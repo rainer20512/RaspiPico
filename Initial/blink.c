@@ -22,6 +22,11 @@
 #define LED_DELAY_MS 250
 #endif
 
+int __putchar(int c, __printf_tag_ptr u) {
+  (void)(u);
+  return stdio_putchar(c);
+}
+
 // Perform initialisation
 int pico_led_init(void) {
 #if defined(PICO_DEFAULT_LED_PIN)
@@ -59,7 +64,7 @@ int main() {
         sleep_ms(LED_DELAY_MS);
         pico_set_led(false);
         sleep_ms(LED_DELAY_MS);
-        stdio_putchar('c');
+//        stdio_putchar('c');
         stdio_printf("Hello, world!\n");
     }
 }
