@@ -50,7 +50,7 @@ typedef struct {
     uint8_t pkt_cnt;    //!< \brief Rolling packet counter
 } rtc_t;
 
-extern uint32_t         ms;        //!< \brief Date: Year (0-255) -> 2000 - 2255
+extern uint32_t         rtc_ms;        //!< \brief Date: Year (0-255) -> 2000 - 2255
 extern rtc_t            rtc;
 extern uint32_t         uptime_mins;
 

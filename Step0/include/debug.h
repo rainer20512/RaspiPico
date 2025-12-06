@@ -43,11 +43,12 @@
 
 
 #define DEBUG_STARTUP       0
-#define DEBUG_PROFILING     0
+#define DEBUG_PROFILING     1
 #define DEBUG_PERIODIC      1
 #define DEBUG_SLEEP_STOP    0
+#define DEBUG_FEATURES      1 
 
-#define DEBUG_PRINT_ADDITIONAL_TIMESTAMPS 1
+#define DEBUG_PRINT_ADDITIONAL_TIMESTAMPS 0
 
 #if DEBUG_MODE 
   #include <stdint.h>

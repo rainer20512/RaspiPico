@@ -11,7 +11,10 @@
 #ifndef __PROFILING_H
 #define __PROFILING_H
 
+#include <stddef.h>
+
 #include "config/config.h"
+#include "hardware/timer.h"
 
 
 #ifdef __cplusplus
@@ -62,17 +65,17 @@ typedef enum ActiveJobEnum {
     #define JOBNAMES1 JOBNAMES0 \
     "LVGL",
 #else
-    #define JOBNAMES1 JOBNAMES2
+    #define JOBNAMES1 JOBNAMES0
 #endif             
 #if USE_USB > 0
-    #define JOBNAMES3 JOBNAMES2 \
+    #define JOBNAMES2 JOBNAMES1 \
     "USB-DEV",
 #else
-    #define JOBNAMES3 JOBNAMES2
+    #define JOBNAMES2 JOBNAMES1
 #endif             
 
 #define JOBNAMES99 \
-    JOBNAMES3     \
+    JOBNAMES2     \
     "ADC",        \
     "SLEEP",      \
     "STOP0",      \
@@ -88,16 +91,16 @@ typedef enum ActiveJobEnum {
     "IRQ_PROFILER",\
     "PROFILER",
 
-#include "dev/timer_dev.h"
 
 /* Define the timer that will be used as microsecond timer */
 /* Change all defines, if counter is changed !             */
+/*
 #define MICROCOUNTER_TMR              TIM7
 #define MICROCOUNTER_TMR_CLK_ENABLE   __HAL_RCC_TIM7_CLK_ENABLE
 #define MICROCOUNTER_TMR_IRQn         TIM7_IRQn
 #define MICROCOUNTER_TMR_IRQHandler   TIM7_IRQHandler            
 // #define MICROCOUNTER_TMR_IRQ_VECTOR   TIM6_DAC_IRQHandler            ; TIM6 and DAC
-
+*/
 
   /* Exported variables ------------------------------------------------------------------*/
   extern volatile uint32_t ProfilerMicroCountHigh;  /* The upper 16 bit of the microsecond-counter */
@@ -105,7 +108,7 @@ typedef enum ActiveJobEnum {
    
   /* Exported functions ------------------------------------------------------------------*/
   /* Get the system uptime in mikroseconds */
-  #define ProfilerGetMicrosecond()  BASTMR_GetMicrosecond(&BASTIM_HANDLE) 
+  #define ProfilerGetMicrosecond()  time_us_32()
   #if DEBUG_FEATURES > 0
      char *ProfilerGetTS(void);
   #endif

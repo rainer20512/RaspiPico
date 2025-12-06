@@ -40,9 +40,6 @@
 
   .syntax unified
 
-
-
-
   .global Reset_Handler
   .extern __vectors
 
@@ -65,6 +62,44 @@ Reset_Handler:
   bics r0, r1
   mov sp, r0
 #endif
+
+/* RHB inserted: Preset all RAM with an uniform pattern */
+#ifdef DO_RAM_PRESET
+  // ldr  r2, RAM_PRESET_VALUE
+  ldr  r2, const
+  // movt r2, RAM_PRESET_VALUE >> 16
+
+  ldr r0, =__RAM_segment_start__
+  ldr r1, =__RAM_segment_end__
+r00:
+  cmp r0, r1
+  beq e00
+  str r2, [r0]
+  adds r0, r0, #4
+  b r00
+e00:
+  ldr r0, =__SCRATCH_X_segment_start__
+  ldr r1, =__SCRATCH_X_segment_end__
+r01:
+  cmp r0, r1
+  beq e01
+  str r2, [r0]
+  adds r0, r0, #4
+  b r01
+e01:
+  ldr r0, =__SCRATCH_Y_segment_start__
+  ldr r1, =__SCRATCH_Y_segment_end__
+r02:
+  cmp r0, r1
+  beq e02
+  str r2, [r0]
+  adds r0, r0, #4
+  b r02
+const:
+  .word RAM_PRESET_VALUE
+e02:
+#endif
+/* RHB End of insertion */
 
 #ifdef MEMORY_INIT
   ldr r0, =MemoryInit

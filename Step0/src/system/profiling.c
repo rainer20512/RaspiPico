@@ -14,6 +14,7 @@
   */
 
 #include "config/config.h"
+#include "hardware/sync.h"
 #include <stdio.h>
 /*******************************************************************************
  * @name    ProfilerFormatTime
@@ -53,12 +54,12 @@ void ProfilerFormatTime(uint64_t time64, char *buffer, size_t buflen, bool bAreU
   */
 #define ADDITIONAL_CHECKS 0         
 
-#include "error.h"
-#include "global_flags.h"
-#include "debug_helper.h"
+//#include "error.h"
+//#include "global_flags.h"
+#include "debug/debug_helper.h"
 #include "system/profiling.h"
 
-#include "hardware.h"
+//#include "hardware.h"
 
 
 /* Private typedef --------------------------------------------------------------*/
@@ -150,7 +151,7 @@ void     ProfilerInitTo(ActiveJobEnumType active )
   ********************************************************************************/
 void     ProfilerSwitchTo(ActiveJobEnumType active )
 {
-  __disable_irq();
+  uint32_t istatus = save_and_disable_interrupts();
   uint32_t tempEntry = ProfilerGetMicrosecond();
   //assert_check(tempEntry, jLastTime);
 
@@ -160,7 +161,7 @@ void     ProfilerSwitchTo(ActiveJobEnumType active )
   uint32_t tempExit = ProfilerGetMicrosecond();
   Increment(&ProfilerTimes[JOB_TASK_PROFILER], tempExit-tempEntry );
   SET_LASTTIME(tempExit);
-  __enable_irq();
+  restore_interrupts(istatus);
 }
 
 /*********************************************************************************
@@ -174,7 +175,7 @@ void     ProfilerSwitchTo(ActiveJobEnumType active )
   ********************************************************************************/
 void     ProfilerPush(ActiveJobEnumType active )
 {
-  __disable_irq();
+  uint32_t istatus = save_and_disable_interrupts();
   uint32_t tempEntry = ProfilerGetMicrosecond();
   //assert_check(tempEntry, jLastTime);
 
@@ -193,7 +194,7 @@ void     ProfilerPush(ActiveJobEnumType active )
   //assert_check(tempExit,tempEntry);
   Increment(&ProfilerTimes[JOB_TASK_PROFILER], tempExit-tempEntry );
   SET_LASTTIME(tempExit);
-  __enable_irq();
+  restore_interrupts(istatus);
 }
 
 /*********************************************************************************
@@ -207,7 +208,7 @@ void     ProfilerPush(ActiveJobEnumType active )
   ********************************************************************************/
 void ProfilerPop()
 {
-  __disable_irq();
+  uint32_t istatus = save_and_disable_interrupts();
   uint32_t tempEntry = ProfilerGetMicrosecond();
   //assert_check(tempEntry, jLastTime);
 
@@ -222,7 +223,7 @@ void ProfilerPop()
   //assert_check(tempExit, tempEntry);
   Increment(&ProfilerTimes[JOB_TASK_PROFILER], tempExit-tempEntry );
   SET_LASTTIME(tempExit);
-  __enable_irq();
+  restore_interrupts(istatus);
 }
 
 /*********************************************************************************

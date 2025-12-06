@@ -16,13 +16,13 @@
 #include <assert.h>
 
 #include "config/config.h"
-#include "debug_helper.h"
+#include "debug/debug_helper.h"
 #include "task/minitask.h"
 #include "system/profiling.h"
 
 
 #if DEBUG_MODE > 0
-    #include "debug_helper.h"
+    #include "debug/debug_helper.h"
 #endif
 /* Private define ------------------------------------------------------------*/
 

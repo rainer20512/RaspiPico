@@ -9,6 +9,9 @@
 #include "boards/pico.h"  
 #include <stdio.h>
 #include "pico/stdlib.h"
+#include "system/status.h"
+#include "system/profiling.h"
+#include "task/minitask.h"
 
 #include <stdlib.h>
 
@@ -22,35 +25,20 @@
 #define LED_DELAY_MS 250
 #endif
 
+#if DEBUG_MODE 
+  uint32_t console_debuglevel;
+  uint32_t fatfs_debuglevel;
+#endif
+
+void Init_DefineTasks(void);
+
+/*
 int __putchar(int c, __printf_tag_ptr u) {
   (void)(u);
   return stdio_putchar(c);
 }
+*/
 
-// Perform initialisation
-int pico_led_init(void) {
-#if defined(PICO_DEFAULT_LED_PIN)
-    // A device like Pico that uses a GPIO for the LED will define PICO_DEFAULT_LED_PIN
-    // so we can use normal GPIO functionality to turn the led on and off
-    gpio_init(PICO_DEFAULT_LED_PIN);
-    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-    return PICO_OK;
-#elif defined(CYW43_WL_GPIO_LED_PIN)
-    // For Pico W devices we need to initialise the driver etc
-    return cyw43_arch_init();
-#endif
-}
-
-// Turn the led on or off
-void pico_set_led(bool led_on) {
-#if defined(PICO_DEFAULT_LED_PIN)
-    // Just set the GPIO on or off
-    gpio_put(PICO_DEFAULT_LED_PIN, led_on);
-#elif defined(CYW43_WL_GPIO_LED_PIN)
-    // Ask the wifi "driver" to set the GPIO on or off
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, led_on);
-#endif
-}
 
 #if UNIQUEID
 extern uint32_t * __fast_load_start__;
@@ -92,21 +80,26 @@ int main() {
     alarm_pool_init_default();
     stdio_init_all();
 
-    int rc = pico_led_init();
-    hard_assert(rc == PICO_OK);     
-    
+    ProfilerInitTo(JOB_TASK_INIT);
+
+    Init_DefineTasks();
+    TaskInitAll();
 
 #if UNIQUEID
     check_fastrun ();
     dump_unique_id();
 #endif
+#ifndef PICO_DEFAULT_LED_PIN
+  #error "No default LED pin!"
+#endif
+
+    ProfilerSwitchTo(JOB_TASK_MAIN);  
+
     cnt = 0;
     while (true) {
-        pico_set_led(true);
-        sleep_ms(LED_DELAY_MS);
-        pico_set_led(false);
-        sleep_ms(LED_DELAY_MS);
+        pin_toggle_wait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 1 );
 //        stdio_putchar('c');
-        stdio_printf("%06d Hello, world!\n", cnt++);
+//        stdio_printf("%06d Hello, world!\n", cnt++);
+        TaskRunAll();
     }
 }

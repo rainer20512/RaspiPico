@@ -10,10 +10,10 @@
 #include "config/config.h"
 #include "system/profiling.h"
 #include "system/rtc.h"
-#include "debug_helper.h"
+#include "debug/debug_helper.h"
 
 #if DEBUG_MODE > 0
-    #include "debug_helper.h"
+    #include "debug/debug_helper.h"
 #endif
 
 /* - Add additional conditional #includes here ------------------------------*/

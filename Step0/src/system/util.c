@@ -8,7 +8,7 @@
  */
 
 #include "config/config.h"
-#include "debug_helper.h"
+#include "debug/debug_helper.h"
 
 #include "hardware/timer.h"
 

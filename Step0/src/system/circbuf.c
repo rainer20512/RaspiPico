@@ -118,7 +118,7 @@ static void CB_PutNowrap(CircBuffT *b, const uint8_t *buf, uint32_t buflen)
  * 
  * The number of stored bytes will be returned
  *****************************************************************************/
-#include "debug_helper.h"
+#include "debug/debug_helper.h"
 uint32_t CircBuff_PutStr(CircBuffT *b, const uint8_t *buf, uint32_t buflen)
 {
     /* chek for storeable bytes and reduce write size, if neccessary */
@@ -264,7 +264,7 @@ void LinBuff_Gets(LinBuffT *b, uint8_t **str, size_t *len )
   ********************************************************************************/
 size_t LinBuff_GetN(LinBuffT *b, uint8_t **buf, size_t numtoread )
 {
-    size_t avail = LBUF_USED(*b);
+    size_t avail = LBUF_GET_USED(*b);
     size_t num = ( avail < numtoread ? avail : numtoread );
 
     /* Return ptr to input string */

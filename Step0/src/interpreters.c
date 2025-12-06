@@ -16,48 +16,19 @@
 #include <inttypes.h>
 
 #include "config/config.h"
-#include "system/clockconfig.h"
-#include "config/devices_config.h"
 #include "interpreters.h"
-#include "debug_helper.h"
+#include "debug/debug_helper.h"
 #include "system/profiling.h"
-#include "system/util.h"
-#include "wireless.h"
-#include "timer.h"
-#include "rfm/rfm_packets.h"
-#include "task/minitask.h"
-#include "com.h"
-#include "dev/i2c_dev.h"
 #include "system/status.h"
-#include "system/hw_util.h"
+#include "system/rtc.h"
+#include "system/util.h"
+#include "task/minitask.h"
 #include "cmdline.h"
-#include "sensors/thp_sensor.h"
-#include "eeprom.h"
-#include "dev/devices.h"
-#include "system/tm1637.h"
 #include "version.h"
 
-#if USE_DS18X20  > 0
-    #include "onewire.h"
-    #include "ds18xxx20.h"
-#endif
-#if USE_EPAPER > 0
-    #include "disp/epaper.h"
-#endif
-#if USE_DOGM132 > 0
-    #include "disp/dogm-graphic.h"
-    #include "disp/fonts/lcd_fonts.h"
-#endif
-#if USE_QENCODER > 0
-    #include "dev/qencode.h"
-#endif
-#if USE_THPSENSOR > 0
-    #include "sensors/thp_sensor.h"
-#endif
+#include "hardware/watchdog.h"
+#include "boards/pico.h"  
 
-#if USE_HW_PWMTIMER > 0 || USE_USER_PWMTIMER > 0
-    #include "dev/pwm_timer.h"
-#endif
 /** @addtogroup CmdLine
   * @{
   */ 
@@ -84,14 +55,13 @@ const InterpreterModuleT mdl##name =  {pmt##name, cmd##name, sizeof(cmd##name) /
  */
 
 /* Private functions ---------------------------------------------------------*/
-
+// RHB todo
 #if DEBUG_FEATURES > 0
 
-#include "debug_sram.h"
-#include "debug_gpio_exti.h"
-#include "debug_pwr_rcc.h"
 
-void SystemClock_Set(CLK_CONFIG_T clk_config_byte, bool bSwitchOffMSI );
+#include "debug/debug_gpio_exti.h"
+// #include "debug_pwr_rcc.h"
+
 
 /*********************************************************************************
   * @brief  Submenu to dump system config
@@ -108,52 +78,13 @@ static bool Config_Menu ( char *cmdline, size_t len, const void * arg )
 
   switch( (uint32_t)arg )  {
     case 0:
-      DBG_dump_clocksetting();
+      // RHB todo DBG_dump_clocksetting();
       break;
     case 1:
-      DBG_dump_rtcclockconfig();
+      // RHB todo DBG_dump_rtcclockconfig();
       break;
-    case 2:
-      DBG_dump_powersetting();
-      break;
-    case 3:
-      DBG_dump_peripheralclocksetting();
-      break;
-    case 4:
-      DBG_dump_peripheralclockconfig();
-      break;
-    case 5:
-      DBG_dump_peripheralclocksetting_insleepmode();
-      break;
-    case 6:
-      for ( uint32_t i = 0; i < 5; i++ )
-         Config_Menu( cmdline, len, VOID(i) );
-      break;
-    case 7:
-      if ( CMD_argc() < 1 ) {
-          printf("Usage: 'SetSysClk nn \n");
-          return false;
-      }
-      CMD_get_one_word( &word, &wordlen );
-      ret = CMD_to_number ( word, wordlen );
-      SystemClock_Set(ret, true);
-      break;
-    case 8:
-      DEBUG_PUTS("Calibrating HSI clock");
-      HSIClockCalibrate();
-      break;
-    case 9:
-      if ( CMD_argc() < 1 ) {
-          printf("Usage:MCO output <n>, 0=Off, 1=SYSCLK, 2=MSI, 3=HSI, 4=HSE, 5=PLL, 6=LSE, 7=LSI");
-          return false;
-      }
-      CMD_get_one_word( &word, &wordlen );
-      ret = CMD_to_number ( word, wordlen );
-      DEBUG_PRINTF("MCO Source %d\n", ret );
-      EnableMCO ( ret );
-      break;
-    default:
-      DEBUG_PUTS("RFM_Menu: command not implemented");
+    default:  
+      DEBUG_PUTS("Config_Menu: command not implemented");
   } /* end switch */
 
   return true;
@@ -167,14 +98,6 @@ static const char *pmtClkCfg (void)
 static const CommandSetT cmdClkCfg[] = {
   { "Clock",     ctype_fn, {Config_Menu},  VOID(0), "Show clocksettings" },
   { "RTCClock",  ctype_fn, {Config_Menu},  VOID(1), "Show RTC clocksettings" },
-  { "Power",     ctype_fn, {Config_Menu},  VOID(2), "Show powersettings" },
-  { "PeriClk",   ctype_fn, {Config_Menu},  VOID(3), "Show peripheral clock settings"  },
-  { "PeriCfg",   ctype_fn, {Config_Menu},  VOID(4), "Show peripheral clock configuration"  },
-  { "SleepClk",  ctype_fn, {Config_Menu},  VOID(5), "Show peripheral clock settings in sleep mode"  },
-  { "All",       ctype_fn, {Config_Menu},  VOID(6), "Show Items 0) to 4) "  },
-  { "SetSysClk", ctype_fn, {Config_Menu},  VOID(7), "Set system clock to predefined settings"  },
-  { "Calib-HSI", ctype_fn, {Config_Menu},  VOID(8), "Calibrate HSI Clock"  },
-  { "MCO output",ctype_fn, {Config_Menu},  VOID(9), "Activate MCO Output PA8" },
 };
 ADD_SUBMODULE(ClkCfg);
 
@@ -214,7 +137,7 @@ static bool Init_GPIO ( char *cmdline, size_t len, const void * arg )
       CMD_get_one_word( &word, &wordlen);
       outval = CMD_to_number(word, wordlen) & 0x01;
 
-        DBG_init_pin(portletter, portnum, speed, pupd, outval);
+        // RHB todo DBG_init_pin(portletter, portnum, speed, pupd, outval);
         break;
     case 1:
       if ( CMD_argc() < 2 ) {
@@ -227,7 +150,7 @@ static bool Init_GPIO ( char *cmdline, size_t len, const void * arg )
 
       while (CMD_get_one_word( &word, &wordlen) ) {
           portnum = CMD_to_number(word, wordlen) & 0x0f;
-          DBG_deinit_pin(portletter, portnum);
+          // RHB todo DBG_deinit_pin(portletter, portnum);
       }
       break;
     case 2:
@@ -263,7 +186,7 @@ static bool Toggle_GPIO ( char *cmdline, size_t len, const void * arg )
 
   while (CMD_get_one_word( &word, &wordlen) ) {
       portnum = CMD_to_number(word, wordlen) & 0x0f;
-      DBG_dump_toggle_pin(portletter, portnum,(uint32_t)arg==1);
+      // RHB todo DBG_dump_toggle_pin(portletter, portnum,(uint32_t)arg==1);
   }
   return true;
 }
@@ -288,11 +211,13 @@ static bool Dump_GPIO ( char *cmdline, size_t len, const void * arg )
 
   while (CMD_get_one_word( &word, &wordlen) ) {
     for ( uint32_t i = 0; i < wordlen; i++ ) {
-      DBG_dump_gpio_status(*(word+i));
+       // RHB todo DBG_dump_gpio_status(*(word+i));
     }
   }
   return true;
 }
+
+void DBG_sram(void);
 
 static bool Devices_Menu ( char *cmdline, size_t len, const void * arg )
 {
@@ -300,7 +225,6 @@ static bool Devices_Menu ( char *cmdline, size_t len, const void * arg )
   size_t wordlen;
   uint8_t idx;
   uint32_t initarg;
-  ARD_PinT dio, clk;
     
   UNUSED(cmdline);UNUSED(len);
 
@@ -309,62 +233,10 @@ static bool Devices_Menu ( char *cmdline, size_t len, const void * arg )
       DBG_sram();
       break;
     case 1:
-      DBG_dump_exti_config(0);
+      // DBG_dump_exti_config(0);
       break;
     case 2:
       DBG_dump_nvic_config();
-      break;
-    case 3:
-      DBG_dump_devices(true);
-      break;
-    case 4:
-    case 5:
-      if ( CMD_argc() < 1 ) {
-        printf("Usage: 'De/ReInit <devicenum>\n");
-        return false;
-      }
-      CMD_get_one_word( &word, &wordlen );
-      idx = CMD_to_number ( word, wordlen );
-      if ( (uint32_t)arg == 5) {
-        initarg = 0;
-        if ( CMD_argc() > 1 ) {
-          CMD_get_one_word( &word, &wordlen );
-          initarg = CMD_to_number ( word, wordlen );
-        }
-        DeviceInitByIdx(idx, (void *)initarg);
-      } else {
-        DeviceDeInitByIdx(idx);
-      }
-      break;
-    case 6:
-      clk.gpio = GPIOA; clk.pin = 0;  
-      dio.gpio = GPIOA; dio.pin = 1;  
-      TM1637_Init(clk,dio, 100);
-      break;
-    case 7:
-    case 10:
-      if ( CMD_argc() < 1 ) {
-        printf("Usage: 'Display <number>'\n");
-        return false;
-      }
-      CMD_get_one_word( &word, &wordlen );
-      initarg = CMD_to_number ( word, wordlen );
-      if ( (uint32_t)arg == 7 )
-          TM1637_displayInteger(initarg,0, 99);
-      else
-        TM1637_displayHex(initarg,0, 99);
-      break;
-    case 8:
-      if ( CMD_argc() < 1 ) {
-        printf("Usage: 'Display <number>'\n");
-        return false;
-      }
-      CMD_get_one_word( &word, &wordlen );
-      initarg = CMD_to_number ( word, wordlen );
-      TM1637_displayInteger(initarg,1, 2);
-      break;
-    case 9:
-      TM1637_clearDisplay();
       break;
     default:
       DEBUG_PUTS("RFM_Menu: command not implemented");
@@ -384,18 +256,11 @@ static const CommandSetT cmdDevices[] = {
   { "EXTI",      ctype_fn, {Devices_Menu},    VOID(1), "Show EXTI settings" },
   { "NVIC",      ctype_fn, {Devices_Menu},    VOID(2), "Show NVIC settings" },
   { "GPIO",      ctype_fn, {Dump_GPIO},       VOID(0), "Show GPIO settings"  },
-  { "Devices",   ctype_fn, {Devices_Menu},    VOID(3), "Dump Devices"  },
-  { "Dev Init",  ctype_fn, {Devices_Menu},    VOID(4), "DeInit Device i"  },
-  { "Dev DeInit",ctype_fn, {Devices_Menu},    VOID(5), "ReInit Device i"  },
   { "Toggle 8x", ctype_fn, {Toggle_GPIO},     VOID(0), "Toggle GPIO pin 8x"  },
   { "Alter",     ctype_fn, {Toggle_GPIO},     VOID(1), "Alter output value of pin"  },
   { "Pin Init",  ctype_fn, {Init_GPIO},       VOID(0), "Set Output Pin"  },
   { "Pin DeInit",ctype_fn, {Init_GPIO},       VOID(1), "Reset Output Pin"  },
   { "Disp Init", ctype_fn, {Devices_Menu},    VOID(6), "Init 6 DD"  },
-  { "Disp Num4", ctype_fn, {Devices_Menu},    VOID(7), "Write <num> to 6 DD"  },
-  { "Disp Num6", ctype_fn, {Devices_Menu},    VOID(8), "Write <num> to 6 DD"  },
-  { "Disp hex",  ctype_fn, {Devices_Menu},    VOID(10),"Write <hex> to 6 DD"  },
-  { "Disp Clr",  ctype_fn, {Devices_Menu},    VOID(9), "Clear display"  },
 };
 ADD_SUBMODULE(Devices);
 
@@ -418,7 +283,7 @@ static bool Test_WD_reset ( char *cmdline, size_t len, const void * arg )
   DEBUG_PUTS("Watchdog reset");
 
   /* the following call will not return */
-  TimerWatchdogReset(500);
+  watchdog_reboot (0, 0, 100);
 
   return true;
 }
@@ -470,7 +335,7 @@ static bool Test_TmrAbs ( char *cmdline, size_t len, const void * arg )
   uint32_t ret = CMD_to_number ( word, wordlen );
 
   COM_print_time('?', true);
-  tmrID = MsTimerSetAbs ( MILLISEC_TO_TIMERUNIT(ret), TimerCB, 0 );
+  DEBUG_PRINTF("Under Construction\n");
 
   return true;
 }
@@ -501,7 +366,8 @@ static bool Test_TmrRel ( char *cmdline, size_t len, const void * arg )
       bPeriodic = false;
   }
   COM_print_time('?', true);
-  tmrID = MsTimerSetRel ( MILLISEC_TO_TIMERUNIT(ret), bPeriodic, TimerCB, 0 );
+  // tmrID = MsTimerSetRel ( MILLISEC_TO_TIMERUNIT(ret), bPeriodic, TimerCB, 0 );
+  DEBUG_PRINTF("Under Construction\n");
 
   return true;
 }
@@ -509,13 +375,14 @@ static bool Test_TmrRel ( char *cmdline, size_t len, const void * arg )
 static bool Test_TmrDel ( char *cmdline, size_t len, const void * arg )
 {
   UNUSED(cmdline);UNUSED(len);UNUSED(arg);
-  MsTimerDelete(tmrID);
+  DEBUG_PRINTF("Under Construction\n");
+  // MsTimerDelete(tmrID);
   return true;
 }
 
 void TestCB(uint32_t arg)
 {
-    DEBUG_PRINTF("@%02x Tmr activation by iteration %d\n", RTC_GetS256(), arg);
+    DEBUG_PRINTF("@%03d Tmr activation by iteration %d\n", RTC_GetMillis(), arg);
 }
 
 static bool Test_TmrMulti ( char *cmdline, size_t len, const void * arg )
@@ -532,18 +399,22 @@ static bool Test_TmrMulti ( char *cmdline, size_t len, const void * arg )
   CMD_get_one_word( &word, &wordlen );
   uint32_t ret = CMD_to_number ( word, wordlen );
 
-  int8_t TmrID = MsTimerAllocate(NO_TIMER_ID);
+  /* int8_t TmrID = MsTimerAllocate(NO_TIMER_ID);
   if ( TmrID == NO_TIMER_ID ) {
     DEBUG_PUTS("Could not allocate TimerID");
     return false;
   }
+  */
+  DEBUG_PRINTF("Under Construction\n");
 
+  /*
   for ( uint32_t i = 0; i < ret; i++ ) {
     if ( MsTimerReUseRel(TmrID, MILLISEC_TO_TIMERUNIT(20), 0, TestCB, i) == NO_TIMER_ID ) 
         DEBUG_PUTS("Could not ReSet Timer");
     uint32_t cnt = RTC_GetS256()+2;
     while ( RTC_GetS256() != cnt );
   }
+  */
   return true;
 }
 
@@ -557,6 +428,7 @@ static bool Test_TmrKill ( char *cmdline, size_t len, const void * arg )
 
 #define DELTA_CNT   4
 
+  /* 
   TmrID=MsTimerSetRel(MILLISEC_TO_TIMERUNIT(15), 0, TestCB, i++ );
   if ( TmrID == NO_TIMER_ID ) {
     DEBUG_PUTS("TmrKill: Could not Set Timer 0");
@@ -603,7 +475,8 @@ static bool Test_TmrKill ( char *cmdline, size_t len, const void * arg )
     DEBUG_PUTS("TmrKill: Could not set timer 5");
     return false;
   }
-
+  */
+  DEBUG_PRINTF("Under Construction\n");
 
   return true;
 }
@@ -626,24 +499,10 @@ static bool Test_Toggle ( char *cmdline, size_t len, const void * arg )
   uint32_t p2 = CMD_to_number ( word, wordlen );
 
   DEBUG_PRINTF("%d Steps, Period %d\n", p1,p2  );
-  UserPinSignalN(p1, p2);
+  pin_toggle_wait( PICO_DEFAULT_LED_PIN, p2, p1 );
   return true;
 }
 
-static bool Test_Bitband ( char *cmdline, size_t len, const void * arg )
-{
-  uint32_t *start, *stop;
-  UNUSED(cmdline);UNUSED(len);UNUSED(arg);
-  DEBUG_PRINTF("LPUART1->CR1=%04x\n",(uint16_t)LPUART1->CR1);
-  
-  start = HW_GetPeriphBitBandAddr(&LPUART1->CR1,0);
-  stop  = HW_GetPeriphBitBandAddr(&LPUART1->CR1,15);
-  for ( ;start <= stop; start++ )
-    DEBUG_PRINTF("%04x ",(uint16_t)*start);
-  DEBUG_PUTS("");
- 
-  return true;
-}
 
 #include "system/periodic.h"
 /*********************************************************************************
@@ -715,8 +574,7 @@ static const CommandSetT cmdTest[] = {
   { "TmrDel",          ctype_fn, .exec.fn = Test_TmrDel,    VOID(0), "Delete priodic timer" },
   { "Multi Tmr",       ctype_fn, .exec.fn = Test_TmrMulti,  VOID(0), "Lots of timers" }, 
   { "Kill Tmr",        ctype_fn, .exec.fn = Test_TmrKill,   VOID(0), "Generates Error" }, 
-  { "Toggle",          ctype_fn, .exec.fn = Test_Toggle,    VOID(0), "Toggle UserLed2" },
-  { "Bit-band test",   ctype_fn, .exec.fn = Test_Bitband,   VOID(0), "Test Bit-banding"}, 
+  { "Toggle",          ctype_fn, .exec.fn = Test_Toggle,    VOID(0), "Toggle UserLed2" }, 
 };
 ADD_SUBMODULE(Test);
 
@@ -837,14 +695,14 @@ bool Settings(char *cmdline, size_t len, const void * arg )
         idx = CMD_to_number ( word, wordlen );
         CMD_get_one_word( &word, &wordlen );
         val = CMD_to_number ( word, wordlen );
-        result = Config_SetVal(idx, val); 
+        // RHB todo result = Config_SetVal(idx, val); 
         DEBUG_PRINTF("%s No. %d to 0x%02x\n", result? "Set" : "Failed to set", idx, val );
         argnum -= 2;
       }
   }
   
   /* Show all settings */
-  Config_Dump();
+  // RHB todo Config_Dump();
 
   return true;
 }
@@ -889,10 +747,13 @@ static const char *pmtBasic (void)
 
 static const CommandSetT cmdBasic[] = {
   { "Settings",        ctype_fn,  .exec.fn = Settings,        VOID(0),  "Persistent settings"  },
+#if DEBUG_FEATURES > 0
+  { "Clock&Pwr",       ctype_sub, .exec.sub = &mdlClkCfg,      0,       "Clock & Power Config submenu" },
+  { "Devices",         ctype_sub, .exec.sub = &mdlDevices,     0,       "Peripheral devices submenu" },
+#endif
 #if DEBUG_MODE > 0
   { "Level",           ctype_fn,  .exec.fn = MainMenu,        VOID(0),  "Set Debuglevel"  },
 #endif
-  { "UID",             ctype_fn,  .exec.fn = HW_DumpID,       VOID(0),  "Print Hardware UID"  },
   { "Version",         ctype_fn,  .exec.fn = MainMenu,        VOID(1),  "Show version info"  },
 #if defined(USE_ADC1)
   { "ADC"    ,         ctype_sub, .exec.sub = &mdlADC,         0,       "ADC submenu" },

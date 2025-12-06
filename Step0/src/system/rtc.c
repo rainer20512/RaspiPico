@@ -10,7 +10,7 @@
   * @{
   */
 #include "config/config.h"
-#include "debug_helper.h"
+#include "debug/debug_helper.h"
 #include "system/profiling.h"
 #include "task/minitask.h"
 #include "system/rtc.h"
@@ -40,7 +40,7 @@
  */
 static uint8_t rtc_DS = 0; 
 
-static uint32_t rtc_ms;        //!< \brief millisecond Counter
+uint32_t rtc_ms;        //!< \brief millisecond Counter
 
 /* Private function prototypes -----------------------------------------------*/
 static uint32_t RTC_IsLastSunday(void);
@@ -461,14 +461,21 @@ void RTC_IncrementSecond ( void )
 
 
 static repeating_timer_t mstimer;
+static repeating_timer_t sectimer;
 
 bool mstimer_callback(repeating_timer_t *rt) {
     UNUSED(rt);
     ProfilerPush(JOB_IRQ_RTC);
-    if( ++rtc_ms == 1000 ) {
-      RTC_IncrementSecond();
-      rtc_ms = 0;
-    }  
+    ++rtc_ms;
+    ProfilerPop();
+    return true; // keep repeating
+}
+
+bool sectimer_callback(repeating_timer_t *rt) {
+    UNUSED(rt);
+    ProfilerPush(JOB_IRQ_RTC);
+    rtc_ms = 0;
+    RTC_IncrementSecond();
     ProfilerPop();
     return true; // keep repeating
 }
@@ -478,6 +485,10 @@ bool task_init_rtc(void) {
   // negative timeout means exact delay (rather than delay between callbacks)
   if (!add_repeating_timer_ms(-1, mstimer_callback, NULL, &mstimer)) {
       DEBUG_PRINTF("Failed to add millisecond timer\n");
+      return false;
+  }
+  if (!add_repeating_timer_ms(-1000, sectimer_callback, NULL, &sectimer)) {
+      DEBUG_PRINTF("Failed to add second timer\n");
       return false;
   }
 
@@ -501,10 +512,9 @@ void task_handle_rtc(uint32_t arg)
     UNUSED(arg);
 
     #if DEBUG_PRINT_ADDITIONAL_TIMESTAMPS > 0
-        // COM_print_time('+', true); // print_hexXXXX(RTCTIMER->CNT); CRLF();
+        COM_print_time('+', true); 
     #endif
 
-    handle_sectimer_periodic();
 
 }
 

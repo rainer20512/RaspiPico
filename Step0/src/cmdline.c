@@ -20,7 +20,7 @@
 #include "system/util.h"
 #include "system/circbuf.h"
 #include "task/minitask.h"
-#include "debug_helper.h"
+#include "debug/debug_helper.h"
 
 #include "cmdline.h"
 #include "interpreters.h"

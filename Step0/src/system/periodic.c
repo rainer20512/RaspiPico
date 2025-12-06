@@ -9,7 +9,7 @@
  */
 
 #include "config/config.h"
-#include "debug_helper.h"
+#include "debug/debug_helper.h"
 #include "system/rtc.h"
 #include "system/periodic.h"
 

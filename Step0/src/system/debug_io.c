@@ -24,11 +24,14 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "debug_helper.h"
+#include "debug/debug_helper.h"
 // #include "debug_io.h"
 
 #include "system/circbuf.h"
 #include "system/util.h"
+
+#include "pico/stdio.h"
+#include "pico/time.h"
 
 
 /* Private define ------------------------------------------------------------*/
@@ -49,12 +52,28 @@ static uint8_t bDelayedFlush = 0;       /* Keep in mind an delayed flush */
 static CircBuffT o;
 static LinBuffT i; 
 
+/* RHB tbd */
+#define DMAMEM
+
+static DMAMEM uint8_t outbuf[OUTBUF_SIZE];
+static DMAMEM uint8_t inbuf[INBUF_SIZE];
 
 /* Private macro -------------------------------------------------------------*/
 
 /* forward declarations  -----------------------------------------------------*/
+void DebugOutputCompleteCB ( uint32_t size );
 
 /* Private functions  ---------------------------------------------------------*/
+
+
+static void UsartStartTx(uint8_t *data, uint32_t txSize)
+{
+  for ( uint32_t i=0; i< txSize; i++ ) {
+    stdio_putchar(*(data++));
+  }
+  DebugOutputCompleteCB ( txSize );
+}
+
 
 /* Start transfer to output device */
 static void Debug_OutputTransfer(uint32_t from, uint32_t to )
@@ -64,14 +83,11 @@ static void Debug_OutputTransfer(uint32_t from, uint32_t to )
   /* Make sure, there is no wraparound between 'from' and 'to'  */
   assert_param(from <= to);
 
-  /* Make sure, there is a assigned DebugUart  */
-  assert_param(DebugUart);
-
-  
   bOngoingTransfer = 1;
   uint32_t transfer_size = to - from;
 
-  UsartStartTx(DebugUart, o.buf+o.rdptr, transfer_size);
+  UsartStartTx(o.buf+o.rdptr, transfer_size);
+
 }
 
 
@@ -148,7 +164,7 @@ void task_handle_out(uint32_t arg)
 /* int __putchar(int ch ) { */
 int __putchar(int ch, __printf_tag_ptr uu) {
   // if ( bExpandCrToCrlf && (char)ch == '\n' ) __putchar('\r', uu);
-/*  if ( bExpandCrToCrlf && (char)ch == '\n' ) __putchar('\r'); */
+  // if ( bExpandCrToCrlf && (char)ch == '\n' ) __putchar('\r'); */
 
   /*
    * - if there is room left in outbuf, copy character to outbuf and start transfer, if character is '\n'
@@ -165,6 +181,7 @@ int __putchar(int ch, __printf_tag_ptr uu) {
      
   return ch;
 }
+
 
 /**
 * @brief  Callback when input character(s) available
@@ -183,15 +200,12 @@ bool task_init_io(void)
     LinBuff_Init        (&i, INBUF_SIZE,  inbuf );
     stdio_set_chars_available_callback(Debug_RxCharAvailCB, NULL);
 
-    printf("Redirecting stdout to %s\n",dev->devName);
+    stdio_printf("Redirecting stdout to UART\n");
 }
 
-void DebugTxCpltCallback(UsartHandleT *uhandle)
-{
-  DebugOutputCompleteCB(uhandle->TxCount);  // or Count ????    
-}
+void Interpret_line(LinBuffT *inbuf);
 
-void DebugHandleInputChar ( char ch ) 
+void DebugHandleInputChar ( unsigned char ch ) 
 {
     /* Handle CRLF, Echo & flush*/
     // if ( ch == '\r' ) DEBUG_PUTC('\n');
@@ -204,10 +218,12 @@ void DebugHandleInputChar ( char ch )
       LBUF_DEL(i);
     } else {
       /* store character, if not '\r' */
-      if ( ch != '\r' ) { LinBuff_Putc(i, ch); }
+      if ( ch == '\r' ) { ch='\n'; }
       if ( ( ch == '\n' || ch == 0x04 ) ) { 
           /* CR or CTRl-D: interpret input */
           Interpret_line(&i);
+      } else {
+          LinBuff_Putc(&i, ch);
       }
     }
 }
@@ -223,18 +239,12 @@ void task_handle_com( uint32_t param)
   int rc,i;
   /* read input characters until there are no more */
   do {
-    rc = stdio_get_until(inbuf, sizeof(buf), make_timeout_time_us(TIMEOUT_US));
+    rc = stdio_getchar_timeout_us(0);
     /* rc < 0 -> no more characters */
     if (rc < 0) break;
-    for ( i=0;i < rc; i ++ ) {
-      DebugHandleInputChar(inbuf[i]);
-    }
-  }
+    DebugHandleInputChar((unsigned char)rc);
+  }while(1);
 }
-  
-    UNUSED(param);
-}
-
 
 
 
@@ -245,7 +255,6 @@ void dbg_printf( const char* format, ... ) {
     va_end( args );
 }
 
-#endif // #if DEBUG_FEATURES > 0 && DEBUG_DEBUGIO == 0
 
 /*----------------------------------------------------------------------------*
  * logger functions
@@ -269,6 +278,17 @@ void dbg_printf( const char* format, ... ) {
         }
 
 
+        /******************************************************************************
+         * Write CRLF and transfer to file
+         *****************************************************************************/
+        void Console_CRLF(void)
+        {
+            if ( bExpandCrToCrlf ) CircBuff_Put(&o, '\r');
+            CircBuff_Put(&o, '\n');
+            TaskNotify(TASK_LOG);
+        }
+
+
 
         /******************************************************************************
          * Write NULL-terminated string to LogFile, append CRLF and start write to file 
@@ -279,17 +299,6 @@ void dbg_printf( const char* format, ... ) {
             if ( ret ) Console_CRLF();
             return ret;
 
-        }
-
-
-        /******************************************************************************
-         * Write CRLF and transfer to file
-         *****************************************************************************/
-        void Console_CRLF(void)
-        {
-            if ( bExpandCrToCrlf ) CircBuff_Put(&o, '\r');
-            CircBuff_Put(&o, '\n');
-            TaskNotify(TASK_LOG);
         }
      #else
         /******************************************************************************
