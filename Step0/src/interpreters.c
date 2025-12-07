@@ -161,6 +161,9 @@ static bool Init_GPIO ( char *cmdline, size_t len, const void * arg )
   return true;
 }
 
+#define DELAY_MS 500
+#include "hardware/gpio.h"
+
 /*********************************************************************************
   * @brief  Toggle GPIO ports
   *         
@@ -173,21 +176,37 @@ static bool Toggle_GPIO ( char *cmdline, size_t len, const void * arg )
   UNUSED(cmdline);UNUSED(len);UNUSED(arg);
   char *word;
   size_t wordlen;
-  char portletter;   
-  uint8_t portnum;
+  uint8_t pin;
+  uint32_t times;
   
-  if ( CMD_argc() < 2 ) {
-    printf("Usage: Toggle portletter [portnum1 [portnum2[...]]\n");
-    return false;
-  }
+    switch( (uint32_t)arg )  {
+    case 0:
+      /* cycle <pin> <num> times */
+      if ( CMD_argc() < 2 ) {
+        printf("Cycle <pin> <num>\n");
+        return false;
+      }
+      CMD_get_one_word( &word, &wordlen );
+      pin  = CMD_to_number ( word, wordlen );
+      CMD_get_one_word( &word, &wordlen );
+      times  = CMD_to_number ( word, wordlen );
+      pin_toggle_nowait( pin, DELAY_MS, times );
+      break;
+    case 1:
+      /* Toggle output pin <pin> */
+      if ( CMD_argc() < 1 ) {
+        printf("Toggle <pin>\n");
+        return false;
+      }
+      CMD_get_one_word( &word, &wordlen );
+      pin  = CMD_to_number ( word, wordlen );
+      times = gpio_get(pin) ? 0 : 1;
+      gpio_put(pin, times);
+      break;
+    default:
+      DEBUG_PUTS("command not implemented");
+  } /* end switch */
 
-  CMD_get_one_word( &word, &wordlen);
-  portletter = *word;
-
-  while (CMD_get_one_word( &word, &wordlen) ) {
-      portnum = CMD_to_number(word, wordlen) & 0x0f;
-      // RHB todo DBG_dump_toggle_pin(portletter, portnum,(uint32_t)arg==1);
-  }
   return true;
 }
 
@@ -201,19 +220,9 @@ static bool Toggle_GPIO ( char *cmdline, size_t len, const void * arg )
 static bool Dump_GPIO ( char *cmdline, size_t len, const void * arg )
 {
   UNUSED(cmdline);UNUSED(len);UNUSED(arg);
-  char *word;
-  size_t wordlen;
 
-  if ( CMD_argc() < 1 ) {
-    printf("Usage: GPIO letter [letter [...]]\n");
-    return false;
-  }
+  DEBUG_PUTS("command not implemented");
 
-  while (CMD_get_one_word( &word, &wordlen) ) {
-    for ( uint32_t i = 0; i < wordlen; i++ ) {
-       // RHB todo DBG_dump_gpio_status(*(word+i));
-    }
-  }
   return true;
 }
 
@@ -252,15 +261,15 @@ static const char *pmtDevices (void)
 }
 
 static const CommandSetT cmdDevices[] = {
-  { "SRAM",      ctype_fn, {Devices_Menu},    VOID(0), "Show SRAM sections and usage" },
-  { "EXTI",      ctype_fn, {Devices_Menu},    VOID(1), "Show EXTI settings" },
-  { "NVIC",      ctype_fn, {Devices_Menu},    VOID(2), "Show NVIC settings" },
-  { "GPIO",      ctype_fn, {Dump_GPIO},       VOID(0), "Show GPIO settings"  },
-  { "Toggle 8x", ctype_fn, {Toggle_GPIO},     VOID(0), "Toggle GPIO pin 8x"  },
-  { "Alter",     ctype_fn, {Toggle_GPIO},     VOID(1), "Alter output value of pin"  },
-  { "Pin Init",  ctype_fn, {Init_GPIO},       VOID(0), "Set Output Pin"  },
-  { "Pin DeInit",ctype_fn, {Init_GPIO},       VOID(1), "Reset Output Pin"  },
-  { "Disp Init", ctype_fn, {Devices_Menu},    VOID(6), "Init 6 DD"  },
+  { "SRAM",                   ctype_fn, {Devices_Menu},    VOID(0), "Show SRAM sections and usage" },
+  { "EXTI",                   ctype_fn, {Devices_Menu},    VOID(1), "Show EXTI settings" },
+  { "NVIC",                   ctype_fn, {Devices_Menu},    VOID(2), "Show NVIC settings" },
+  { "GPIO",                   ctype_fn, {Dump_GPIO},       VOID(0), "Show GPIO settings"  },
+  { "Cycle <pin> <num>",      ctype_fn, {Toggle_GPIO},     VOID(0), "Cycle GPIO <pin> <num> times"  },
+  { "Alter <pin>",            ctype_fn, {Toggle_GPIO},     VOID(1), "Toggle output of GPIO <pin>"  },
+  { "Pin Init",               ctype_fn, {Init_GPIO},       VOID(0), "Set Output Pin"  },
+  { "Pin DeInit",             ctype_fn, {Init_GPIO},       VOID(1), "Reset Output Pin"  },
+  { "Disp Init",              ctype_fn, {Devices_Menu},    VOID(6), "Init 6 DD"  },
 };
 ADD_SUBMODULE(Devices);
 

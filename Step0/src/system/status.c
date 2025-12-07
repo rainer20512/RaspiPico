@@ -57,13 +57,14 @@ void pin_toggle_wait( uint8_t pin, uint32_t delay_ms, uint32_t cycles )
 bool blink_callback(repeating_timer_t *rt) 
 {
   uint8_t new_state = curr_state ? 0 : 1;
-  if ( --blinkcount ) {
+  if ( --blinkcount == 0 ) {
     // finished toggling
     cancel_repeating_timer(rt);
     pin_restore_cfg(curr_pin);
     return false;
   } else {
     pico_set_pin(curr_pin, new_state);
+    curr_state = new_state;
     return true; // keep repeating
   }
 }
@@ -76,7 +77,7 @@ void pin_toggle_nowait( uint8_t pin, uint32_t delay_ms, uint32_t cycles )
     DEBUG_PRINTF("Another pin currently claimed");
   }
   pico_pin_init(pin, GPIO_OUT);
-  blinkcount = cycles*2; // each toggle counts, so double the cycles
+  blinkcount = cycles*2+1; // each toggle counts, so double the cycles
   curr_pin = pin;
   curr_state = (uint8_t)gpio_get(pin);
   if (!add_repeating_timer_ms(delay_ms, blink_callback, NULL, &toggle_timer)) {

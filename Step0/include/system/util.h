@@ -15,6 +15,7 @@ int16_t average_n ( int16_t avg, int16_t value, uint8_t n  );
 uint32_t My_Delay(uint32_t waittime );
 void Error_Handler(char *file, int line);
 void Error_Handler_XX(int32_t code, char *file, int line);
+uint32_t pico_get_coreID(void);
 
 #ifdef  USE_FULL_ASSERT
   void assert_failed(char* file, uint32_t line);

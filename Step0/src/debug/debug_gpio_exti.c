@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "debug/debug_helper.h"
+#include "system/util.h"
 
 /*
  *************************************************************
@@ -628,6 +629,12 @@ void DBG_dump_nvic_config(void)
     DBG_setIndentAbs(oldIndent);
 }
 
+
+
+void DBG_dump_coreID(void)
+{
+  DEBUG_PRINTF("CPUID=%d\n",pico_get_coreID() );
+}
 
 #endif // #if DEBUG_FEATURES > 0
 

@@ -58,6 +58,12 @@ void Error_Handler_XX(int32_t code, char *file, int line)
     Error_Handler( file, line );
 }
 
+#include "hardware/structs/sio.h"
+uint32_t pico_get_coreID(void)
+{
+  return sio_hw->cpuid;
+}
+
 #ifdef  USE_FULL_ASSERT
 
 /**

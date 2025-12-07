@@ -57,6 +57,8 @@ static LinBuffT i;
 
 static DMAMEM uint8_t outbuf[OUTBUF_SIZE];
 static DMAMEM uint8_t inbuf[INBUF_SIZE];
+static int uart_dma_chan;
+static uint32_t tx_transfer_size;     // size of currently sent dma block
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -64,8 +66,54 @@ static DMAMEM uint8_t inbuf[INBUF_SIZE];
 void DebugOutputCompleteCB ( uint32_t size );
 
 /* Private functions  ---------------------------------------------------------*/
+#include "hardware/dma.h"
+#include "hardware/irq.h"
+#include "hardware/uart.h"
 
+#define PFX CONCAT(DREQ_UART,PICO_DEFAULT_UART)
+#define UART_TX_DMA_CHANNEL CONCAT(PFX,_TX)
 
+void DMA_TX_handler(void)
+{
+  ProfilerPush(JOB_IRQ_UART);
+  dma_channel_acknowledge_irq0 (uart_dma_chan);
+  DebugOutputCompleteCB ( tx_transfer_size );
+  ProfilerPop();
+}
+
+static bool uart_setup_dma_channel(void)
+{
+    uart_dma_chan = dma_claim_unused_channel(true);
+    dma_channel_config c = dma_channel_get_default_config(uart_dma_chan);
+    channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+    channel_config_set_write_increment(&c, false);
+    channel_config_set_dreq(&c, UART_TX_DMA_CHANNEL);
+
+    dma_channel_configure(
+        uart_dma_chan,
+        &c,
+        &uart_get_hw(uart_default)->dr, // Write address (only need to set this once)
+        NULL,             // read address will be set later
+        0,                // Transfer size will be set later
+        false             // Don't start yet
+    );
+
+    // Tell the DMA to raise IRQ line 0 when the channel finishes a block
+    dma_channel_set_irq0_enabled(uart_dma_chan, true);
+
+    // Configure the processor to run dma_handler() when DMA IRQ 0 is asserted
+    irq_set_exclusive_handler(DMA_IRQ_0, DMA_TX_handler);
+    irq_set_enabled(DMA_IRQ_0, true);
+}
+
+static void UsartStartTx(uint8_t *data, uint32_t txSize)
+{
+  /* setup and start dma */
+  dma_channel_set_read_addr   (uart_dma_chan, data, false);
+  dma_channel_set_trans_count (uart_dma_chan, txSize, true);
+}
+ 
+/*
 static void UsartStartTx(uint8_t *data, uint32_t txSize)
 {
   for ( uint32_t i=0; i< txSize; i++ ) {
@@ -73,7 +121,7 @@ static void UsartStartTx(uint8_t *data, uint32_t txSize)
   }
   DebugOutputCompleteCB ( txSize );
 }
-
+*/
 
 /* Start transfer to output device */
 static void Debug_OutputTransfer(uint32_t from, uint32_t to )
@@ -84,9 +132,9 @@ static void Debug_OutputTransfer(uint32_t from, uint32_t to )
   assert_param(from <= to);
 
   bOngoingTransfer = 1;
-  uint32_t transfer_size = to - from;
+  tx_transfer_size = to - from;
 
-  UsartStartTx(o.buf+o.rdptr, transfer_size);
+  UsartStartTx(o.buf+o.rdptr, tx_transfer_size);
 
 }
 
@@ -163,7 +211,7 @@ void task_handle_out(uint32_t arg)
  */
 /* int __putchar(int ch ) { */
 int __putchar(int ch, __printf_tag_ptr uu) {
-  // if ( bExpandCrToCrlf && (char)ch == '\n' ) __putchar('\r', uu);
+  if ( bExpandCrToCrlf && (char)ch == '\n' ) __putchar('\r', uu);
   // if ( bExpandCrToCrlf && (char)ch == '\n' ) __putchar('\r'); */
 
   /*
@@ -190,17 +238,21 @@ int __putchar(int ch, __printf_tag_ptr uu) {
 */
 void Debug_RxCharAvailCB(void *param) 
 {
+    ProfilerPush(JOB_IRQ_UART);
     TaskNotify(TASK_COM);
+    ProfilerPop();
 }
 
 
 bool task_init_io(void) 
 {
-    CircBuff_Init       (&o, OUTBUF_SIZE, outbuf);
-    LinBuff_Init        (&i, INBUF_SIZE,  inbuf );
+    CircBuff_Init         (&o, OUTBUF_SIZE, outbuf);
+    LinBuff_Init          (&i, INBUF_SIZE,  inbuf );
+    bExpandCrToCrlf = true;
+    uart_setup_dma_channel();
     stdio_set_chars_available_callback(Debug_RxCharAvailCB, NULL);
 
-    stdio_printf("Redirecting stdout to UART\n");
+    stdio_printf("Running on core %d, redirecting stdout to Uart%d\n", pico_get_coreID(),PICO_DEFAULT_UART);
 }
 
 void Interpret_line(LinBuffT *inbuf);

@@ -12,6 +12,7 @@
 #include "system/status.h"
 #include "system/profiling.h"
 #include "task/minitask.h"
+#include "hardware/sync.h"
 
 #include <stdlib.h>
 
@@ -96,10 +97,15 @@ int main() {
     ProfilerSwitchTo(JOB_TASK_MAIN);  
 
     cnt = 0;
+    pin_toggle_nowait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 15 );
     while (true) {
-        pin_toggle_wait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 1 );
 //        stdio_putchar('c');
 //        stdio_printf("%06d Hello, world!\n", cnt++);
         TaskRunAll();
+        if (!TaskIsRunableTask() )  {
+          ProfilerPush(JOB_SLEEP);
+          __wfi();
+          ProfilerPop();
+        }
     }
 }
