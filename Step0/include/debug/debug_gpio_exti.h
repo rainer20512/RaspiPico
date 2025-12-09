@@ -19,7 +19,7 @@
 #endif
 
 #if DEBUG_FEATURES > 0
-  void DBG_dump_gpio_status(char gpio_letter );
+  void DBG_dump_gpio_status(uint8_t banksel );
   void DBG_dump_exti_config(uint32_t exti_domain);
   void DBG_dump_nvic_config(void);
 #endif

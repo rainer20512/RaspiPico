@@ -40,15 +40,46 @@
  * Functions to dump GPIO status
  *************************************************************
  */
-
-
-const char * const moder_txt[]={"Inp ", "Out ", "AF  ", "Ana ", "ADC " };
-static const char* DBG_get_moder_txt(uint32_t sel, uint16_t ascr )
+#include "hardware/structs/pads_bank0.h"
+#include "hardware/structs/io_bank0.h"
+/*                                0       1       2       3       4       5       6       7    */
+const char * const func_pin[3][16]= {
+                              /* SPI */
+                              {"0RX ", "0CS ", "0CK ", "0TX ", "0RX ", "0CS ", "0CK ", "0TX ", 
+                               "1RX ", "1CS ", "1CK ", "1TX ", "1RX ", "1CS ", "1CK ", "1TX ", },
+                              /* UART */
+                              {"0TX ", "0RX ", "0CT ", "0RT ", "1TX ", "1RX ", "1CT ", "1RT ",  
+                               "1TX ", "1RX ", "1CT ", "1RT ", "0TX ", "0RX ", "0CT ", "0RT ", },
+                              /* I2C */
+                              {"0SD ", "0SC ", "1SD ", "1SC ", "0SD ", "0SC ", "1SD ", "1SC ",
+                               "0SD ", "0SC ", "1SD ", "1SC ", "0SD ", "0SC ", "1SD ", "1SC ", },
+                              /* PWM is decoded by algorithm*/
+                              };
+static const char* DBG_get_pin_func(uint32_t pin, uint32_t func)
 {
-  // If Analog mode and connected to ADC, then annotate accordingly
-  if ( sel == 0b11 && ascr ) sel = 4;
-  if ( sel < sizeof(moder_txt)/sizeof(char *) ) 
-    return moder_txt[sel];
+  static char mode[5];
+  // pin func repeats after 16
+  pin &= 0x0f;
+  // Pin Functions only for SPI, UAR and I2c ( F1, F2, F3 )
+  if ( func < 1 || func > 4 )  return "    ";
+  if ( func < 4 )              return func_pin[func-1][pin];
+
+  /* Decode PWM */
+  mode[0]= 'A' + ( pin & 0b01 );
+  mode[1]= '0' + ( (pin & 0b10) >> 1 );
+  mode[3] = mode[4] = ' ' ;
+  mode[5] = '\0';
+  return (const char *)mode;
+}
+
+const char * const func_txt[]={"XIP ", "SPI ", "UAR ", "I2c ", "PWM ", "SIO ", "PI0 ", "PI1 ", "GPCK", "USB ", };
+static const char* DBG_get_func_txt(uint32_t func)
+{
+  // Default after POR is "NULL"
+  if ( func == 0x1f ) return " -- ";
+
+  if ( func < sizeof(func_txt)/sizeof(char *) ) 
+    return func_txt[func];
   else
     return "??? ";
 }
@@ -72,124 +103,161 @@ static const char* DBG_get_ospeedr_txt(uint32_t sel)
 }
 
 
-
-static void DBG_gpio_dump_moder ( uint32_t moder, uint32_t ascr )
+/*-----------------------------------------------------------------------------
+ * Pin function: In, Out, Drv Strngth
+ *---------------------------------------------------------------------------*/
+static void DBG_gpio_dump_iomode ( uint8_t gpio_min, uint8_t gpio_max )
 {
-  const uint32_t moder_mask = 0xC0000000;
-  const uint16_t ascr_mask  = 0x8000;
-  uint32_t cnt;
-  for ( cnt=0; cnt < 16; cnt++ ) {
-    DEBUG_PRINTF("%s",DBG_get_moder_txt((moder & moder_mask) >> 30, ( ascr &  ascr_mask ) >> 15 ));
-    moder <<= 2;
-    ascr <<= 1;
+  char mode[4];
+  uint32_t raw;
+  mode[3] ='\0';
+  for ( int32_t cnt = gpio_max; cnt >= gpio_min; cnt-- ) {
+     raw = pads_bank0_hw->io[cnt] & 0xff;
+     mode[1] = raw & 0x40 ? 'I':' ';
+     mode[0] = raw & 0x80 ? ' ':'O';  // 1 = Output disabled
+     mode[2] = ((raw & 0x30) >> 4 ) +'0';
+     DEBUG_PRINTF ( "%s",mode );
+     DEBUG_PUTC(' ');
   }
 }
 
-static void DBG_gpio_dump_ospeedr ( uint32_t val )
+/*-----------------------------------------------------------------------------
+ * Pin function: Pullup/Pulldown
+ *---------------------------------------------------------------------------*/
+static void DBG_gpio_dump_pupd ( uint8_t gpio_min, uint8_t gpio_max )
 {
-  const uint32_t mask = 0xC0000000;
-  uint32_t cnt;
-  for ( cnt=0; cnt < 16; cnt++ ) {
-    DEBUG_PRINTF("%s",DBG_get_ospeedr_txt((val & mask) >> 30 ));
-    val <<= 2;
+  char mode[4];
+  uint32_t raw;
+  mode[0] ='P';
+  mode[3] ='\0';
+  for ( int32_t cnt = gpio_max; cnt >= gpio_min; cnt-- ) {
+     raw = pads_bank0_hw->io[cnt] & 0xff;
+     mode[1] = raw & 0x08 ? 'U':' ';
+     mode[2] = raw & 0x04 ? 'D':' ';
+     DEBUG_PRINTF ( "%s",mode );
+     DEBUG_PUTC(' ');
   }
 }
 
-static void DBG_gpio_dump_pupdr ( uint32_t val )
+/*-----------------------------------------------------------------------------
+ * Pin function: Schmitt-Trigger Slew rate
+ *---------------------------------------------------------------------------*/
+static void DBG_gpio_dump_schm_rate ( uint8_t gpio_min, uint8_t gpio_max )
 {
-  const uint32_t mask = 0xC0000000;
-  uint32_t cnt;
-  for ( cnt=0; cnt < 16; cnt++ ) {
-    DEBUG_PRINTF("%s",DBG_get_pupdr_txt((val & mask) >> 30 ));
-    val <<= 2;
+  char mode[4];
+  uint32_t raw;
+  mode[3] ='\0';
+  for ( int32_t cnt = gpio_max; cnt >= gpio_min; cnt-- ) {
+     raw = pads_bank0_hw->io[cnt] & 0xff;
+     mode[0] = raw & 0x02 ? 'S':' ';
+     mode[1] = raw & 0x02 ? 'T':' ';
+     mode[2] = raw & 0x01 ? 'F':'S';
+     DEBUG_PRINTF ( "%s",mode );
+     DEBUG_PUTC(' ');
   }
 }
 
-static void DBG_gpio_dump_afr ( uint32_t val )
+
+/*-----------------------------------------------------------------------------
+ * Function group
+ *---------------------------------------------------------------------------*/
+static void DBG_gpio_dump_function ( uint8_t gpio_min, uint8_t gpio_max )
 {
-  const uint32_t mask = 0xF0000000;
-  uint32_t cnt;
-  uint32_t current;
-  for ( cnt=0; cnt  < 8; cnt++ ) {
-    current = (val & mask) >> 28;
-    print_dec_number ( current, 2, true);DEBUG_PRINTF("  ");
-    val <<= 4;
+  char mode[4];
+  uint32_t raw;
+  for ( int32_t cnt = gpio_max; cnt >= gpio_min; cnt-- ) {
+     raw = io_bank0_hw->io[cnt].ctrl & 0x1f;
+     DEBUG_PRINTF ( "%s", DBG_get_func_txt(raw) );
   }
 }
 
-static void DBG_gpio_dump_otyper ( uint32_t val )
+/*-----------------------------------------------------------------------------
+ * Pin function ( for SPI, UART or I2C )
+ *---------------------------------------------------------------------------*/
+static void DBG_gpio_dump_pin_func ( uint8_t gpio_min, uint8_t gpio_max )
 {
-  uint32_t position = 0x8000;
-  uint32_t cnt;
-
-  for ( cnt = 0; cnt <16; cnt++ ) {
-    DEBUG_PRINTF( position & val ? "OD  " : "PP  " );
-    position >>= 1;
+  char mode[4];
+  uint32_t raw;
+  for ( int32_t cnt = gpio_max; cnt >= gpio_min; cnt-- ) {
+     raw = io_bank0_hw->io[cnt].ctrl & 0x1f;
+     DEBUG_PRINTF ( "%s", DBG_get_pin_func(cnt, raw) );
   }
 }
 
-static void DBG_gpio_dump_bitwise ( uint32_t val )
+static void DBG_gpio_dump_InToPeri( uint8_t gpio_min, uint8_t gpio_max )
 {
-  uint32_t position = 0x8000;
-  uint32_t cnt;
+  #define INTOPERI_POS 19
+  #define INTOPERI_MSK ( 1UL << INTOPERI_POS )
+  uint32_t raw;
 
-  for ( cnt = 0; cnt <16; cnt++ ) {
-    DEBUG_PRINTF( position & val ? "1   " : "0   " );
-    position >>= 1;
+  for ( int32_t cnt = gpio_max; cnt >= gpio_min; cnt-- ) {
+     raw = io_bank0_hw->io[cnt].status & INTOPERI_MSK;
+      DEBUG_PRINTF ( "  %1d ", raw ? 1 : 0 );
   }
 }
 
-static void DBG_gpio_dump_bitnumbers ( char gpio_letter )
+static void DBG_gpio_dump_OutToPad( uint8_t gpio_min, uint8_t gpio_max )
 {
-  int8_t cnt;
+  #define OUTTOPAD_POS 9
+  #define OUTTOPAD_MSK ( 1UL << OUTTOPAD_POS )
+  uint32_t raw;
 
-  for ( cnt = 15; cnt >= 0; cnt-- ) {
-    DEBUG_PUTC ( gpio_letter );
+  for ( int32_t cnt = gpio_max; cnt >= gpio_min; cnt-- ) {
+     raw = io_bank0_hw->io[cnt].status & INTOPERI_MSK;
+      DEBUG_PRINTF ( "  %1d ", raw ? 1 : 0 );
+  }
+}
+
+static void DBG_gpio_dump_bitnumbers ( uint8_t gpio_min, uint8_t gpio_max )
+{
+  int32_t cnt;
+
+  for ( cnt = gpio_max; cnt >= gpio_min; cnt-- ) {
+    DEBUG_PUTC ( ' ' );
     print_dec_number ( cnt, 2, true);
     DEBUG_PUTC(' ');
   }
 }
 
 
-
-void DBG_dump_gpio_status(char gpio_letter )
+/*-----------------------------------------------------------------------------
+ * banksel=0: GPIO 0-15, banksel=1: GPIO16-29
+ * 00-15 16-29
+ *---------------------------------------------------------------------------*/
+void DBG_dump_gpio_status(uint8_t banksel )
 {
-  /* RHB todo
     bool gp_clck_ena; 
-    
-
-    DEBUG_PRINTF  ("Status of GPIO%c----------------------------------------------------------\n",gpio_letter);
-    if ( !gp ) {
-      DEBUG_PUTS  ("  ??? undefined ???");
-      return;
+    uint8_t gpio_min, gpio_max;
+    switch ( banksel ) {
+      case 0:
+        gpio_min=0; gpio_max=15;
+        break;
+      case 1:
+        gpio_min=16; gpio_max=29;
+        break;
+      default:
+        DEBUG_PRINTF  ("*** Illegal GPIO block ****");
+        return;
     }
 
-    gp_clck_ena = HW_GetHWClockStatus ( gp );
-    if ( ! gp_clck_ena ) {
-      DEBUG_PUTS  ("  Not clocked ");
-      return;
-    }
+    DEBUG_PRINTF  ("Status of GPIO %02d-%02d ----------------------------------------------------\n",gpio_min, gpio_max);
+
+    /* RHB Todo: Dump clockspeed */
 
     int oldIndent = DBG_setIndentRel(+2);
+    DEBUG_PRINTF  ("Voltage Level: %s\n",pads_bank0_hw->voltage_select & 0b01 ? "1.8V" : "3.3V" );
 
-    DEBUG_PRINTF("        ");DBG_gpio_dump_bitnumbers(gpio_letter);DEBUG_PUTC('\n');
-    DEBUG_PRINTF("MODER  :");DBG_gpio_dump_moder(
-                gp->MODER, 
-            #if defined(STM32476xx)
-                gp->ASCR);
-            #else
-                0);
-            #endif 
-    DEBUG_PUTC('\n');
-    DEBUG_PRINTF("OTYPER :");DBG_gpio_dump_otyper(gp->OTYPER);DEBUG_PUTC('\n');
-    DEBUG_PRINTF("OSPEEDR:");DBG_gpio_dump_ospeedr(gp->OSPEEDR);DEBUG_PUTC('\n');
-    DEBUG_PRINTF("OPUPDR :");DBG_gpio_dump_pupdr(gp->PUPDR);DEBUG_PUTC('\n');
-    DEBUG_PRINTF("AFR    :");DBG_gpio_dump_afr(gp->AFR[1]);DBG_gpio_dump_afr(gp->AFR[0]);DEBUG_PUTC('\n');
-    DEBUG_PRINTF("IDR    :");DBG_gpio_dump_bitwise(gp->IDR);DEBUG_PUTC('\n');
-    DEBUG_PRINTF("ODR    :");DBG_gpio_dump_bitwise(gp->ODR);DEBUG_PUTC('\n');
-  
+
+    DEBUG_PRINTF("GPIO#   :");DBG_gpio_dump_bitnumbers (gpio_min, gpio_max);DEBUG_PUTC('\n');
+    DEBUG_PRINTF("Functn  :");DBG_gpio_dump_function  (gpio_min, gpio_max);DEBUG_PUTC('\n');
+    DEBUG_PRINTF("PinFunc :");DBG_gpio_dump_pin_func  (gpio_min, gpio_max);DEBUG_PUTC('\n');
+    DEBUG_PRINTF("MODE    :");DBG_gpio_dump_iomode     (gpio_min, gpio_max);DEBUG_PUTC('\n');
+    DEBUG_PRINTF("PU/PD   :");DBG_gpio_dump_pupd       (gpio_min, gpio_max);DEBUG_PUTC('\n');
+    DEBUG_PRINTF("ST/Rate :");DBG_gpio_dump_schm_rate  (gpio_min, gpio_max);DEBUG_PUTC('\n');
+    DEBUG_PRINTF("InToPer :");DBG_gpio_dump_InToPeri   (gpio_min, gpio_max);DEBUG_PUTC('\n');
+    DEBUG_PRINTF("OutToPad:");DBG_gpio_dump_OutToPad   (gpio_min, gpio_max);DEBUG_PUTC('\n');
+
     DBG_setIndentAbs(oldIndent);
-    ---*/
 }
 
 

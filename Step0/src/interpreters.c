@@ -219,9 +219,19 @@ static bool Toggle_GPIO ( char *cmdline, size_t len, const void * arg )
   ********************************************************************************/
 static bool Dump_GPIO ( char *cmdline, size_t len, const void * arg )
 {
+  char *word;
+  size_t wordlen;
+  uint8_t idx;
   UNUSED(cmdline);UNUSED(len);UNUSED(arg);
 
-  DEBUG_PUTS("command not implemented");
+  if ( CMD_argc() < 1 ) {
+    printf("GPIO [0|1]\n");
+    return false;
+  }
+  CMD_get_one_word( &word, &wordlen );
+  idx  = CMD_to_number ( word, wordlen );
+
+  DBG_dump_gpio_status(idx);
 
   return true;
 }
@@ -264,7 +274,7 @@ static const CommandSetT cmdDevices[] = {
   { "SRAM",                   ctype_fn, {Devices_Menu},    VOID(0), "Show SRAM sections and usage" },
   { "EXTI",                   ctype_fn, {Devices_Menu},    VOID(1), "Show EXTI settings" },
   { "NVIC",                   ctype_fn, {Devices_Menu},    VOID(2), "Show NVIC settings" },
-  { "GPIO",                   ctype_fn, {Dump_GPIO},       VOID(0), "Show GPIO settings"  },
+  { "GPIO [0|1]",             ctype_fn, {Dump_GPIO},       VOID(0), "Show GPIO 0-15 or 16-29"  },
   { "Cycle <pin> <num>",      ctype_fn, {Toggle_GPIO},     VOID(0), "Cycle GPIO <pin> <num> times"  },
   { "Alter <pin>",            ctype_fn, {Toggle_GPIO},     VOID(1), "Toggle output of GPIO <pin>"  },
   { "Pin Init",               ctype_fn, {Init_GPIO},       VOID(0), "Set Output Pin"  },
