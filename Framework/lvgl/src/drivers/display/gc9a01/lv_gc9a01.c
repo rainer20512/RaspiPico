@@ -45,8 +45,10 @@
 #define GC9A01_DATA_MODE     	1
 
 
-#define GC9A01_DEBUG            0
-
+#define GC9A01_DEBUG            1
+#if GC9A01_DEBUG
+  #include "debug/debug_helper.h"
+#endif
 /**********************
  *      TYPEDEFS
  **********************/

@@ -90,12 +90,22 @@ tlsf_decl int tlsf_ffs(unsigned int word)
 }
 
 #else
+// RHB chnged: *** 30 ***
+// force to use handcrafted Version of tlsf_ffs
+#if 1
+tlsf_decl int tlsf_ffs(unsigned int word)
+{
+    const unsigned int reverse = word & (~word + 1);
+    const int bit = 32 - __builtin_clz(reverse);
+    return bit - 1;
+}
 
+#else
 tlsf_decl int tlsf_ffs(unsigned int word)
 {
     return __builtin_ffs(word) - 1;
 }
-
+#endif
 #endif
 
 tlsf_decl int tlsf_fls(unsigned int word)

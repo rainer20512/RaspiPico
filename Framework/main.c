@@ -91,6 +91,7 @@ void lv_example_anim_2(void);
 
 bool task_init_lvgl(void)
 {
+    Init_Spi1();
     lv_init();
     lv_tick_set_cb(get_ms_since_start);
     lv_display_t * disp = lv_gc9a01_create(240, 240, LV_LCD_FLAG_MIRROR_Y, gc9a01_send_cmd, gc9a01_send_mass_data );

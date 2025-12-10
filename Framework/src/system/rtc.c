@@ -463,10 +463,19 @@ void RTC_IncrementSecond ( void )
 static repeating_timer_t mstimer;
 static repeating_timer_t sectimer;
 
+#if USE_LVGL > 0
+  #include "../../lvgl/lv_conf.h"
+  void lv_tick_inc(uint32_t);
+#endif
+
 bool mstimer_callback(repeating_timer_t *rt) {
     UNUSED(rt);
     ProfilerPush(JOB_IRQ_RTC);
     ++rtc_ms;
+    #if USE_LVGL > 0
+      lv_tick_inc(1);
+      TaskNotify(TASK_LVGL);
+    #endif
     ProfilerPop();
     return true; // keep repeating
 }

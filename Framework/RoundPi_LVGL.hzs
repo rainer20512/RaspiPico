@@ -29,11 +29,8 @@
  <Project>
   <ProjectSessionItem path="RoundPi_Lvgl"/>
   <ProjectSessionItem path="RoundPi_Lvgl;RoundPi_LVGL"/>
-  <ProjectSessionItem path="RoundPi_Lvgl;RoundPi_LVGL;lvgl"/>
-  <ProjectSessionItem path="RoundPi_Lvgl;RoundPi_LVGL;lvgl;src"/>
-  <ProjectSessionItem path="RoundPi_Lvgl;RoundPi_LVGL;lvgl;src;drivers"/>
-  <ProjectSessionItem path="RoundPi_Lvgl;RoundPi_LVGL;lvgl;src;drivers;display"/>
-  <ProjectSessionItem path="RoundPi_Lvgl;RoundPi_LVGL;lvgl;src;drivers;display;gc9a01"/>
+  <ProjectSessionItem path="RoundPi_Lvgl;RoundPi_LVGL;CMSIS Files"/>
+  <ProjectSessionItem path="RoundPi_Lvgl;RoundPi_LVGL;SDK Files"/>
   <ProjectSessionItem path="RoundPi_Lvgl;RoundPi_LVGL;Source Files"/>
   <ProjectSessionItem path="RoundPi_Lvgl;RoundPi_LVGL;Source Files;inc"/>
   <ProjectSessionItem path="RoundPi_Lvgl;RoundPi_LVGL;Source Files;inc;debug"/>
@@ -78,20 +75,20 @@
  </Watch4>
  <Files>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="82" useTextEdit="1" path="main.c" left="0" top="49" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="628" useTextEdit="1" path="src/cmdline.c" left="0" top="553" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="628" useTextEdit="1" path="src/cmdline.c" left="0" top="533" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="src/system/init.c" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="19" useTextEdit="1" path="Init_Spi1.c" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="33" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_spi/spi.c" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="27" y="1025" useTextEdit="1" path="RoundPi_LVGL.hzp" left="0" top="950" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="lvgl/lv_conf.h" left="0" top="66" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="lvgl/lvgl.h" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="23" y="11" useTextEdit="1" path="lvgl/src/drivers/display/gc9a01/lv_4wire_spi.h" left="0" selected="1" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="23" y="11" useTextEdit="1" path="lvgl/src/drivers/display/gc9a01/lv_4wire_spi.h" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="19" y="1154" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_gpio/include/hardware/gpio.h" left="0" top="1116" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="13" y="9" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_spi/include/hardware/spi.h" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/common/pico_base_headers/include/pico.h" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="12" useTextEdit="1" path="lvgl/src/drivers/display/gc9a01/lv_4wire_spi.c" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="6" useTextEdit="1" path="src/system/status.c" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="21" y="424" useTextEdit="1" path="lvgl/src/drivers/display/gc9a01/lv_gc9a01.c" left="0" top="384" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="24" y="95" useTextEdit="1" path="lvgl/src/stdlib/builtin/lv_tlsf.c" left="0" top="48" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="RoundPi_LVGL" fileDialogDefaultFilter="*.c" autoConnectTarget="CMSIS-DAP" buildConfiguration="THUMB Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="E:/GIT-Repos/RaspiPico/Framework" debugSearchPath="" autoConnectCapabilities="388479"/>
 </session>

@@ -93,7 +93,14 @@ How to program/debug RP2040 target with Rpi Debug Probe          RHB 17.11.2025
       LIB_PICO_PRINTF_PICO
       LIB_PICO_STDIO
 
+-------------------------------------------------------------------------------
+ LVGL zum rennen bringen
+-------------------------------------------------------------------------------
 
+30. tv_tlsf.c: Aus irgendeinem grund wird __builtin_ffs() nicht gelinkt
+    Daher in dieser Datei zwangsweise die handgestrickte Version von
+    tlsf_ffs verwenden
+        
 -------------------------------------------------------------------------------
 * rumgemache mit Crossworks V.4.X
 -------------------------------------------------------------------------------
