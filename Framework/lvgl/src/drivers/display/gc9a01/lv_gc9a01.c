@@ -45,7 +45,7 @@
 #define GC9A01_DATA_MODE     	1
 
 
-#define GC9A01_DEBUG            1
+#define GC9A01_DEBUG            0
 #if GC9A01_DEBUG
   #include "debug/debug_helper.h"
 #endif
@@ -405,11 +405,16 @@ static void disp_flush(lv_display_t * disp_drv, const lv_area_t * area, uint8_t 
 
 
 /**********************
- *   GLOBAL FUNCTIONS
+ *   Frame buffer
  **********************/
 // #define GRMEM __attribute((section(".bss2")))
 #define GRMEM 
-#define NUMROWS     60          // Number of rows in partial buffer
+#define NUMROWS     120          // Number of rows in partial buffer
+static GRMEM uint8_t buf_1_1[MY_DISP_HOR_RES * NUMROWS * BYTE_PER_PIXEL];            /*A buffer for NUMROWS rows*/
+// static GRMEM uint8_t buf_1_1[MY_DISP_HOR_RES * MY_DISP_VER_RES * BYTE_PER_PIXEL];       /*A full buffer       */
+/**********************
+ *   GLOBAL FUNCTIONS
+ **********************/
 lv_display_t * lv_gc9a01_create(uint32_t hor_res, uint32_t ver_res, lv_lcd_flag_t flags,
                                 lv_gc9a01_send_cmd_cb_t send_cmd_cb, lv_gc9a01_send_color_cb_t send_color_cb)
 {
@@ -421,13 +426,15 @@ lv_display_t * lv_gc9a01_create(uint32_t hor_res, uint32_t ver_res, lv_lcd_flag_
 
      /* One buffer for partial rendering*/
     LV_ATTRIBUTE_MEM_ALIGN
-    static GRMEM uint8_t buf_1_1[MY_DISP_HOR_RES * NUMROWS * BYTE_PER_PIXEL];            /*A buffer for 10 rows*/
     lv_display_set_buffers(disp, buf_1_1, NULL, sizeof(buf_1_1), LV_DISPLAY_RENDER_MODE_PARTIAL);
+    // lv_display_set_buffers(disp, buf_1_1, NULL, sizeof(buf_1_1), LV_DISPLAY_RENDER_MODE_DIRECT);
 
+    /* Test code to see, whether TFT driver Communication is working at all */
     uint16_t temp = (uint16_t)get_ms_since_start();
-    
     GC9A01_fillScreen(GC9A01_Color565(temp, temp>>4, temp>>8)); // ?
     GC9A01_fillRect( 60, 60, 80, 80, GC9A01_Color565(0xFF,0x00,0x00));
+    /* End test code */
+
     return disp;
 }
 

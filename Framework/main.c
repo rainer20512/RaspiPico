@@ -131,7 +131,6 @@ int main() {
 
     Init_DefineTasks();
     TaskInitAll();
-    Init_Spi1();
 
 #if UNIQUEID
     check_fastrun ();

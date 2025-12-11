@@ -1196,7 +1196,7 @@
 #endif /*LV_USE_TEST*/
 
 /** Enable loading XML UIs runtime */
-#define LV_USE_XML    1
+#define LV_USE_XML    0
 
 /** 1: Enable text translation support */
 #define LV_USE_TRANSLATION 0
@@ -1401,7 +1401,7 @@
 *======================*/
 
 /** Enable examples to be built with the library. */
-#define LV_BUILD_EXAMPLES 1
+#define LV_BUILD_EXAMPLES 0
 
 /** Build the demos */
 #define LV_BUILD_DEMOS 1
