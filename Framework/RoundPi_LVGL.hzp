@@ -362,7 +362,6 @@
         <folder Name="drivers">
           <folder
             Name="display"
-            exclude=""
             filter="*.*"
             path="lvgl/src/drivers/display"
             recurse="Yes" />

@@ -20,6 +20,7 @@
 #define LV_DRV_DISP_CMD_DATA(lvl)           gpio_put(PICO_DEFAULT_SPI_DNC_PIN, lvl);
 #define LV_DRV_DISP_SPI_WR_BYTE(byte)       spi_write_blocking (spi_default, &byte, 1)
 
-
+bool spi_setup_dma(void);
+typedef void (pfn_spi_done_cb) (void);
 void LV_DRV_DELAY_MS(uint32_t wait_ms);
-void LV_DRV_DISP_SPI_WR_ARRAY(const uint8_t *arr, uint32_t len);
+void LV_DRV_DISP_SPI_WR_ARRAY(const uint8_t *arr, uint32_t len, pfn_spi_done_cb done_cb);

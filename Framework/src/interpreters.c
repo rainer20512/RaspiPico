@@ -690,6 +690,108 @@ ADD_SUBMODULE(Test);
     ADD_SUBMODULE(ADC);
 #endif
 
+#if USE_LVGL > 0
+#include "../lvgl/lvgl.h"
+
+static lv_obj_t * obj=NULL;
+
+    /*********************************************************************************
+      * @brief  Submenu for LVGL test functions
+      *         
+      * @retval true on success, false otherwise
+      *
+      * @note   will try to read as many parameters as needed
+      ********************************************************************************/
+    static bool LVGL_Menu ( char *cmdline, size_t len, const void * arg )
+    {
+      char *word;
+      size_t wordlen;
+      uint8_t r,g,b;
+      uint32_t temp;
+      UNUSED(cmdline);UNUSED(len);
+
+      switch((uint32_t)arg) {
+        case 0:
+            lv_obj_clean(lv_scr_act());
+            break;
+        case 1:
+            if ( CMD_argc() < 3 ) {
+              printf("Usage: 'BG color <r> <g> <b>\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            r = CMD_to_number ( word, wordlen );
+            CMD_get_one_word( &word, &wordlen );
+            g = CMD_to_number ( word, wordlen );
+            CMD_get_one_word( &word, &wordlen );
+            b = CMD_to_number ( word, wordlen );
+            /*Change the active screen's background color*/
+            lv_obj_set_style_bg_color(lv_screen_active(),  lv_color_make(r,g,b), LV_PART_MAIN);
+        case 2:
+            if ( ! obj ) {
+              obj = lv_obj_create(lv_screen_active());
+              lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
+              lv_obj_set_style_bg_color(obj,  lv_color_hex(0xFF0000), 0);
+              lv_obj_set_style_radius(obj, LV_RADIUS_CIRCLE, 0);
+              lv_obj_set_size(obj, 30, 30); 
+              lv_obj_align(obj, LV_ALIGN_CENTER, 0, 0);
+            }
+            break;
+        case 3:
+            if ( obj ) {
+              
+              lv_obj_delete( obj );
+              obj = NULL;
+            }
+            break;
+        case 4:
+            if ( !obj ) return false;
+            if ( CMD_argc() < 3 ) {
+              printf("Usage: 'Kr color <r> <g> <b>\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            r = CMD_to_number ( word, wordlen );
+            CMD_get_one_word( &word, &wordlen );
+            g = CMD_to_number ( word, wordlen );
+            CMD_get_one_word( &word, &wordlen );
+            b = CMD_to_number ( word, wordlen );
+            /*Change the active screen's background color*/
+            lv_obj_set_style_bg_color(obj,  lv_color_make(r,g,b), 0);
+        case 5:
+            break;
+        case 6:
+            break;
+        case 7:
+            break;
+        case 8:
+            break;
+        default:
+          DEBUG_PUTS("Lvgl-Menu: command not implemented");
+      } /* end switch */
+
+      return true;
+    }
+
+    static const char *pmtLVGL (void)
+    {
+      return "Lvgl";
+    }
+
+
+    static const CommandSetT cmdLVGL[] = {
+        { "Clear Display",          ctype_fn, .exec.fn = LVGL_Menu,VOID(0), "Clear Display" },
+        { "BG Color <r> <g> <b>",   ctype_fn, .exec.fn = LVGL_Menu,VOID(1), "Set Background color" },
+        { "Draw red kringel",       ctype_fn, .exec.fn = LVGL_Menu,VOID(2), "Draw kringel" },
+        { "Delete kringel",         ctype_fn, .exec.fn = LVGL_Menu,VOID(3), "Delete kringel" },
+        { "Kr Color <r> <g> <b>",   ctype_fn, .exec.fn = LVGL_Menu,VOID(4), "Set Kringel color" },
+        { "Measure group auto",     ctype_fn, .exec.fn = LVGL_Menu,VOID(5), "Measure whole sequence automatically repeated" },
+        { "Refint disable",         ctype_fn, .exec.fn = LVGL_Menu,VOID(5), "Disable Refint ADC channel" },
+        { "All int. Ch. Disable",   ctype_fn, .exec.fn = LVGL_Menu,VOID(6), "Disable all internal ADC channels" },
+        { "Periph Timer Start/Stop",ctype_fn, .exec.fn = LVGL_Menu,VOID(7), "Start/Stop the perpheral timer" },
+    };
+    ADD_SUBMODULE(LVGL);
+#endif
 
 
 
@@ -770,6 +872,11 @@ static const CommandSetT cmdBasic[] = {
   { "Clock&Pwr",       ctype_sub, .exec.sub = &mdlClkCfg,      0,       "Clock & Power Config submenu" },
   { "Devices",         ctype_sub, .exec.sub = &mdlDevices,     0,       "Peripheral devices submenu" },
 #endif
+#if USE_LVGL > 0
+  { "LVGL TEst",       ctype_sub, .exec.sub = &mdlLVGL,        0,       "LVGL test submenu" },
+  { "Devices",         ctype_sub, .exec.sub = &mdlDevices,     0,       "Peripheral devices submenu" },
+#endif
+
 #if DEBUG_MODE > 0
   { "Level",           ctype_fn,  .exec.fn = MainMenu,        VOID(0),  "Set Debuglevel"  },
 #endif

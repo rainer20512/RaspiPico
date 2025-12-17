@@ -28,9 +28,8 @@
 #define GC9A01_HOR_RES  	240
 #define GC9A01_VER_RES  	240
 
+
 /* GC9A01 Commands that we know of.  Limited documentation */
-#define GC9A01_INVOFF		0x20
-#define GC9A01_INVON		0x21
 #define GC9A01_DISPON		0x29
 #define GC9A01_CASET		0x2A
 #define GC9A01_RASET		0x2B
@@ -65,10 +64,86 @@ enum GC9A01_cmd {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void GC9A01_command(uint8_t cmd);
-static void GC9A01_data(uint8_t data);
-static void GC9A01_set_addr_win(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
 
+/**********************
+ *  STATIC CONSTANTS
+ **********************/
+#if 0
+/* 
+ * init commands for 1.28" round display, old code
+ * copied from somewhere in the internet
+ */
+static const uint8_t init_cmd_list[] = {
+    0xEF,       0,
+    0xEB,       1,  0x14,
+    0xFE,       0,          // Inter Register Enable1
+    0xEF,       0,          // Inter Register Enable2
+    0xEB,       1,  0x14,
+    0x84,       1,  0x40,
+    0x85,       1,  0xFF,
+    0x86,       1,  0xFF,
+    0x87,       1,  0xFF,
+    0x88,       1,  0x0A,
+    0x89,       1,  0x21,
+    0x8A,       1,  0x00,
+    0x8B,       1,  0x80,
+    0x8C,       1,  0x01,
+    0x8D,       1,  0x01,
+    0x8E,       1,  0xFF,
+    0x8F,       1,  0xFF,
+    GC9A01_DISFNCTRL,      // Display Function Control
+                2,  0x00, 0x00,
+    GC9A01_MADCTL,        // Memory Access Control
+                1,  0x48, // Set the display direction 0,1,2,3	four directions
+    GC9A01_COLMOD,        // COLMOD: Pixel Format Set
+                1,  0x05, // 16 Bits per pixel
+    0x90,       4,  0x08, 0x08, 0x08, 0x08,
+    0xBD,       1,  0x06,
+    0xBC,       1,  0x00,
+    0xFF,       3,  0x60, 0x01, 0x04,
+    0xC3,               // Power Control 2
+                1,  0x13,
+    0xC4,               // Power Control 3
+                1,  0x13,
+    0xC9,               // Power Control 4
+                1,  0x22,
+    0xBE,       1 , 0x11,
+    0xE1,       2,  0x10, 0x0E,
+    0xDF,       3,  0x21, 0x0C, 0x02,
+    0xF0,               // SET_GAMMA1
+                6,  0x45, 0x09, 0x08, 0x08, 0x26, 0x2A,
+    0xF1,               // SET_GAMMA2
+                6,  0x43, 0x70, 0x72, 0x36, 0x37, 0x6F,
+    0xF2,               // SET_GAMMA3
+                6,  0x45, 0x09, 0x08, 0x08, 0x26, 0x2A,
+    0xF3,               // SET_GAMMA4
+                6,  0x43, 0x70, 0x72, 0x36, 0x37, 0x6F,
+    0xED,       2,  0x1B, 0x0B,
+    0xAE,       1,  0x77,
+    0xCD,       1,  0x63,
+    0x70,       9,  0x07, 0x07, 0x04, 0x0E, 0x0F, 0x09, 0x07, 0x08, 0x03,
+    0xE8,       1,  0x34,
+    0x62,       12, 0x18, 0x0D, 0x71, 0xED, 0x70, 0x70,
+                    0x18, 0x0F, 0x71, 0xEF, 0x70, 0x70,
+    0x63,       12, 0x18, 0x11, 0x71, 0xF1, 0x70, 0x70,
+                    0x18, 0x13, 0x71, 0xF3, 0x70, 0x70,
+    0x64,       7,  0x28, 0x29, 0xF1, 0x01, 0xF1, 0x00, 0x07,
+    0x66,       10, 0x3C, 0x00, 0xCD, 0x67, 0x45, 0x45,
+                    0x10, 0x00, 0x00, 0x00,
+    0x67,       10, 0x00, 0x3C, 0x00, 0x00, 0x00, 0x01,
+                    0x54, 0x10, 0x32, 0x98,
+    0x74,       7,  0x10, 0x85, 0x80, 0x00, 0x00, 0x4E, 0x00,
+    0x98,       2,  0x3E, 0x07,
+    0x35,       0,      // Tearing Effect Line ON
+    0x21,       0,      // Display Inversion ON
+    0x11,       0,      // Sleep Out Mode
+    LV_LCD_CMD_DELAY_MS, 12,        // Delay in multiples of 10(!) ms
+    GC9A01_DISPON, 0,   // Display ON
+    LV_LCD_CMD_DELAY_MS, 26,
+    LV_LCD_CMD_DELAY_MS, LV_LCD_CMD_EOF
+};
+
+#endif
 /**********************
  *  STATIC VARIABLES
  **********************/
@@ -310,6 +385,12 @@ static struct GC9A01_function GC9A01_cfg_script[] = {
 	{ GC9A01_END, GC9A01_END},
 };
 
+
+/**********************
+ *  STATIC PROTOTYPES
+ **********************/
+static void GC9A01_set_addr_win(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
+
 /**********************
  *      MACROS
  **********************/
@@ -338,45 +419,11 @@ static void GC9A01_data(uint8_t data)
 	LV_DRV_DISP_SPI_WR_BYTE(data);
 }
 
-static int GC9A01_data_array(uint8_t *buf, uint32_t len)
-{
-	uint8_t *pt = buf;
-
-	for (uint32_t lp = 0; lp < len; lp++, pt++)
-	{
-		LV_DRV_DISP_SPI_WR_BYTE(*pt);
-	}
-	return 0;
-}
-
-static int GC9A01_databuf(uint32_t len, uint8_t *buf)
-{
-	uint32_t byte_left = len;
-	uint8_t *pt = buf;
-
-	while (byte_left)
-	{
-		if (byte_left > 64)
-		{
-			LV_DRV_DISP_SPI_WR_ARRAY((char*)pt, 64);
-			byte_left = byte_left - 64;
-			pt = pt + 64;
-		}
-		else
-		{
-			LV_DRV_DISP_SPI_WR_ARRAY((char*)pt, byte_left);
-			byte_left=0;
-		}
-	}
-
-	return 0;
-}
-
+//***********************************************************
 // hard reset of the tft controller
 // ----------------------------------------------------------
-static void GC9A01_hard_reset( void )
+void GC9A01_hard_reset( void )
 {
-
     LV_DRV_DISP_RST(1);
     LV_DRV_DELAY_MS(50);
     LV_DRV_DISP_RST(0);
@@ -387,7 +434,7 @@ static void GC9A01_hard_reset( void )
 
 // Configuration of the tft controller
 // ----------------------------------------------------------
-static void GC9A01_run_cfg_script(void)
+void GC9A01_run_cfg_script(void)
 {
 	int i = 0;
 	int end_script = 0;
@@ -416,6 +463,7 @@ static void GC9A01_run_cfg_script(void)
 
         LV_DRV_DISP_SPI_CS(1); // Deselect
 }
+
 
 void GC9A01_drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
   // Rudimentary clipping
@@ -459,11 +507,6 @@ void GC9A01_drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
 // Pass 8-bit (each) R,G,B, get back 16-bit packed color
 uint16_t GC9A01_Color565(uint8_t r, uint8_t g, uint8_t b) {
   return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
-}
-
-void GC9A01_invertDisplay(bool i)
-{
-  GC9A01_command(i ? GC9A01_INVON : GC9A01_INVOFF);
 }
 
 void GC9A01_drawPixel(int16_t x, int16_t y, uint16_t color)
@@ -542,25 +585,6 @@ void GC9A01_setRotation(uint8_t m) {
   }
 }
 
-/**
- * Initialize the GC9A01
- */
-int GC9A01_init(void)
-{
-    GC9A01_hard_reset();
-    GC9A01_run_cfg_script();
-
-    // GC9A01_fillScreen(0x0000); // Black
-    // GC9A01_fillScreen(0xFFFF); // White
-    GC9A01_fillScreen(GC9A01_Color565(0x33,0x33,0x33)); // ?
-    GC9A01_fillRect( 60, 100, 40, 40, GC9A01_Color565(0xFF,0x00,0x00));
-    GC9A01_fillRect(100, 100, 40, 40, GC9A01_Color565(0x00,0xFF,0x00));
-    GC9A01_fillRect(140, 100, 40, 40, GC9A01_Color565(0x00,0x00,0xFF));
-    GC9A01_drawFastHLine(0,  120, 240, GC9A01_Color565(0x00,0x00,0x00));
-    GC9A01_drawFastVLine(120,  0, 240, GC9A01_Color565(0xFF,0xFF,0xFF));
-    return 0;
-}
-
 /* only for DEBUG_PRINTF Below */
 #include "debug/debug_helper.h"
 
@@ -586,19 +610,4 @@ static void  GC9A01_set_addr_win(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t
   GC9A01_command(GC9A01_RAMWR);
 }
 
-void GC9A01_flush(lv_display_t * disp_drv, const lv_area_t * area, lv_color_t *color_p)
-{
-  LV_DRV_DISP_SPI_CS(0); // Listen to us
-
-  GC9A01_set_addr_win(area->x1, area->y1, area->x2, area->y2);
-  int32_t len = (area->x2 - area->x1 + 1) * (area->y2 - area->y1 + 1) * 2;
-
-  LV_DRV_DISP_CMD_DATA(GC9A01_DATA_MODE);
-  LV_DRV_DISP_SPI_WR_ARRAY((char*)color_p, len);
-
-  LV_DRV_DISP_SPI_CS(1);
-  lv_disp_flush_ready(disp_drv);         /* Indicate you are ready with the flushing*/
-}
-
 #endif
-

@@ -82,7 +82,7 @@ bool Init_Spi1 ( void );
 
 #include "../lvgl/lv_conf.h"
 #include "../lvgl/src/display/lv_display.h"
-#include "../lvgl/src/drivers/lv_drivers.h"
+#include "../lvgl/src/drivers/lv_drivers.h" 
 #include "../lvgl/src/drivers/display/gc9a01/lv_gc9a01.h"
 #include "system/util.h"
 
@@ -94,7 +94,8 @@ bool task_init_lvgl(void)
     Init_Spi1();
     lv_init();
     lv_tick_set_cb(get_ms_since_start);
-    lv_display_t * disp = lv_gc9a01_create(240, 240, LV_LCD_FLAG_MIRROR_Y, gc9a01_send_cmd, gc9a01_send_mass_data );
+    lv_display_t * disp = lv_gc9a01_create(240, 240, LV_LCD_FLAG_MIRROR_Y );
+    lv_display_set_color_format(disp, LV_COLOR_FORMAT_RGB565);
     //lv_example_get_started_1();
     lv_example_anim_2();
     // lv_xml_register_component_from_data();
