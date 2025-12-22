@@ -9,7 +9,9 @@
 extern "C" {
 #endif
 
+#define BUILD_CONFIG_STR  1
 #include "config/config.h"
+
 #include <stddef.h>
 
 #define APP_NAME "LVGL App"

@@ -715,6 +715,16 @@ static lv_obj_t * obj=NULL;
             lv_obj_clean(lv_scr_act());
             break;
         case 1:
+            if ( CMD_argc() < 1 ) {
+              printf("Usage: 'BG color <24bit-RGB>\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            temp = CMD_to_number ( word, wordlen );
+            /*Change the active screen's background color*/
+            lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(temp), LV_PART_MAIN);
+            break;
+        case 2:
             if ( CMD_argc() < 3 ) {
               printf("Usage: 'BG color <r> <g> <b>\n");
               return false;
@@ -726,8 +736,9 @@ static lv_obj_t * obj=NULL;
             CMD_get_one_word( &word, &wordlen );
             b = CMD_to_number ( word, wordlen );
             /*Change the active screen's background color*/
-            lv_obj_set_style_bg_color(lv_screen_active(),  lv_color_make(r,g,b), LV_PART_MAIN);
-        case 2:
+            lv_obj_set_style_bg_color(lv_screen_active(), lv_color_make(r,g,b), LV_PART_MAIN);
+            break;
+        case 3:
             if ( ! obj ) {
               obj = lv_obj_create(lv_screen_active());
               lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
@@ -737,14 +748,14 @@ static lv_obj_t * obj=NULL;
               lv_obj_align(obj, LV_ALIGN_CENTER, 0, 0);
             }
             break;
-        case 3:
+        case 4:
             if ( obj ) {
               
               lv_obj_delete( obj );
               obj = NULL;
             }
             break;
-        case 4:
+        case 5:
             if ( !obj ) return false;
             if ( CMD_argc() < 3 ) {
               printf("Usage: 'Kr color <r> <g> <b>\n");
@@ -758,8 +769,6 @@ static lv_obj_t * obj=NULL;
             b = CMD_to_number ( word, wordlen );
             /*Change the active screen's background color*/
             lv_obj_set_style_bg_color(obj,  lv_color_make(r,g,b), 0);
-        case 5:
-            break;
         case 6:
             break;
         case 7:
@@ -781,16 +790,89 @@ static lv_obj_t * obj=NULL;
 
     static const CommandSetT cmdLVGL[] = {
         { "Clear Display",          ctype_fn, .exec.fn = LVGL_Menu,VOID(0), "Clear Display" },
-        { "BG Color <r> <g> <b>",   ctype_fn, .exec.fn = LVGL_Menu,VOID(1), "Set Background color" },
-        { "Draw red kringel",       ctype_fn, .exec.fn = LVGL_Menu,VOID(2), "Draw kringel" },
-        { "Delete kringel",         ctype_fn, .exec.fn = LVGL_Menu,VOID(3), "Delete kringel" },
-        { "Kr Color <r> <g> <b>",   ctype_fn, .exec.fn = LVGL_Menu,VOID(4), "Set Kringel color" },
-        { "Measure group auto",     ctype_fn, .exec.fn = LVGL_Menu,VOID(5), "Measure whole sequence automatically repeated" },
-        { "Refint disable",         ctype_fn, .exec.fn = LVGL_Menu,VOID(5), "Disable Refint ADC channel" },
-        { "All int. Ch. Disable",   ctype_fn, .exec.fn = LVGL_Menu,VOID(6), "Disable all internal ADC channels" },
-        { "Periph Timer Start/Stop",ctype_fn, .exec.fn = LVGL_Menu,VOID(7), "Start/Stop the perpheral timer" },
+        { "BG Color <24b-hex>",     ctype_fn, .exec.fn = LVGL_Menu,VOID(1), "Set Background color" },
+        { "BG Color <r> <g> <b>",   ctype_fn, .exec.fn = LVGL_Menu,VOID(2), "Set Background color" },
+        { "Draw red kringel",       ctype_fn, .exec.fn = LVGL_Menu,VOID(3), "Draw kringel" },
+        { "Delete kringel",         ctype_fn, .exec.fn = LVGL_Menu,VOID(4), "Delete kringel" },
+        { "Kr Color <r> <g> <b>",   ctype_fn, .exec.fn = LVGL_Menu,VOID(5), "Set Kringel color" },
     };
     ADD_SUBMODULE(LVGL);
+#endif
+
+#if USE_SPI1 > 0
+#include "dev/GC9A01.h"
+
+
+    /*********************************************************************************
+      * @brief  Submenu for LVGL test functions
+      *         
+      * @retval true on success, false otherwise
+      *
+      * @note   will try to read as many parameters as needed
+      ********************************************************************************/
+    static bool Spi1_Menu ( char *cmdline, size_t len, const void * arg )
+    {
+      char *word;
+      size_t wordlen;
+      uint8_t r,g,b;
+      uint32_t temp;
+      UNUSED(cmdline);UNUSED(len);
+      uint8_t retbuf[6];
+
+      switch((uint32_t)arg) {
+        case 0:
+            GC9A01_run_cfg_script();
+            break;
+        case 1:
+           if ( CMD_argc() < 1 ) {
+              printf("Usage: 'FillScr <color> - fill Screen\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            temp = CMD_to_number ( word, wordlen );
+            GC9A01_fillScreen(temp);
+            break;
+        case 2:
+           if ( CMD_argc() < 1 ) {
+              printf("Usage: 'MADCTL byte - Set MADCTL byte\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            r = CMD_to_number ( word, wordlen );
+            GC9A01_cmd_data(0x36, r);
+            printf("MADCTL=0x%02x\n", r);
+            break;
+        case 3:
+            break;
+        case 4:
+            break;
+        case 5:
+            break;
+        case 6:
+            break;
+        case 7:
+            break;
+        case 8:
+            break;
+        default:
+          DEBUG_PUTS("Lvgl-Menu: command not implemented");
+      } /* end switch */
+
+      return true;
+    }
+
+    static const char *pmtSpi1 (void)
+    {
+      return "Disp-Spi";
+    }
+
+
+    static const CommandSetT cmdSpi1[] = {
+        { "GC9A01 Init Sequence",   ctype_fn, .exec.fn = Spi1_Menu,VOID(0), "GC9A01 Init" },
+        { "Fill Screen <color>",    ctype_fn, .exec.fn = Spi1_Menu,VOID(1), "Fill Scr w 565 color code" },
+        { "MADCTL <x>",             ctype_fn, .exec.fn = Spi1_Menu,VOID(2), "Write MADCTL byte" },
+    };
+    ADD_SUBMODULE(Spi1);
 #endif
 
 
@@ -871,6 +953,9 @@ static const CommandSetT cmdBasic[] = {
 #if DEBUG_FEATURES > 0
   { "Clock&Pwr",       ctype_sub, .exec.sub = &mdlClkCfg,      0,       "Clock & Power Config submenu" },
   { "Devices",         ctype_sub, .exec.sub = &mdlDevices,     0,       "Peripheral devices submenu" },
+#endif
+#if USE_SPI1 > 0
+  { "SPi1 Test",       ctype_sub, .exec.sub = &mdlSpi1,        0,       "SPI1 test submenu" },
 #endif
 #if USE_LVGL > 0
   { "LVGL TEst",       ctype_sub, .exec.sub = &mdlLVGL,        0,       "LVGL test submenu" },

@@ -10,8 +10,8 @@
  *      INCLUDES
  *********************/
 #include "lv_gc9a01.h"
-#include "gc9a01.h"
-#include "lv_4wire_spi.h"
+#include "dev/gc9a01.h"
+#include "dev/lv_4wire_spi.h"
 #include "debug/debug_io.h"
 
 #include "system/util.h"
@@ -29,26 +29,10 @@
 #define MY_DISP_VER_RES         240
 #define BYTE_PER_PIXEL          2
 
-/* GC9A01 Commands that we know of.  Limited documentation */
-#define GC9A01_INVOFF		0x20
-#define GC9A01_INVON		0x21
-#define GC9A01_DISPON		0x29
-#define GC9A01_CASET		0x2A
-#define GC9A01_RASET		0x2B
-#define GC9A01_RAMWR		0x2C
-#define GC9A01_COLMOD		0x3A
-#define GC9A01_MADCTL		0x36
-#define GC9A01_MADCTL_MY  	0x80
-#define GC9A01_MADCTL_MX  	0x40
-#define GC9A01_MADCTL_MV  	0x20
-#define GC9A01_MADCTL_RGB 	0x00
-#define GC9A01_DISFNCTRL	0xB6
-
 #define GC9A01_CMD_MODE		0
 #define GC9A01_DATA_MODE     	1
 
-
-#define GC9A01_DEBUG            0
+#define GC9A01_DEBUG            1
 #if GC9A01_DEBUG
   #include "debug/debug_helper.h"
 #endif
@@ -86,9 +70,12 @@ static GRMEM uint8_t buf_1_1[MY_DISP_HOR_RES * NUMROWS * BYTE_PER_PIXEL];       
  **********************/
 lv_display_t * lv_gc9a01_create(uint32_t hor_res, uint32_t ver_res, lv_lcd_flag_t flags )
 {
+    uint8_t retbuf[6];
     spi_setup_dma();
     GC9A01_hard_reset();
     GC9A01_run_cfg_script();
+    GC9A01_fillScreen(GC9A01_Color565(0x00,0x00,0xFF)); // ?
+
 
     lv_display_t * disp = lv_lcd_generic_mipi_create(hor_res, ver_res, flags, gc9a01_send_cmd, gc9a01_send_mass_data);
     // lv_lcd_generic_mipi_send_cmd_list(disp, init_cmd_list);
@@ -100,7 +87,6 @@ lv_display_t * lv_gc9a01_create(uint32_t hor_res, uint32_t ver_res, lv_lcd_flag_
 
     /* Test code to see, whether TFT driver Communication is working at all */
     uint16_t temp = (uint16_t)get_ms_since_start();
-    GC9A01_fillScreen(GC9A01_Color565(temp, temp>>4, temp>>8)); // ?
     GC9A01_fillRect( 60, 60, 80, 80, GC9A01_Color565(0xFF,0x00,0x00));
     /* End test code */
 
@@ -146,6 +132,17 @@ void gc9a01_send_done ( void )
     lv_display_flush_ready(mydisp);
 }
 
+#if GC9A01_DEBUG > 0
+  static void dump_vector ( const uint8_t *data, size_t param_size )
+  {
+    DEBUG_PRINTF("%d data bytes: ", param_size);
+    size_t limit=MIN(param_size, 4 );
+    for ( size_t i=0; i< limit; i++ ) {
+       DEBUG_PRINTF("%02x ", *(data++));
+    }
+    if ( param_size > limit ) DEBUG_PRINTF("...");
+  }
+#endif
 
 /******************************************************************************
 * lowlevel routine for writing n command and m data bytes, n,m >= 0
@@ -171,7 +168,7 @@ void gc9a01_send_cmd(lv_display_t * disp, const uint8_t * cmd, size_t cmd_size,
     }
     if ( param_size > 0 ) {
         #if GC9A01_DEBUG > 0
-            DEBUG_PRINTF("%d data bytes starting with 0x%02x", param_size, *param);
+          dump_vector( param, param_size );
         #endif
         for ( i = 0, p=param; i < param_size; p++,i++ ) {
             LV_DRV_DISP_SPI_WR_BYTE(*p);
@@ -212,7 +209,7 @@ void gc9a01_send_mass_data(lv_display_t * disp, const uint8_t * cmd, size_t cmd_
     }     
 
     #if GC9A01_DEBUG > 0
-        DEBUG_PRINTTS("Blockwise: %d data bytes starting with 0x%02x", param_size, *param);
+        dump_vector( param, param_size);
     #endif
     #if 0
       byte_left = param_size;
@@ -232,7 +229,9 @@ void gc9a01_send_mass_data(lv_display_t * disp, const uint8_t * cmd, size_t cmd_
       }
     #endif
 
-    LV_DRV_DISP_SPI_WR_ARRAY(param, param_size, gc9a01_send_done);
+    /* Make sure, the number of bytes is even, ie integer number of 16bit words */
+    assert((param_size&1)==0);
+    LV_DRV_DISP_SPI_WR_WORD_ARRAY((const uint16_t *)param, param_size / 2, gc9a01_send_done);
 }
 
 /**********************
