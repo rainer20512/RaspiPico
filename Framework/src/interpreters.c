@@ -693,7 +693,10 @@ ADD_SUBMODULE(Test);
 #if USE_LVGL > 0
 #include "../lvgl/lvgl.h"
 
+void lv_example_scale_3(void);
+extern lv_style_t my_style;
 static lv_obj_t * obj=NULL;
+bool bSpiDMA=false;
 
     /*********************************************************************************
       * @brief  Submenu for LVGL test functions
@@ -743,8 +746,9 @@ static lv_obj_t * obj=NULL;
               obj = lv_obj_create(lv_screen_active());
               lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
               lv_obj_set_style_bg_color(obj,  lv_color_hex(0xFF0000), 0);
-              lv_obj_set_style_radius(obj, LV_RADIUS_CIRCLE, 0);
-              lv_obj_set_size(obj, 30, 30); 
+              lv_obj_add_style(obj, &my_style, LV_PART_MAIN);
+              // lv_obj_set_style_radius(obj, LV_RADIUS_CIRCLE, 0);
+              lv_obj_set_size(obj, 120, 100); 
               lv_obj_align(obj, LV_ALIGN_CENTER, 0, 0);
             }
             break;
@@ -770,10 +774,41 @@ static lv_obj_t * obj=NULL;
             /*Change the active screen's background color*/
             lv_obj_set_style_bg_color(obj,  lv_color_make(r,g,b), 0);
         case 6:
+            if ( !obj ) return false;
+            if ( CMD_argc() < 1 ) {
+              printf("Usage: 'Border wid <w>[Pixel]\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            temp = CMD_to_number ( word, wordlen );
+            /*Change the Border Width*/
+            lv_obj_set_style_border_width(obj, temp, LV_PART_MAIN);
             break;
         case 7:
+            if ( !obj ) return false;
+            if ( CMD_argc() < 1 ) {
+              printf("Usage: 'Border rad <r>[Pixel]\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            temp = CMD_to_number ( word, wordlen );
+            /*Change the obj radius*/
+            lv_obj_set_style_radius(obj, temp, LV_PART_MAIN);
+            break;
             break;
         case 8:
+            if ( CMD_argc() < 1 ) {
+              printf("Usage: 'SPI-DMA [0|1]\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            temp = CMD_to_number ( word, wordlen );
+            bSpiDMA = temp != 0;
+            printf("SPI DMA is %s\n", bSpiDMA ? "On" : "Off"); 
+            break;
+        case 9:
+            lv_example_scale_3();
+            printf("Scale Example\n"); 
             break;
         default:
           DEBUG_PUTS("Lvgl-Menu: command not implemented");
@@ -795,6 +830,10 @@ static lv_obj_t * obj=NULL;
         { "Draw red kringel",       ctype_fn, .exec.fn = LVGL_Menu,VOID(3), "Draw kringel" },
         { "Delete kringel",         ctype_fn, .exec.fn = LVGL_Menu,VOID(4), "Delete kringel" },
         { "Kr Color <r> <g> <b>",   ctype_fn, .exec.fn = LVGL_Menu,VOID(5), "Set Kringel color" },
+        { "Set Border Width <w>",   ctype_fn, .exec.fn = LVGL_Menu,VOID(6), "Border width <n> Pixels" },
+        { "Set Border Radius <r>",  ctype_fn, .exec.fn = LVGL_Menu,VOID(7), "Border radius <r> Pixels" },
+        { "SPI-DMA [0|1]",          ctype_fn, .exec.fn = LVGL_Menu,VOID(8), "Enable/Disable SPI-DMA" },
+        { "Scale-Example",          ctype_fn, .exec.fn = LVGL_Menu,VOID(9), "Display scale example" },
     };
     ADD_SUBMODULE(LVGL);
 #endif

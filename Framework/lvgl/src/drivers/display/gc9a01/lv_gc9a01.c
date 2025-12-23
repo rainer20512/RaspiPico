@@ -9,6 +9,7 @@
 /*********************
  *      INCLUDES
  *********************/
+#include "string.h"
 #include "lv_gc9a01.h"
 #include "dev/gc9a01.h"
 #include "dev/lv_4wire_spi.h"
@@ -32,7 +33,7 @@
 #define GC9A01_CMD_MODE		0
 #define GC9A01_DATA_MODE     	1
 
-#define GC9A01_DEBUG            1
+#define GC9A01_DEBUG            0
 #if GC9A01_DEBUG
   #include "debug/debug_helper.h"
 #endif
@@ -54,7 +55,7 @@ static void disp_flush(lv_display_t * disp_drv, const lv_area_t * area, uint8_t 
 void gc9a01_send_cmd(lv_display_t * disp, const uint8_t * cmd, size_t cmd_size, 
                        const uint8_t * param, size_t param_size);
 void gc9a01_send_mass_data(lv_display_t * disp, const uint8_t * cmd, size_t cmd_size, 
-                       uint8_t * param, size_t param_size);
+                           uint8_t * param, size_t param_size);
 
 
 /**********************
@@ -174,13 +175,34 @@ void gc9a01_send_cmd(lv_display_t * disp, const uint8_t * cmd, size_t cmd_size,
             LV_DRV_DISP_SPI_WR_BYTE(*p);
         }
     }
+    #if 0
     mydisp = disp;
     gc9a01_send_done();
+    #endif
+
+   LV_DRV_DISP_SPI_CS(1);  
 }
 
+/* ----------------------------------------------------------------------------
+ * Handle a data block of max size "SWAPWORDSIZE*2" bytes:
+ * - copy to temp buffer ( to leave original unchanged )
+ * - Send to low level display driver display
+ * - notify via callback when done
+ * - can be done blocking or no blocking ( when using DMA fro transfer )
+ *---------------------------------------------------------------------------*/
+static void gc9a01_handle_block  (const uint8_t *block, size_t block_bytesize, bool trigger_done, pfn_spi_done_cb done_cb)
+{
+  uint32_t i;
+  uint16_t *p;
+
+  assert( (block_bytesize&1) == 0 );
+
+  /* Send via SPI interface */
+  LV_DRV_DISP_SPI_WR_WORD_ARRAY((uint16_t *)block, block_bytesize / 2, gc9a01_send_done);
+}
 
 void gc9a01_send_mass_data(lv_display_t * disp, const uint8_t * cmd, size_t cmd_size, 
-                       uint8_t * param, size_t param_size)
+                          uint8_t * param, size_t param_size)
 {
     LV_UNUSED(disp);
     uint32_t byte_left;
@@ -211,27 +233,13 @@ void gc9a01_send_mass_data(lv_display_t * disp, const uint8_t * cmd, size_t cmd_
     #if GC9A01_DEBUG > 0
         dump_vector( param, param_size);
     #endif
-    #if 0
-      byte_left = param_size;
-      pt = param;
-      while (byte_left)
-      {
-              if (byte_left > 64) {
-                      LV_DRV_DISP_SPI_WR_ARRAY(pt, 64);
-                      byte_left = byte_left - 64;
-                      pt = pt + 64;
-              }
-              else
-              {
-                      LV_DRV_DISP_SPI_WR_ARRAY(pt, byte_left);
-                      byte_left=0;
-              }
-      }
-    #endif
-
+    
     /* Make sure, the number of bytes is even, ie integer number of 16bit words */
-    assert((param_size&1)==0);
-    LV_DRV_DISP_SPI_WR_WORD_ARRAY((const uint16_t *)param, param_size / 2, gc9a01_send_done);
+    assert( (param_size&1) == 0 );
+
+  /* Send via SPI interface */
+  LV_DRV_DISP_SPI_WR_WORD_ARRAY((uint16_t *)param, param_size / 2, gc9a01_send_done);
+
 }
 
 /**********************

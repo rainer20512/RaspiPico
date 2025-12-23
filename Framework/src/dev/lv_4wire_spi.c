@@ -14,7 +14,7 @@
 #include "dev/lv_4wire_spi.h"
 #include "debug/debug_helper.h"
 
-#define LV_USE_SPI_DMA    0
+#define LV_USE_SPI_DMA    1
 
 static pfn_spi_done_cb *tx_done_cb;
 
@@ -26,19 +26,47 @@ static pfn_spi_done_cb *tx_done_cb;
 #include "system/profiling.h"
 #include "debug/debug_helper.h"
 
-#define PFX CONCAT(DREQ_SPI,DISP_SPI_NUM)
-#define SPI_TX_DMA_CHANNEL CONCAT(PFX,_TX)
+#ifndef DISP_SPI_NUM
+  #error "DISP_SPI_NUM not defined"
+#elif DISP_SPI_NUM == 0
+  #define SPI_TX_DMA_CHANNEL  DREQ_SPI0_TX
+  #define SPI_HW              spi0
+  #define SPI_ACK             dma_channel_acknowledge_irq0
+  #define SPI_ENABLE_IRQ(ena) dma_channel_set_irq0_enabled(spi_dma_chan, ena);
+#elif DISP_SPI_NUM == 1
+  #define SPI_TX_DMA_CHANNEL  DREQ_SPI1_TX
+  #define SPI_HW              spi1
+  #define SPI_ACK             dma_channel_acknowledge_irq1
+  #define SPI_ENABLE_IRQ(ena) dma_channel_set_irq1_enabled(spi_dma_chan, ena);
+#else
+  #error "no assignemnt for DISP_SPI_NUM"
+#endif
 
 static int spi_dma_chan;
+extern bool bSpiDMA;
 
 void SPI_TX_handler(void)
 {
   ProfilerPush(JOB_IRQ_SPI);
-  dma_channel_acknowledge_irq1 (spi_dma_chan);
-  // SPI_tx_CompleteCB ( tx_transfer_size );
+  SPI_ACK (spi_dma_chan);
+  SPI_ENABLE_IRQ(false);
+
+
+  // Drain RX FIFO, then wait for shifting to finish (which may be *after*
+  // TX FIFO drains), then drain RX FIFO again
+  while (spi_is_readable(SPI_HW))
+      (void)spi_get_hw(SPI_HW)->dr;
+  while (spi_get_hw(SPI_HW)->sr & SPI_SSPSR_BSY_BITS)
+      tight_loop_contents();
+  while (spi_is_readable(SPI_HW))
+      (void)spi_get_hw(SPI_HW)->dr;
+
+  // Don't leave overrun flag set
+  spi_get_hw(SPI_HW)->icr = SPI_SSPICR_RORIC_BITS;
+
   tx_done_cb();
-  uint32_t ctrl = dma_get_channel_config(spi_dma_chan).ctrl;
-  DEBUG_PRINTF(" ctrl=%08x", ctrl);
+  // uint32_t ctrl = dma_get_channel_config(spi_dma_chan).ctrl;
+  // DEBUG_PRINTF(" ctrl=%08x\n", ctrl);
   ProfilerPop();
 }
 
@@ -53,24 +81,30 @@ bool spi_setup_dma(void)
     dma_channel_configure(
         spi_dma_chan,
         &c,
-        &spi_get_hw(spi_default)->dr, // Write address (only need to set this once)
+        &spi_get_hw(SPI_HW)->dr, // Write address (only need to set this once)
         NULL,             // read address will be set later
         0,                // Transfer size will be set later
         false             // Don't start yet
     );
 
-    // Tell the DMA to raise IRQ line 0 when the channel finishes a block
-    dma_channel_set_irq1_enabled(spi_dma_chan, true);
 
-    // Configure the processor to run dma_handler() when DMA IRQ 0 is asserted
-    irq_set_exclusive_handler(DMA_IRQ_1, SPI_TX_handler);
-    irq_set_enabled(DMA_IRQ_1, true);
+    // Configure the processor to run SPI_TX_handler() when DMA IRQ is asserted
+    #if DISP_SPI_NUM == 0
+      irq_set_exclusive_handler(DMA_IRQ_0, SPI_TX_handler);
+      irq_set_enabled(DMA_IRQ_0, true);
+    #elif DISP_SPI_NUM == 1
+      irq_set_exclusive_handler(DMA_IRQ_1, SPI_TX_handler);
+      irq_set_enabled(DMA_IRQ_1, true);
+    #endif
 
     return true;
 }
 
 static void StartTxDma(const uint8_t *data, uint32_t txSize)
 {
+  /* clear "old" dma Interrupts and enable spi dma interrupt */
+  SPI_ACK (spi_dma_chan);
+  SPI_ENABLE_IRQ(true);
   /* setup and start dma */
   dma_channel_set_read_addr   (spi_dma_chan, data, false);
   dma_channel_set_trans_count (spi_dma_chan, txSize, true);
@@ -99,45 +133,37 @@ void LV_DRV_DISP_SPI_WR_BYTE_ARRAY(const uint8_t *arr, uint32_t len, pfn_spi_don
   assert(done_cb);
   tx_done_cb = done_cb;
 
-  #if LV_USE_SPI_DMA > 0
+  if ( bSpiDMA ) {
     StartTxDma(arr, len);
-  #else
+  } else {
     /* Non DMA transfer */
     while ( len-- ) {
         LV_DRV_DISP_SPI_WR_BYTE(*(arr++));
     }
     done_cb();
-  #endif
-}
-
-static void LV_DRV_DISP_SPI_WR_WORD ( uint16_t word ) 
-{
-  union myword_u {
-                    uint16_t w;
-                    uint8_t  b[2];
-  } myword;
-  myword.w = word;
-  LV_DRV_DISP_SPI_WR_BYTE(myword.b[1]);
-  LV_DRV_DISP_SPI_WR_BYTE(myword.b[0]);
+  }
 }
 
 /* 
  * Write word vector. Pay attention when underlying data are not word 
  * bcs hi byte is sent first, ie byte order is swapped
  * Use LV_DRV_DISP_SPI_WR_BYTE_ARRAY instead, when byte order has to be preserved
+ * ATTENTION: the passed word array is modified by byte swapping!
  */
-void LV_DRV_DISP_SPI_WR_WORD_ARRAY(const uint16_t *arr, uint32_t len, pfn_spi_done_cb done_cb)
+void LV_DRV_DISP_SPI_WR_WORD_ARRAY(uint16_t *arr, uint32_t len, pfn_spi_done_cb done_cb)
 {
+  uint32_t i;
+  uint16_t *p;
+
   assert(done_cb);
   tx_done_cb = done_cb;
 
-  #if LV_USE_SPI_DMA > 0
-    StartTxDma(arr, len);
-  #else
-    /* Non DMA transfer */
-    while ( len-- ) {
-        LV_DRV_DISP_SPI_WR_WORD(*(arr++));
-    }
-    done_cb();
-  #endif
+  /* Swap bytes in all words, ie convert from small to big endian */
+  
+  for ( i=0, p=arr; i < len; i++, p++ ) {
+    *p = __builtin_bswap16(*p);
+  }
+
+  /* Send all bytes, non DMA transfer */
+  LV_DRV_DISP_SPI_WR_BYTE_ARRAY((const uint8_t *)arr, len*2, done_cb );
 }

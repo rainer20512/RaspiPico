@@ -77,7 +77,7 @@
 
 
       // 500kHz, TX only
-      spi_init(spi1, 1000 * 1000);
+      spi_init(spi1, 8000 * 1000);
       gpio_set_function(PICO_DEFAULT_SPI1_SCK_PIN, GPIO_FUNC_SPI);
       gpio_set_function(PICO_DEFAULT_SPI1_TX_PIN, GPIO_FUNC_SPI);
 

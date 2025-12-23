@@ -106,14 +106,29 @@ void lv_example_anim_2(void);
   #define spi_init_all() 
 #endif
 
+#include "../lvgl/lvgl.h"
+/* style with no border an 0 radius */
+lv_style_t my_style;
+
+void lv_example_scale_3(void);
+
 bool task_init_lvgl(void)
 {
     lv_init();
     lv_tick_set_cb(get_ms_since_start);
     lv_display_t * disp = lv_gc9a01_create(240, 240,LV_LCD_FLAG_BGR | LV_LCD_FLAG_MIRROR_Y );
+    lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_180);
+
+    /* Init Style */
+    lv_style_init(&my_style);
+    lv_style_set_border_width(&my_style, 0);
+    lv_style_set_radius(&my_style, 0);
+
+
 //    lv_display_set_color_format(disp, LV_COLOR_FORMAT_RGB565);
     //lv_example_get_started_1();
 //    lv_example_anim_2();
+    // lv_example_scale_3();
     // lv_xml_register_component_from_data();
     TaskNotify(TASK_LVGL);
     return true;

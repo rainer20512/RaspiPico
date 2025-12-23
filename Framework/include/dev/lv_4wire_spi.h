@@ -37,4 +37,4 @@ bool spi_setup_dma(void);
 typedef void (pfn_spi_done_cb) (void);
 void LV_DRV_DELAY_MS(uint32_t wait_ms);
 void LV_DRV_DISP_SPI_WR_BYTE_ARRAY(const uint8_t *arr, uint32_t len, pfn_spi_done_cb done_cb);
-void LV_DRV_DISP_SPI_WR_WORD_ARRAY(const uint16_t *arr, uint32_t len, pfn_spi_done_cb done_cb);
+void LV_DRV_DISP_SPI_WR_WORD_ARRAY(uint16_t *arr, uint32_t len, pfn_spi_done_cb done_cb);
