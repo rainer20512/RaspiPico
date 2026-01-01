@@ -1,7 +1,7 @@
 <!DOCTYPE Linker_Placement_File>
 <Root name="Flash Section Placement">
   <MemorySegment name="$(FLASH_NAME:FLASH);FLASH1">
-    <ProgramSection alignment="4" load="Yes" name=".boot" start="$(FLASH_START:)" size="0x100" />
+    <ProgramSection alignment="4" load="Yes" name=".boot" size="0x100" />
     <ProgramSection alignment="0x100" load="Yes" name=".vectors" />
     <ProgramSection alignment="4" load="Yes" name=".init" />
     <ProgramSection alignment="4" load="Yes" name=".init_rodata" />

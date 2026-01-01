@@ -23,7 +23,7 @@
  ********************************************************************************
  */ 
 
- #define USE_LVGL       1
+ #define USE_LVGL       0
  #define USE_SPI0       0  
  #define USE_SPI1       1  
 
