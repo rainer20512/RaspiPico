@@ -120,7 +120,7 @@ static void DBG_dump_sram_areas(void)
 static void DBG_dump_sram_sections(void)
 {
   DBG_setPadLen(16);
-  #ifdef RP2040_MO_0
+  #ifdef RP2040_M0_0
     /* .boot2 section only on core 0 */
     DO_DUMP_SECTION("Boot Stage2",    __boot );
   #endif
