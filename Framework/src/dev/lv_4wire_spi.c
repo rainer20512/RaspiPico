@@ -47,7 +47,7 @@ extern bool bSpiDMA;
 
 void SPI_TX_handler(void)
 {
-  ProfilerPush(JOB_IRQ_SPI);
+  ProfilerPush(JOB_IRQ_DMA);
   SPI_ACK (spi_dma_chan);
   SPI_ENABLE_IRQ(false);
 

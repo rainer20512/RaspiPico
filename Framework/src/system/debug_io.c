@@ -75,7 +75,7 @@ void DebugOutputCompleteCB ( uint32_t size );
 
 void DMA_TX_handler(void)
 {
-  ProfilerPush(JOB_IRQ_UART);
+  ProfilerPush(JOB_IRQ_DMA);
   dma_channel_acknowledge_irq0 (uart_dma_chan);
   DebugOutputCompleteCB ( tx_transfer_size );
   ProfilerPop();
