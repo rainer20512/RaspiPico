@@ -1,0 +1,92 @@
+<!DOCTYPE CrossStudio_Session_File>
+<session>
+ <Bookmarks/>
+ <Breakpoints groups="Breakpoints" active_group="Breakpoints">
+  <BreakpointListItem trigger="" line="127" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" stopAll="false" group="Breakpoints" type="Breakpoint" state="4" filename="RP2040_Startup.s" useHWbreakpoint="false"/>
+  <BreakpointListItem trigger="" line="140" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" stopAll="false" group="Breakpoints" type="Breakpoint" state="2" filename="../common/src/boot/RP2040_Startup.s" useHWbreakpoint="false"/>
+ </Breakpoints>
+ <ExecutionProfileWindow/>
+ <FrameBuffer>
+  <FrameBufferWindow width="0" keepAspectRatio="0" zoomToFitWindow="0" addressSpace="" format="0" height="0" autoEvaluate="0" scaleFactor="1" refreshPeriod="0" name="DualCore-Core0_THUMB Debug" addressText="" accessByDisplayWidth="0"/>
+ </FrameBuffer>
+ <Memory1>
+  <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" viewType="4" addressOrder="0" columnsText="" refreshPeriod="0" name="DualCore-Core0_THUMB Debug" sizeText="" addressText="0xFFFFFB0"/>
+ </Memory1>
+ <Memory2>
+  <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" viewType="4" addressOrder="0" columnsText="" refreshPeriod="0" name="DualCore-Core0_THUMB Debug" sizeText="" addressText=""/>
+ </Memory2>
+ <Memory3>
+  <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" viewType="4" addressOrder="0" columnsText="" refreshPeriod="0" name="DualCore-Core0_THUMB Debug" sizeText="" addressText=""/>
+ </Memory3>
+ <Memory4>
+  <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" viewType="4" addressOrder="0" columnsText="" refreshPeriod="0" name="DualCore-Core0_THUMB Debug" sizeText="" addressText=""/>
+ </Memory4>
+ <Project>
+  <ProjectSessionItem path="DualCore-Core0"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;CMSIS Files"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Documentation"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Script Files"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;inc"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;inc;task"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;src"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;src;debug"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;src;system"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;src;task"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;System Files"/>
+ </Project>
+ <Register1>
+  <RegisterWindow visibleNodes="CPU - Current Context/r0;CPU - Current Context/r1;CPU - Current Context/r2;CPU - Current Context/r3;CPU - Current Context/r4;CPU - Current Context/r5;CPU - Current Context/r6;CPU - Current Context/r7;CPU - Current Context/r8;CPU - Current Context/r9;CPU - Current Context/r10;CPU - Current Context/r11;CPU - Current Context/r12;CPU - Current Context/sp(r13);CPU - Current Context/lr(r14);CPU - Current Context/pc(r15);CPU - Current Context/apsr;CPU/r0;CPU/r1;CPU/r2;CPU/r3;CPU/r4;CPU/r5;CPU/r6;CPU/r7;CPU/r8;CPU/r9;CPU/r10;CPU/r11;CPU/r12;CPU/sp(r13);CPU/lr(r14);CPU/pc(r15);CPU/xpsr;CPU/MSP;CPU/PSP;CPU/PRIMASK;CPU/CONTROL;CPU/internal" binaryNodes="" asciiNodes="" openNodes="CPU - Current Context" name="DualCore-Core0_THUMB Debug" decimalNodes="" octalNodes="" unsignedNodes=""/>
+ </Register1>
+ <Register2>
+  <RegisterWindow visibleNodes="CPU - Current Context/r0;CPU - Current Context/r1;CPU - Current Context/r2;CPU - Current Context/r3;CPU - Current Context/r4;CPU - Current Context/r5;CPU - Current Context/r6;CPU - Current Context/r7;CPU - Current Context/r8;CPU - Current Context/r9;CPU - Current Context/r10;CPU - Current Context/r11;CPU - Current Context/r12;CPU - Current Context/sp(r13);CPU - Current Context/lr(r14);CPU - Current Context/pc(r15);CPU - Current Context/apsr;CPU/r0;CPU/r1;CPU/r2;CPU/r3;CPU/r4;CPU/r5;CPU/r6;CPU/r7;CPU/r8;CPU/r9;CPU/r10;CPU/r11;CPU/r12;CPU/sp(r13);CPU/lr(r14);CPU/pc(r15);CPU/xpsr;CPU/MSP;CPU/PSP;CPU/PRIMASK;CPU/CONTROL;CPU/internal" binaryNodes="" asciiNodes="" openNodes="CPU - Current Context" name="DualCore-Core0_THUMB Debug" decimalNodes="" octalNodes="" unsignedNodes=""/>
+ </Register2>
+ <Register3>
+  <RegisterWindow visibleNodes="CPU - Current Context/r0;CPU - Current Context/r1;CPU - Current Context/r2;CPU - Current Context/r3;CPU - Current Context/r4;CPU - Current Context/r5;CPU - Current Context/r6;CPU - Current Context/r7;CPU - Current Context/r8;CPU - Current Context/r9;CPU - Current Context/r10;CPU - Current Context/r11;CPU - Current Context/r12;CPU - Current Context/sp(r13);CPU - Current Context/lr(r14);CPU - Current Context/pc(r15);CPU - Current Context/apsr;CPU/r0;CPU/r1;CPU/r2;CPU/r3;CPU/r4;CPU/r5;CPU/r6;CPU/r7;CPU/r8;CPU/r9;CPU/r10;CPU/r11;CPU/r12;CPU/sp(r13);CPU/lr(r14);CPU/pc(r15);CPU/xpsr;CPU/MSP;CPU/PSP;CPU/PRIMASK;CPU/CONTROL;CPU/internal" binaryNodes="" asciiNodes="" openNodes="CPU - Current Context" name="DualCore-Core0_THUMB Debug" decimalNodes="" octalNodes="" unsignedNodes=""/>
+ </Register3>
+ <Register4>
+  <RegisterWindow visibleNodes="CPU - Current Context/r0;CPU - Current Context/r1;CPU - Current Context/r2;CPU - Current Context/r3;CPU - Current Context/r4;CPU - Current Context/r5;CPU - Current Context/r6;CPU - Current Context/r7;CPU - Current Context/r8;CPU - Current Context/r9;CPU - Current Context/r10;CPU - Current Context/r11;CPU - Current Context/r12;CPU - Current Context/sp(r13);CPU - Current Context/lr(r14);CPU - Current Context/pc(r15);CPU - Current Context/apsr;CPU/r0;CPU/r1;CPU/r2;CPU/r3;CPU/r4;CPU/r5;CPU/r6;CPU/r7;CPU/r8;CPU/r9;CPU/r10;CPU/r11;CPU/r12;CPU/sp(r13);CPU/lr(r14);CPU/pc(r15);CPU/xpsr;CPU/MSP;CPU/PSP;CPU/PRIMASK;CPU/CONTROL;CPU/internal" binaryNodes="" asciiNodes="" openNodes="CPU - Current Context" name="DualCore-Core0_THUMB Debug" decimalNodes="" octalNodes="" unsignedNodes=""/>
+ </Register4>
+ <TargetWindow programLoadAddress="" programSize="" programMemoryInterface="" programFileName="" programFileType="" programAction=""/>
+ <Threads>
+  <ThreadsWindow showLists=""/>
+ </Threads>
+ <TraceWindow>
+  <Trace enabled="Yes"/>
+ </TraceWindow>
+ <Watch1>
+  <Watches active="1" update="Never"/>
+ </Watch1>
+ <Watch2>
+  <Watches active="0" update="Never"/>
+ </Watch2>
+ <Watch3>
+  <Watches active="0" update="Never"/>
+ </Watch3>
+ <Watch4>
+  <Watches active="0" update="Never"/>
+ </Watch4>
+ <Files>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="242" useTextEdit="1" folds0="95" path="Core0.hzp" left="0" top="111" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="111" useTextEdit="1" path="main.c" left="0" top="48" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="212" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_runtime_init/runtime_init.c" left="0" top="157" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="156" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_runtime_init/runtime_init_clocks.c" left="0" top="93" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="45" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_runtime/runtime.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="139" useTextEdit="1" path="../common/src/boot/RP2040_Startup.s" left="0" top="76" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="272" useTextEdit="1" path="../common/src/boot/thumb_crt0.s" left="0" top="209" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="60" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/targets/RP2040/CMSIS/Device/Source/system_RP2040.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="203" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_clib_interface/newlib_interface.c" left="0" top="142" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="18" y="9" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_sync_spin_lock/sync_spin_lock.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="46" y="23" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/common/pico_sync/mutex.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="78" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/common/pico_time/time.c" left="0" top="43" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="19" y="85" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_time_adapter/include/pico/time_adapter.h" left="0" top="30" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="43" y="179" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_timer/include/hardware/timer.h" left="0" top="135" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="667" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_irq/irq.c" left="0" top="632" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="67" y="9" useTextEdit="1" path="RP2040_M0_0_MemoryMap.xml" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="81" y="34" useTextEdit="1" path="flash_placement2040.xml" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="138" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_clocks/clocks.c" left="0" top="101" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../common/include/task/minitask.h" left="0" selected="1" top="0" codecName="Default"/>
+ </Files>
+ <ARMCrossStudioWindow activeProject="DualCore-Core0" fileDialogDefaultFilter="*.c" autoConnectTarget="CMSIS-DAP" buildConfiguration="THUMB Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="" debugSearchPath="" autoConnectCapabilities="388479"/>
+</session>
