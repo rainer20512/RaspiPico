@@ -252,7 +252,7 @@ bool task_init_io(void)
     LinBuff_Init          (&i0, INBUF0_SIZE,  inbuf );
     bExpandCrToCrlf0 = true;
     uart_setup_dma_channel();
-    uart0_set_rxchars_callback(Debug_RxCharAvailCB);
+    uart1_set_rxchars_callback(Debug_RxCharAvailCB);
 
     printf("Running on core %d, redirecting stdout to Uart%d\n", pico_get_coreID(),CORE0_UART);
 }
@@ -294,7 +294,7 @@ void task_handle_com( uint32_t param)
   int rc,i;
   /* read input characters until there are no more */
   do {
-    rc = uart0_in_chars(&c, 1);
+    rc = uart1_in_chars(&c, 1);
     /* rc < 0 -> no more characters */
     if (rc < 0) break;
     DebugHandleInputChar((unsigned char)c);

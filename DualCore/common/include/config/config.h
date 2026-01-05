@@ -23,9 +23,11 @@
  ********************************************************************************
  */ 
 
- #define USE_LVGL       0
- #define USE_SPI0       0  
- #define USE_SPI1       1  
+#define USE_LVGL       0
+#define USE_UART0      1
+#define USE_UART1      1
+#define USE_SPI0       0  
+#define USE_SPI1       1  
 
 
 
@@ -63,21 +65,23 @@
     MK_CONFIGSTR(DEBUG_MODE,1)
     MK_CONFIGSTR(DEBUG_FEATURES,2)
     MK_CONFIGSTR(USE_LVGL,3)
-    MK_CONFIGSTR(USE_SPI0,4)
-    MK_CONFIGSTR(USE_SPI1,5)
+    MK_CONFIGSTR(USE_UART0,4)
+    MK_CONFIGSTR(USE_UART1,5)
+    MK_CONFIGSTR(USE_SPI0,6)
+    MK_CONFIGSTR(USE_SPI1,7)
     
-    #define MAX_CONFIGSTR   5
+    #define MAX_CONFIGSTR   7
 
     const char *ConfigStrings[MAX_CONFIGSTR] = 
         {
-            ConfigStr1,  ConfigStr2,  ConfigStr3,  ConfigStr4,  ConfigStr5,  /* ConfigStr6,  ConfigStr7,  ConfigStr8,
+            ConfigStr1,  ConfigStr2,  ConfigStr3,  ConfigStr4,  ConfigStr5,  ConfigStr6,  ConfigStr7,  /* ConfigStr8,
             ConfigStr9,  ConfigStr10, ConfigStr11, ConfigStr12, ConfigStr13, ConfigStr14, ConfigStr15, ConfigStr16,
             ConfigStr17, ConfigStr18, ConfigStr19, ConfigStr20, ConfigStr21, ConfigStr22, ConfigStr23, ConfigStr24,
             ConfigStr25, ConfigStr26, ConfigStr27, ConfigStr28, ConfigStr29, ConfigStr30, ConfigStr31, ConfigStr32, */
         };
     const uint8_t ConfigValues[MAX_CONFIGSTR] = 
         {
-            ConfigVal1,  ConfigVal2,  ConfigVal3,  ConfigVal4,  ConfigVal5, /* ConfigVal6,  ConfigVal7,  ConfigVal8,
+            ConfigVal1,  ConfigVal2,  ConfigVal3,  ConfigVal4,  ConfigVal5,  ConfigVal6,  ConfigVal7,  /* ConfigVal8,
             ConfigVal9,  ConfigVal10, ConfigVal11, ConfigVal12, ConfigVal13, ConfigVal14, ConfigVal15, ConfigVal16,
             ConfigVal17, ConfigVal18, ConfigVal19, ConfigVal20, ConfigVal21, ConfigVal22, ConfigVal23, ConfigVal24,
             ConfigVal25, ConfigVal26, ConfigVal27, ConfigVal28, ConfigVal29, ConfigVal30, ConfigVal31, ConfigVal32, */

@@ -27,14 +27,19 @@
 
 #define CORE0_UART_INSTANCE()     (__CONCAT(uart,CORE0_UART))
 
+#if USE_UART0 > 0
+  void uart0_init                   (void);
+  void uart0_set_rxchars_callback   (void (*fn)(void) ); 
+  void uart0_out_chars              (const char *buf, int length);
+  int  uart0_in_chars               (char *buf, int length);
+#endif
 
-void uart0_init                   (void);
-void uart0_set_rxchars_callback   (void (*fn)(void) ); 
-void uart0_out_chars              (const char *buf, int length);
-int  uart0_in_chars               (char *buf, int length);
 
-
-
-void uart1_init(void);
+#if USE_UART1 > 0
+  void uart1_init(void);
+  void uart1_set_rxchars_callback   (void (*fn)(void) ); 
+  void uart1_out_chars              (const char *buf, int length);
+  int  uart1_in_chars               (char *buf, int length);
+#endif
 
 #endif /* __UART_H__ */

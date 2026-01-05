@@ -109,7 +109,13 @@ int main()
 {
     IPC_Init_Core0();
     alarm_pool_init_default();
-    uart0_init();              // stdio_init_all();
+    #if CORE0_UART == 0
+      uart0_init();
+    #elif CORE0_UART == 1
+      uart1_init();      
+    #else
+      #error "No debug uart assigned"
+    #endif
     spi_init_all();
     GC9A01_hard_reset();
 
