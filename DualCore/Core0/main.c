@@ -11,6 +11,7 @@
 #include "pico/stdlib.h"
 #include "system/status.h"
 #include "system/profiling.h"
+#include "system/ipc.h"
 #include "task/minitask.h"
 #include "hardware/sync.h"
 
@@ -81,6 +82,7 @@ static uint32_t cnt;
 #include "system/util.h"
 
 #include "dev/GC9A01.h"
+#include "dev/uarts.h"
 
 
 void lv_init(void);
@@ -103,9 +105,11 @@ void lv_example_anim_2(void);
 #endif
 
 
-int main() {
+int main() 
+{
+    IPC_Init_Core0();
     alarm_pool_init_default();
-    stdio_init_all();
+    uart0_init();              // stdio_init_all();
     spi_init_all();
     GC9A01_hard_reset();
 
@@ -136,4 +140,13 @@ int main() {
           ProfilerPop();
         }
     }
+}
+
+
+void main_core1(void) 
+{
+  pin_toggle_nowait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 15 );
+  IPC_Init_Core1();
+  __wfi();
+
 }

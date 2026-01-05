@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    debug_io.c
+  * @file    debug_io0.c
   * @author  Rainer
   * @brief   Implementation of a circular output buffer, that will automatically
   *          be written to DebugUart
@@ -25,52 +25,52 @@
 #include <string.h>
 
 #include "debug/debug_helper.h"
-// #include "debug_io.h"
+// #include "debug_io0.h"
 
 #include "system/circbuf.h"
 #include "system/util.h"
 
-#include "pico/stdio.h"
+#include "dev/uarts.h"
 #include "pico/time.h"
 
 
 /* Private define ------------------------------------------------------------*/
 
 /* size of RX/TX buffers, sizes must be power of two  */
-#define OUTBUF_SIZE 2048   
-#define INBUF_SIZE  64
+#define OUTBUF0_SIZE 2048   
+#define INBUF0_SIZE  64
 
 /* Private variables ---------------------------------------------------------*/
-static uint8_t bOngoingTransfer = 0;    /* indicates an ongoing transfer, if != 0 */
-static uint8_t bExpandCrToCrlf = 0;     /* expand LF to CRLF */
-static uint8_t bDelayedFlush = 0;       /* Keep in mind an delayed flush */
+static uint8_t bOngoingTransfer0 = 0;    /* indicates an ongoing transfer, if != 0 */
+static uint8_t bExpandCrToCrlf0 = 0;     /* expand LF to CRLF */
+static uint8_t bDelayedFlush0 = 0;       /* Keep in mind an delayed flush */
 
 /**** 003 **** 
  * Whenever BDMA is used ( here: for LPUART1 ), the DMA memory hasto reside
  * in SRAM4. 
  */
-static CircBuffT o;
-static LinBuffT i; 
+static CircBuffT o0;
+static LinBuffT i0; 
 
 /* RHB tbd */
 #define DMAMEM
 
-static DMAMEM uint8_t outbuf[OUTBUF_SIZE];
-static DMAMEM uint8_t inbuf[INBUF_SIZE];
+static DMAMEM uint8_t outbuf[OUTBUF0_SIZE];
+static DMAMEM uint8_t inbuf[INBUF0_SIZE];
 static int uart_dma_chan;
 static uint32_t tx_transfer_size;     // size of currently sent dma block
 
 /* Private macro -------------------------------------------------------------*/
 
 /* forward declarations  -----------------------------------------------------*/
-void DebugOutputCompleteCB ( uint32_t size );
+static void DebugOutputCompleteCB ( uint32_t size );
 
 /* Private functions  ---------------------------------------------------------*/
 #include "hardware/dma.h"
 #include "hardware/irq.h"
 #include "hardware/uart.h"
 
-#define PFX CONCAT(DREQ_UART,PICO_DEFAULT_UART)
+#define PFX CONCAT(DREQ_UART,CORE0_UART)
 #define UART_TX_DMA_CHANNEL CONCAT(PFX,_TX)
 
 void DMA_TX_handler(void)
@@ -94,7 +94,7 @@ static bool uart_setup_dma_channel(void)
     dma_channel_configure(
         uart_dma_chan,
         &c,
-        &uart_get_hw(uart_default)->dr, // Write address (only need to set this once)
+        &uart_get_hw(CORE0_UART_INSTANCE())->dr, // Write address (only need to set this once)
         NULL,             // read address will be set later
         0,                // Transfer size will be set later
         false             // Don't start yet
@@ -129,14 +129,14 @@ static void UsartStartTx(uint8_t *data, uint32_t txSize)
 static void Debug_OutputTransfer(uint32_t from, uint32_t to )
 {
   /* Make sure, there is no other active transfer */
-  assert_param(!bOngoingTransfer);
+  assert_param(!bOngoingTransfer0);
   /* Make sure, there is no wraparound between 'from' and 'to'  */
   assert_param(from <= to);
 
-  bOngoingTransfer = 1;
+  bOngoingTransfer0 = 1;
   tx_transfer_size = to - from;
 
-  UsartStartTx(o.buf+o.rdptr, tx_transfer_size);
+  UsartStartTx(o0.buf+o0.rdptr, tx_transfer_size);
 
 }
 
@@ -154,9 +154,9 @@ static void Debug_OutputTransfer(uint32_t from, uint32_t to )
     ********************************************************************************/
   void DebugOutbufGetPtrs(void)
   {
-    store_hexXXXX(o.rdptr);
+    store_hexXXXX(o0.rdptr);
     store_chr('/');
-    store_hexXXXX(o.wrptr);
+    store_hexXXXX(o0.wrptr);
     store_chr(' ');
   }
 #endif
@@ -168,14 +168,14 @@ static void Debug_OutputTransfer(uint32_t from, uint32_t to )
  * - increment txptr
  * - check for wraparound and continue transfer in case of wraparound 
  */
-void DebugOutputCompleteCB ( uint32_t size )
+static void DebugOutputCompleteCB ( uint32_t size )
 {
-  bOngoingTransfer = 0;
-  o.rdptr = CBUFPTR_INCR(o, rdptr, size);
+  bOngoingTransfer0 = 0;
+  o0.rdptr = CBUFPTR_INCR(o0, rdptr, size);
 
   /* If we kept in mind an delayed flush, initiate it now */
-  if ( bDelayedFlush ) {
-    bDelayedFlush = 0;
+  if ( bDelayedFlush0 ) {
+    bDelayedFlush0 = 0;
     TaskNotify(TASK_LOG);
   }
 
@@ -188,11 +188,11 @@ void task_handle_out(uint32_t arg)
     UNUSED(arg);
    
    /* Don't flush when empty */
-   if ( CBUF_EMPTY(o) ) return;
+   if ( CBUF_EMPTY(o0) ) return;
 
    /* Check for ongoing transfer. If so, keep in mind to flush afterwards */ 
-   if ( bOngoingTransfer ) {
-     bDelayedFlush = 1;
+   if ( bOngoingTransfer0 ) {
+     bDelayedFlush0 = 1;
      return;
    }
 
@@ -200,11 +200,11 @@ void task_handle_out(uint32_t arg)
    * If the buffer content wraps around, only transfer up to the end of the circular buffer
    * and keep in mind to transfer from begin later
    */
-  if ( CBUF_WRAPAROUND(o) ) {
-     bDelayedFlush = 1;
-     Debug_OutputTransfer(o.rdptr, OUTBUF_SIZE );
+  if ( CBUF_WRAPAROUND(o0) ) {
+     bDelayedFlush0 = 1;
+     Debug_OutputTransfer(o0.rdptr, OUTBUF0_SIZE );
    } else {
-     Debug_OutputTransfer(o.rdptr, o.wrptr );
+     Debug_OutputTransfer(o0.rdptr, o0.wrptr );
    }
 }
 
@@ -213,15 +213,15 @@ void task_handle_out(uint32_t arg)
  */
 /* int __putchar(int ch ) { */
 int __putchar(int ch, __printf_tag_ptr uu) {
-  if ( bExpandCrToCrlf && (char)ch == '\n' ) __putchar('\r', uu);
-  // if ( bExpandCrToCrlf && (char)ch == '\n' ) __putchar('\r'); */
+  if ( bExpandCrToCrlf0 && (char)ch == '\n' ) __putchar('\r', uu);
+  // if ( bExpandCrToCrlf0 && (char)ch == '\n' ) __putchar('\r'); */
 
   /*
    * - if there is room left in outbuf, copy character to outbuf and start transfer, if character is '\n'
    * - otherwise replace the last written character with * to indicate overflow and start transfer
    */
 
-  if ( !CircBuff_Put(&o, ch ) ) {
+  if ( !CircBuff_Put(&o0, ch ) ) {
       TaskNotify(TASK_LOG);
   } else { 
     if ( ch == '\n') {
@@ -238,7 +238,7 @@ int __putchar(int ch, __printf_tag_ptr uu) {
 * @param  UartCOMx: UART handle
 * @retval None
 */
-void Debug_RxCharAvailCB(void *param) 
+void Debug_RxCharAvailCB(void) 
 {
     ProfilerPush(JOB_IRQ_UART);
     TaskNotify(TASK_COM);
@@ -248,13 +248,13 @@ void Debug_RxCharAvailCB(void *param)
 
 bool task_init_io(void) 
 {
-    CircBuff_Init         (&o, OUTBUF_SIZE, outbuf);
-    LinBuff_Init          (&i, INBUF_SIZE,  inbuf );
-    bExpandCrToCrlf = true;
+    CircBuff_Init         (&o0, OUTBUF0_SIZE, outbuf);
+    LinBuff_Init          (&i0, INBUF0_SIZE,  inbuf );
+    bExpandCrToCrlf0 = true;
     uart_setup_dma_channel();
-    stdio_set_chars_available_callback(Debug_RxCharAvailCB, NULL);
+    uart0_set_rxchars_callback(Debug_RxCharAvailCB);
 
-    stdio_printf("Running on core %d, redirecting stdout to Uart%d\n", pico_get_coreID(),PICO_DEFAULT_UART);
+    printf("Running on core %d, redirecting stdout to Uart%d\n", pico_get_coreID(),CORE0_UART);
 }
 
 void Interpret_line(LinBuffT *inbuf);
@@ -269,15 +269,15 @@ void DebugHandleInputChar ( unsigned char ch )
 
     /* Del = remove last character */
     if ( ch == 0x07f ) { 
-      LBUF_DEL(i);
+      LBUF_DEL(i0);
     } else {
       /* store character, if not '\r' */
       if ( ch == '\r' ) { ch='\n'; }
       if ( ( ch == '\n' || ch == 0x04 ) ) { 
           /* CR or CTRl-D: interpret input */
-          Interpret_line(&i);
+          Interpret_line(&i0);
       } else {
-          LinBuff_Putc(&i, ch);
+          LinBuff_Putc(&i0, ch);
       }
     }
 }
@@ -289,14 +289,15 @@ void task_handle_com( uint32_t param)
 {
   #define MAX_INBUF 4
   #define TIMEOUT_US  4
-  char inbuf[MAX_INBUF];
+  // char inbuf[MAX_INBUF];
+  char c;
   int rc,i;
   /* read input characters until there are no more */
   do {
-    rc = stdio_getchar_timeout_us(0);
+    rc = uart0_in_chars(&c, 1);
     /* rc < 0 -> no more characters */
     if (rc < 0) break;
-    DebugHandleInputChar((unsigned char)rc);
+    DebugHandleInputChar((unsigned char)c);
   }while(1);
 }
 
@@ -325,7 +326,7 @@ void dbg_printf( const char* format, ... ) {
         uint8_t Console_Write(const char *data, uint32_t len )
         {
             /* write ti buffer and start transfer, if full */
-            if ( CircBuff_PutStr(&o, (uint8_t *)data, len ) < len )
+            if ( CircBuff_PutStr(&o0, (uint8_t *)data, len ) < len )
                 TaskNotify(TASK_LOG);
 
             return true;
@@ -337,8 +338,8 @@ void dbg_printf( const char* format, ... ) {
          *****************************************************************************/
         void Console_CRLF(void)
         {
-            if ( bExpandCrToCrlf ) CircBuff_Put(&o, '\r');
-            CircBuff_Put(&o, '\n');
+            if ( bExpandCrToCrlf0 ) CircBuff_Put(&o0, '\r');
+            CircBuff_Put(&o0, '\n');
             TaskNotify(TASK_LOG);
         }
 

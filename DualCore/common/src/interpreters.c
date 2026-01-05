@@ -948,23 +948,19 @@ bool Settings(char *cmdline, size_t len, const void * arg )
 
   return true;
 }
-
-#include "pico/multicore.h"
-
-void Start_Core1(uint32_t launch)
-{
-  uint32_t *core1 = ( uint32_t* ) 0x10100000;
-  typedef void (*entryfn) ( void );
-  entryfn entry = (entryfn)*(core1+1);
-  uint32_t *sp = (uint32_t *)*core1;
-  uint32_t vectors = ( uint32_t)core1;
-  printf("Core1 Start = 0x%08x, SP=0x%08x\n", entry, sp );
-  if ( launch > 0 ) {
-    multicore_launch_core1_raw (entry, sp, vectors);
-    printf("Core1 Started...\n");
+#ifdef RP2040_M0_0
+  #include "system/ipc.h"
+  void main_core1(void);
+  void Start_Core1(uint32_t launch)
+  {
+    IPC_entryfn startfn = main_core1;
+    printf("Core1 Start = 0x%08x\n", startfn);
+    if ( launch > 0 ) {
+     IPC_StartCore1 (startfn);
+      printf("Core1 Started...\n");
+    }
   }
-}
-
+#endif
 /*********************************************************************************
   * @brief  MainMenu
   *         
@@ -974,6 +970,7 @@ static bool MainMenu(char *cmdline, size_t len, const void * arg )
 {
     char *word;
     size_t wordlen;
+    uint32_t val;
 
     UNUSED(cmdline); UNUSED(len);
     switch((uint32_t)arg) {
@@ -992,6 +989,7 @@ static bool MainMenu(char *cmdline, size_t len, const void * arg )
         case 1:
             Dump_VersionInfo();
             break;
+#ifdef RP2040_M0_0
         case 2:
             if ( CMD_argc() < 1 ) {
               printf("Usage: 'Start 1 {0|1{} - 1=Start Core, 0=StartInfo of Core1\n");
@@ -1000,6 +998,18 @@ static bool MainMenu(char *cmdline, size_t len, const void * arg )
             CMD_get_one_word( &word, &wordlen );
             Start_Core1(CMD_to_number ( word, wordlen ) );
             break;
+        case 3:
+            if ( CMD_argc() < 1 ) {
+              printf("Usage: 'FIFO Send <x> - send <x> to Core1\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            val = CMD_to_number ( word, wordlen );
+            IPC_SignalCore0to1();
+            printf("%d sent to Core1\n", val);
+              
+            break;
+#endif
         default:
             DEBUG_PUTS("MainMenu: command not implemented");
             return false;
@@ -1030,7 +1040,10 @@ static const CommandSetT cmdBasic[] = {
   { "Level",           ctype_fn,  .exec.fn = MainMenu,        VOID(0),  "Set Debuglevel"  },
 #endif
   { "Version",         ctype_fn,  .exec.fn = MainMenu,        VOID(1),  "Show version info"  },
+#ifdef RP2040_M0_0
   { "StartCore1 {0|1}",ctype_fn,  .exec.fn = MainMenu,        VOID(2),  "Start core 1"  },
+  { "Send Core1 <x>"  ,ctype_fn,  .exec.fn = MainMenu,        VOID(3),  "Send <x> to core 1"  },
+#endif
 #if defined(USE_ADC1)
   { "ADC"    ,         ctype_sub, .exec.sub = &mdlADC,         0,       "ADC submenu" },
 #endif

@@ -242,7 +242,7 @@ start:
   ldr r1, =__ctors_end__
 ctor_loop:
   cmp r0, r1
-  beq ctor_end
+   beq ctor_end
   ldr r2, [r0]
   adds r0, #4
   push {r0-r1}  

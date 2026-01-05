@@ -2,12 +2,13 @@
 <session>
  <Bookmarks/>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
-  <BreakpointListItem trigger="" line="127" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" stopAll="false" group="Breakpoints" type="Breakpoint" state="4" filename="RP2040_Startup.s" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="140" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" stopAll="false" group="Breakpoints" type="Breakpoint" state="2" filename="../common/src/boot/RP2040_Startup.s" useHWbreakpoint="false"/>
+  <Exceptions>
+   <Group group="V6M Exceptions" set="HardFault;Reset"/>
+  </Exceptions>
  </Breakpoints>
  <ExecutionProfileWindow/>
  <FrameBuffer>
-  <FrameBufferWindow width="0" keepAspectRatio="0" zoomToFitWindow="0" addressSpace="" format="0" height="0" autoEvaluate="0" scaleFactor="1" refreshPeriod="0" name="DualCore-Core0_THUMB Debug" addressText="" accessByDisplayWidth="0"/>
+  <FrameBufferWindow width="0" keepAspectRatio="0" zoomToFitWindow="0" showGrid="0" addressSpace="" format="0" height="0" autoEvaluate="0" scaleFactor="1" refreshPeriod="0" name="DualCore-Core0_THUMB Debug" addressText="" accessByDisplayWidth="0"/>
  </FrameBuffer>
  <Memory1>
   <MemoryWindow addressSpace="" dataSize="1" autoEvaluate="0" viewMode="0" viewType="4" addressOrder="0" columnsText="" refreshPeriod="0" name="DualCore-Core0_THUMB Debug" sizeText="" addressText="0xFFFFFB0"/>
@@ -27,11 +28,21 @@
   <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;CMSIS Files"/>
   <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Documentation"/>
   <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Script Files"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;SDK Files"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;SDK Files;Basic"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;SDK Files;Common"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;SDK Files;RP2_Common"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;SDK Files;RP2_Common;hardware_uart"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;SDK Files;RP2_Common;pico_stdio_uart"/>
   <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files"/>
   <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;inc"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;inc;debug"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;inc;dev"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;inc;system"/>
   <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;inc;task"/>
   <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;src"/>
   <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;src;debug"/>
+  <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;src;dev"/>
   <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;src;system"/>
   <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;Source Files;src;task"/>
   <ProjectSessionItem path="DualCore-Core0;DualCore-Core0;System Files"/>
@@ -56,7 +67,11 @@
   <Trace enabled="Yes"/>
  </TraceWindow>
  <Watch1>
-  <Watches active="1" update="Never"/>
+  <Watches active="1" update="Never">
+   <Watchpoint expression="lock" name="lock" radix="-1" linenumber="265" filename="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_sync_spin_lock/include/hardware/sync/spin_lock.h"/>
+   <Watchpoint expression="*lock" name="*lock" radix="-1" linenumber="265" filename="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_sync_spin_lock/include/hardware/sync/spin_lock.h"/>
+   <Watchpoint expression="core" name="core" radix="-1" linenumber="11" filename="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/common/pico_sync/lock_core.c"/>
+  </Watches>
  </Watch1>
  <Watch2>
   <Watches active="0" update="Never"/>
@@ -68,25 +83,45 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="242" useTextEdit="1" folds0="95" path="Core0.hzp" left="0" top="111" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="111" useTextEdit="1" path="main.c" left="0" top="48" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="212" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_runtime_init/runtime_init.c" left="0" top="157" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="156" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_runtime_init/runtime_init_clocks.c" left="0" top="93" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="45" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_runtime/runtime.c" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="139" useTextEdit="1" path="../common/src/boot/RP2040_Startup.s" left="0" top="76" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="272" useTextEdit="1" path="../common/src/boot/thumb_crt0.s" left="0" top="209" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="60" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/targets/RP2040/CMSIS/Device/Source/system_RP2040.c" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="203" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_clib_interface/newlib_interface.c" left="0" top="142" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="18" y="9" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_sync_spin_lock/sync_spin_lock.c" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="46" y="23" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/common/pico_sync/mutex.c" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="78" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/common/pico_time/time.c" left="0" top="43" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="19" y="85" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_time_adapter/include/pico/time_adapter.h" left="0" top="30" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="43" y="179" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_timer/include/hardware/timer.h" left="0" top="135" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="118" useTextEdit="1" path="main.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="182" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_runtime_init/runtime_init.c" left="0" top="115" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="39" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_runtime_init/runtime_init_clocks.c" left="0" top="5" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="38" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_runtime/runtime.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="21" y="130" useTextEdit="1" path="../common/src/boot/RP2040_Startup.s" left="0" top="60" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="255" useTextEdit="1" path="../common/src/boot/thumb_crt0.s" left="0" top="207" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="9" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_sync_spin_lock/sync_spin_lock.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="83" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/common/pico_time/time.c" left="0" top="43" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="86" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_time_adapter/include/pico/time_adapter.h" left="0" top="30" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="43" y="179" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_timer/include/hardware/timer.h" left="0" top="138" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="667" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_irq/irq.c" left="0" top="632" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="67" y="9" useTextEdit="1" path="RP2040_M0_0_MemoryMap.xml" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="81" y="34" useTextEdit="1" path="flash_placement2040.xml" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="65" y="16" useTextEdit="1" path="flash_placement2040.xml" left="23" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="138" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_clocks/clocks.c" left="0" top="101" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../common/include/task/minitask.h" left="0" selected="1" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="23" useTextEdit="1" path="../common/include/task/minitask.h" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="15" y="91" useTextEdit="1" path="../common/src/system/ipc.c" left="0" top="51" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="22" y="28" useTextEdit="1" path="../common/include/system/ipc.h" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="29" y="1007" useTextEdit="1" path="../common/src/interpreters.c" left="0" top="960" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="333" useTextEdit="1" path="../common/src/boot/RP2040_VectorsSDK.s" left="0" top="268" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="286" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_stdio/stdio.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="33" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_multicore/multicore.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="111" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_sync/include/hardware/sync.h" left="0" top="77" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="191" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_multicore/include/pico/multicore.h" left="0" top="149" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="4" y="256" useTextEdit="1" path="../common/src/system/debug_io.c" left="0" top="255" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="30" y="76" useTextEdit="1" path="../common/src/system/status.c" left="0" top="27" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="265" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_sync_spin_lock/include/hardware/sync/spin_lock.h" left="0" top="248" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="147" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/common/pico_time/include/pico/time.h" left="0" top="112" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="196" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_clib_interface/newlib_interface.c" left="0" top="142" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="35" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/common/pico_sync/mutex.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="23" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_sync/sync.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="11" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/common/pico_sync/lock_core.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="22" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_timer/timer.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="9" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/common/hardware_claim/claim.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../common/src/debug/debug_helper.c" left="0" top="144" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="12" y="33" useTextEdit="1" path="../common/include/debug/debug_helper.h" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="6" y="96" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_stdio_uart/stdio_uart.c" left="0" top="81" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="18" y="15" useTextEdit="1" path="../common/src/dev/uart.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="35" y="20" useTextEdit="1" path="../common/include/dev/uart.h" left="0" selected="1" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="8" y="178" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_uart/include/hardware/uart.h" left="0" top="140" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="41" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_uart/uart.c" left="0" top="30" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="DualCore-Core0" fileDialogDefaultFilter="*.c" autoConnectTarget="CMSIS-DAP" buildConfiguration="THUMB Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="" debugSearchPath="" autoConnectCapabilities="388479"/>
+ <ARMCrossStudioWindow activeProject="DualCore-Core0" fileDialogDefaultFilter="*.c" autoConnectTarget="CMSIS-DAP" buildConfiguration="THUMB Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="E:/GIT-Repos/RaspiPico/DualCore/common/src/dev" debugSearchPath="" autoConnectCapabilities="388479"/>
 </session>
