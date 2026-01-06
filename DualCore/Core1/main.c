@@ -10,9 +10,12 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "system/status.h"
+#include "system/ipc.h"
 #include "system/profiling.h"
 #include "task/minitask.h"
 #include "hardware/sync.h"
+#include "dev/uarts.h"
+#include "debug/debug_helper.h"
 
 #include <stdlib.h>
 
@@ -102,16 +105,21 @@ void lv_example_anim_2(void);
   #define spi_init_all() 
 #endif
 
-
-int main() {
-      stdio_puts("Before alarm pool init");
-      alarm_pool_init_default();
-      stdio_puts("Before stdio init");
-      stdio_init_all();
-    #ifdef RP2040_M0_0  
-      spi_init_all();
-      GC9A01_hard_reset();
+#if defined(RP2040_M0_0)
+int main(void) 
+{
+    IPC_Init_Core0();
+    alarm_pool_init_default();
+    #if CORE0_UART == 0
+      uart0_init();
+    #elif CORE0_UART == 1
+      uart1_init();      
+    #else
+      #error "No debug uart assigned"
     #endif
+    spi_init_all();
+    GC9A01_hard_reset();
+
     ProfilerInitTo(JOB_TASK_INIT);
 
     Init_DefineTasks();
@@ -128,9 +136,7 @@ int main() {
     ProfilerSwitchTo(JOB_TASK_MAIN);  
 
     cnt = 0;
-    #ifdef RP2040_M0_0  
-      pin_toggle_nowait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 15 );
-    #endif
+    pin_toggle_nowait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 15 );
     while (true) {
 //        stdio_putchar('c');
 //        stdio_printf("%06d Hello, world!\n", cnt++);
@@ -142,3 +148,21 @@ int main() {
         }
     }
 }
+#elif defined(RP2040_M0_1)
+
+int main(void) 
+{
+  pin_toggle_nowait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 15 );
+  IPC_Init_Core1();
+  #if CORE0_UART == 0
+    uart0_init();
+  #elif CORE0_UART == 1
+    uart1_init();      
+  #else
+    #error "No debug uart assigned"
+  #endif
+  DEBUG_PUTS("Core1 up and running.");
+  __wfi();
+
+}
+#endif

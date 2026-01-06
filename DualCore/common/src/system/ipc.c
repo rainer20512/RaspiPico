@@ -20,6 +20,7 @@
 const uint32_t MUTEX_LOCK_TMO = 2000;
 
 /* Stack for Core1 */
+
 static uint32_t stack_core1[CORE1_STACKSIZE/4];
 
 /* Mutexes for both directions of communication

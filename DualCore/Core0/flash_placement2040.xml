@@ -2,7 +2,7 @@
 <Root name="Flash Section Placement">
   <MemorySegment name="$(FLASH_NAME:FLASH);FLASH1">
     <ProgramSection alignment="4" load="Yes" name=".boot" />
-    <ProgramSection alignment="0x100" load="Yes" name=".vectors" />
+    <ProgramSection alignment="0x100" load="Yes" name=".vectorscore0" address_symbol="__vectors_start__" end_symbol="__vectors_end__" />
     <ProgramSection alignment="4" load="Yes" name=".init" />
     <ProgramSection alignment="4" load="Yes" name=".init_rodata" />
     <ProgramSection alignment="4" load="Yes" name=".reset" />

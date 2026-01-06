@@ -2,7 +2,7 @@
 <root name="RP2040_M1_1">
   <MemorySegment access="ReadOnly" name="ROM"   size="0x00004000" start="0x00000000" />
   <!-- Raspbery Pi Pico as 2MB Flash on board, which is divided equally btw. cores --> 
-  <MemorySegment access="ReadOnly" name="BOOT2" size="0x00000200" start="0x10000000" />
+  <MemorySegment access="ReadOnly" name="BOOT2" size="0x00000100" start="0x10000000" />
   <MemorySegment access="ReadOnly" name="FLASH" size="0x00100000" start="0x10100000" />
   <!-- Main RAM is 256k, which is divided equally btw. cores --> 
   <MemorySegment access="Read/Write" name="RAM" size="0x00020000" start="0x20020000" />

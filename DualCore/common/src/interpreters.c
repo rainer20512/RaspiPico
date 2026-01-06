@@ -949,11 +949,14 @@ bool Settings(char *cmdline, size_t len, const void * arg )
   return true;
 }
 #ifdef RP2040_M0_0
+  #define CORE1_VECTORTABLE   0x10100000
   #include "system/ipc.h"
   void main_core1(void);
   void Start_Core1(uint32_t launch)
   {
-    IPC_entryfn startfn = main_core1;
+    uint32_t *c1vectors = (uint32_t *)CORE1_VECTORTABLE;
+    /* First word is stack, second word is Reset_Vector */   
+    IPC_entryfn startfn = (IPC_entryfn)c1vectors[1];
     printf("Core1 Start = 0x%08x\n", startfn);
     if ( launch > 0 ) {
      IPC_StartCore1 (startfn);

@@ -21,11 +21,17 @@
 #define PICO_DEFAULT_UART1_RX_PIN 5
 #define UART1_BAUDRATE            115200
 
-#ifndef CORE0_UART
-  #error "UART for Core0 is not set"
+#ifdef RP2040_M0_0
+  #ifndef CORE0_UART
+    #error "UART for Core0 is not set"
+  #endif
+#else
+  #ifndef CORE0_UART
+    #error "UART for Core1 is not set"
+  #endif
 #endif
 
-#define CORE0_UART_INSTANCE()     (__CONCAT(uart,CORE0_UART))
+#define CORE0_UART_INSTANCE()     __CONCAT(uart,CORE0_UART)
 
 #if USE_UART0 > 0
   void uart0_init                   (void);

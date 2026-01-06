@@ -35,7 +35,11 @@ pico_default_asm_setup
 #warning PICO_NO_STORED_VECTOR_TABLE is no longer used. PICO_MINIMAL_STORED_VECTOR_TABLE is not identical but usually serves the same purpose
 #endif
 
-.section .vectors, "ax"
+#ifdef RP2040_M0_1
+.section .vectorscore1, "ax"
+#else
+.section .vectorscore0, "ax"
+#endif
 .align 2
 
 
