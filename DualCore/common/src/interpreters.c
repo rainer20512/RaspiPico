@@ -951,19 +951,22 @@ bool Settings(char *cmdline, size_t len, const void * arg )
 #ifdef RP2040_M0_0
   #define CORE1_VECTORTABLE   0x10100000
   #include "system/ipc.h"
-  void main_core1(void);
   void Start_Core1(uint32_t launch)
   {
-    uint32_t *c1vectors = (uint32_t *)CORE1_VECTORTABLE;
+    uint32_t * c1vectors = (uint32_t *)CORE1_VECTORTABLE;
     /* First word is stack, second word is Reset_Vector */   
+    uint32_t sp = c1vectors[0];
     IPC_entryfn startfn = (IPC_entryfn)c1vectors[1];
-    printf("Core1 Start = 0x%08x\n", startfn);
+
+    printf("Core1 Start = 0x%08x, SP=0x%08x\n", startfn,sp);
     if ( launch > 0 ) {
-     IPC_StartCore1 (startfn);
+     IPC_StartCore1 (startfn, (uint32_t*)sp, CORE1_VECTORTABLE);
       printf("Core1 Started...\n");
     }
   }
 #endif
+
+void pico_active_wait ( uint32_t ticks );
 /*********************************************************************************
   * @brief  MainMenu
   *         
@@ -1013,6 +1016,17 @@ static bool MainMenu(char *cmdline, size_t len, const void * arg )
               
             break;
 #endif
+        case 4:
+            if ( CMD_argc() < 1 ) {
+              printf("Usage: 'Wait <x> - active wait <x> ticks\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            val = CMD_to_number ( word, wordlen );
+            printf("Going to wait %d cycles\n", val);
+            pico_active_wait(val);
+            printf("Done...\n", val);
+            break;
         default:
             DEBUG_PUTS("MainMenu: command not implemented");
             return false;
@@ -1046,6 +1060,7 @@ static const CommandSetT cmdBasic[] = {
 #ifdef RP2040_M0_0
   { "StartCore1 {0|1}",ctype_fn,  .exec.fn = MainMenu,        VOID(2),  "Start core 1"  },
   { "Send Core1 <x>"  ,ctype_fn,  .exec.fn = MainMenu,        VOID(3),  "Send <x> to core 1"  },
+  { "ActiveWait <x>"  ,ctype_fn,  .exec.fn = MainMenu,        VOID(4),  "ActiveWait <x> cycles"  },
 #endif
 #if defined(USE_ADC1)
   { "ADC"    ,         ctype_sub, .exec.sub = &mdlADC,         0,       "ADC submenu" },

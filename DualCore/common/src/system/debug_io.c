@@ -29,11 +29,12 @@
 
 #include "system/circbuf.h"
 #include "system/util.h"
+#include "system/profiling.h"
 
 #include "dev/uarts.h"
 #include "pico/time.h"
 
-
+#define USE_UART_DMA  0
 /* Private define ------------------------------------------------------------*/
 
 /* size of RX/TX buffers, sizes must be power of two  */
@@ -73,57 +74,59 @@ static void DebugOutputCompleteCB ( uint32_t size );
 #define PFX CONCAT(DREQ_UART,CORE0_UART)
 #define UART_TX_DMA_CHANNEL CONCAT(PFX,_TX)
 
-void DMA_TX_handler(void)
-{
-  ProfilerPush(JOB_IRQ_DMA);
-  if (dma_channel_get_irq0_status(uart_dma_chan)) {
-    dma_channel_acknowledge_irq0 (uart_dma_chan);
-    DebugOutputCompleteCB ( tx_transfer_size );
+#if USE_UART_DMA > 0
+  void DMA_TX_handler(void)
+  {
+    ProfilerPush(JOB_IRQ_DMA);
+    if (dma_channel_get_irq0_status(uart_dma_chan)) {
+      dma_channel_acknowledge_irq0 (uart_dma_chan);
+      DebugOutputCompleteCB ( tx_transfer_size );
+    }
+    ProfilerPop();
   }
-  ProfilerPop();
-}
 
-static bool uart_setup_dma_channel(void)
-{
-    uart_dma_chan = dma_claim_unused_channel(true);
-    dma_channel_config c = dma_channel_get_default_config(uart_dma_chan);
-    channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
-    channel_config_set_write_increment(&c, false);
-    channel_config_set_dreq(&c, UART_TX_DMA_CHANNEL);
+  static bool uart_setup_dma_channel(void)
+  {
+      uart_dma_chan = dma_claim_unused_channel(true);
+      dma_channel_config c = dma_channel_get_default_config(uart_dma_chan);
+      channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
+      channel_config_set_write_increment(&c, false);
+      channel_config_set_dreq(&c, UART_TX_DMA_CHANNEL);
 
-    dma_channel_configure(
-        uart_dma_chan,
-        &c,
-        &uart_get_hw(CORE0_UART_INSTANCE())->dr, // Write address (only need to set this once)
-        NULL,             // read address will be set later
-        0,                // Transfer size will be set later
-        false             // Don't start yet
-    );
+      dma_channel_configure(
+          uart_dma_chan,
+          &c,
+          &uart_get_hw(CORE0_UART_INSTANCE())->dr, // Write address (only need to set this once)
+          NULL,             // read address will be set later
+          0,                // Transfer size will be set later
+          false             // Don't start yet
+      );
 
-    // Tell the DMA to raise IRQ line 0 when the channel finishes a block
-    dma_channel_set_irq0_enabled(uart_dma_chan, true);
+      // Tell the DMA to raise IRQ line 0 when the channel finishes a block
+      dma_channel_set_irq0_enabled(uart_dma_chan, true);
 
-    // Configure the processor to run dma_handler() when DMA IRQ 0 is asserted
-    irq_set_exclusive_handler(DMA_IRQ_0, DMA_TX_handler);
-    irq_set_enabled(DMA_IRQ_0, true);
-}
-
-static void UsartStartTx(uint8_t *data, uint32_t txSize)
-{
-  /* setup and start dma */
-  dma_channel_set_read_addr   (uart_dma_chan, data, false);
-  dma_channel_set_trans_count (uart_dma_chan, txSize, true);
-}
- 
-/*
-static void UsartStartTx(uint8_t *data, uint32_t txSize)
-{
-  for ( uint32_t i=0; i< txSize; i++ ) {
-    stdio_putchar(*(data++));
+      // Configure the processor to run dma_handler() when DMA IRQ 0 is asserted
+      irq_set_exclusive_handler(DMA_IRQ_0, DMA_TX_handler);
+      irq_set_enabled(DMA_IRQ_0, true);
   }
-  DebugOutputCompleteCB ( txSize );
-}
-*/
+
+  static void UsartStartTx(uint8_t *data, uint32_t txSize)
+  {
+    /* setup and start dma */
+    dma_channel_set_read_addr   (uart_dma_chan, data, false);
+    dma_channel_set_trans_count (uart_dma_chan, txSize, true);
+  }
+#else 
+  static void UsartStartTx(uint8_t *data, uint32_t txSize)
+  {
+    #if CORE0_UART == 1
+        uart1_out_chars((const char *)data, txSize );
+    #else
+        uart0_out_chars((const char *)data, txSize );
+    #endif
+    DebugOutputCompleteCB ( txSize );
+  }
+#endif
 
 /* Start transfer to output device */
 static void Debug_OutputTransfer(uint32_t from, uint32_t to )
@@ -232,6 +235,7 @@ int __putchar(int ch, __printf_tag_ptr uu) {
   return ch;
 }
 
+extern void LL_Blink(uint32_t nrofblinks, uint32_t delayms );
 
 /**
 * @brief  Callback when input character(s) available
@@ -240,6 +244,9 @@ int __putchar(int ch, __printf_tag_ptr uu) {
 */
 void Debug_RxCharAvailCB(void) 
 {
+    #if RP2040_M0_1
+      LL_Blink(8, 80);
+    #endif
     ProfilerPush(JOB_IRQ_UART);
     TaskNotify(TASK_COM);
     ProfilerPop();
@@ -251,11 +258,15 @@ bool task_init_io(void)
     CircBuff_Init         (&o0, OUTBUF0_SIZE, outbuf);
     LinBuff_Init          (&i0, INBUF0_SIZE,  inbuf );
     bExpandCrToCrlf0 = true;
-    uart_setup_dma_channel();
+    #if USE_UART_DMA > 0
+        uart_setup_dma_channel();
+    #endif
+    #if 0
     #if CORE0_UART == 0
       uart0_set_rxchars_callback(Debug_RxCharAvailCB);
     #elif CORE0_UART == 1
       uart1_set_rxchars_callback(Debug_RxCharAvailCB);
+    #endif
     #endif
     printf("Running on core %d, redirecting stdout to Uart%d\n", pico_get_coreID(),CORE0_UART);
 }
@@ -309,6 +320,18 @@ void task_handle_com( uint32_t param)
 }
 
 
+/*
+ * Returns true, if input chars are available
+ */
+bool rx_chars_available(void)
+{
+  #if CORE0_UART == 0
+    return uart0_rxchars_available();
+  #elif CORE0_UART == 1
+    return uart1_rxchars_available();
+  #endif
+
+}
 
 void dbg_printf( const char* format, ... ) {
     va_list args;

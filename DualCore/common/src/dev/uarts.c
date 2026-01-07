@@ -19,10 +19,10 @@
  * Initialize an hardware uart with a specific baudrate and 8N1
  * No IRQs, no DMA
  *****************************************************************************/
-static void uart_init_full(struct uart_inst *uart, uint baud_rate, int tx_pin, int rx_pin) {
+static bool uart_init_full(struct uart_inst *uart, uint baud_rate, int tx_pin, int rx_pin) {
     if (tx_pin >= 0) gpio_set_function((uint)tx_pin, UART_FUNCSEL_NUM(uart, tx_pin));
     if (rx_pin >= 0) gpio_set_function((uint)rx_pin, UART_FUNCSEL_NUM(uart, rx_pin));
-    uart_init(uart, baud_rate);
+    return uart_init(uart, baud_rate);
 }
 
 #if USE_UART0 > 0
@@ -32,9 +32,9 @@ static void uart_init_full(struct uart_inst *uart, uint baud_rate, int tx_pin, i
   #define UART0_BAUDRATE PICO_DEFAULT_UART_BAUD_RATE
   #endif
 
-  void uart0_init(void)
+  bool uart0_init(void)
   {
-    uart_init_full(uart0, UART0_BAUDRATE, PICO_DEFAULT_UART0_TX_PIN, PICO_DEFAULT_UART0_RX_PIN);
+    return uart_init_full(uart0, UART0_BAUDRATE, PICO_DEFAULT_UART0_TX_PIN, PICO_DEFAULT_UART0_RX_PIN);
   }
 
   static void on_uart0_rx(void) {
@@ -78,6 +78,12 @@ static void uart_init_full(struct uart_inst *uart, uint baud_rate, int tx_pin, i
       }
       return i ? i : PICO_ERROR_NO_DATA;
   }
+
+  bool uart0_rxchars_available(void)
+  {
+    return uart_is_readable(uart0);
+  }
+
 #endif /* USE_UART0 */
 
 #if USE_UART1 > 0
@@ -87,9 +93,9 @@ static void (*rx1_chars_available_callback)(void) = NULL;
 #define UART1_BAUDRATE PICO_DEFAULT_UART_BAUD_RATE
 #endif
 
-void uart1_init(void)
+bool uart1_init(void)
 {
-  uart_init_full(uart1, UART1_BAUDRATE, PICO_DEFAULT_UART1_TX_PIN, PICO_DEFAULT_UART1_RX_PIN);
+  return uart_init_full(uart1, UART1_BAUDRATE, PICO_DEFAULT_UART1_TX_PIN, PICO_DEFAULT_UART1_RX_PIN);
 }
 
 
@@ -133,6 +139,11 @@ void uart1_init(void)
           uart_set_irqs_enabled(uart1, true, false);
       }
       return i ? i : PICO_ERROR_NO_DATA;
+  }
+
+  bool uart1_rxchars_available(void)
+  {
+    return uart_is_readable(uart1);
   }
 
 #endif /* USE_UART1 */

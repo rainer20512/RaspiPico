@@ -127,6 +127,12 @@ _start:
 #endif
 1:
 
+#ifdef RP2040_M0_1
+  movs r0,#2
+  movs r1,#250
+  bl LL_Blink
+#endif
+
   /* Copy initialized memory sections into RAM (if necessary). */
   ldr r0, =__data_load_start__
   ldr r1, =__data_start__
@@ -235,6 +241,7 @@ _start:
 #endif
 
   .type start, function
+  .extern LL_Blink
 start:
 
   /* Call constructors */
@@ -251,9 +258,18 @@ ctor_loop:
   b ctor_loop
 ctor_end:
 
+  movs r0,#2
+  movs r1,#250
+  bl LL_Blink
+
   /* RHB inserted: Runtime initialization */
   ldr r1, =runtime_init
   blx r1
+
+  movs r0,#4
+  movs r1,#250
+  bl LL_Blink
+
 
   .type __startup_complete, function
 __startup_complete:

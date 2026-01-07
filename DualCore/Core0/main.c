@@ -84,7 +84,7 @@ static uint32_t cnt;
 #include "dev/GC9A01.h"
 #include "dev/uarts.h"
 
-
+extern void LL_Blink(uint32_t nrofblinks, uint32_t delayms );
 void lv_init(void);
 void lv_example_anim_2(void);
 
@@ -104,18 +104,24 @@ void lv_example_anim_2(void);
   #define spi_init_all() 
 #endif
 
+bool rx_chars_available(void);
 
 int main() 
 {
+    bool ret;
+    LL_Blink(3,250);
+
     IPC_Init_Core0();
     alarm_pool_init_default();
     #if CORE0_UART == 0
-      uart0_init();
+      ret = uart0_init();
     #elif CORE0_UART == 1
-      uart1_init();      
+      ret =uart1_init();      
     #else
       #error "No debug uart assigned"
     #endif
+    if (!ret) LL_Blink(200,25);
+
     spi_init_all();
     GC9A01_hard_reset();
 
@@ -135,24 +141,16 @@ int main()
     ProfilerSwitchTo(JOB_TASK_MAIN);  
 
     cnt = 0;
-    pin_toggle_nowait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 15 );
+    // pin_toggle_nowait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 15 );
     while (true) {
-//        stdio_putchar('c');
-//        stdio_printf("%06d Hello, world!\n", cnt++);
+        if ( rx_chars_available() ) TaskNotify(TASK_COM);
         TaskRunAll();
         if (!TaskIsRunableTask() )  {
           ProfilerPush(JOB_SLEEP);
-          __wfi();
+          // __wfi();
           ProfilerPop();
         }
     }
 }
 
 
-void main_core1(void) 
-{
-  pin_toggle_nowait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 15 );
-  IPC_Init_Core1();
-  __wfi();
-
-}

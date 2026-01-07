@@ -42,6 +42,7 @@
 
   .global Reset_Handler
   .extern __vectors
+  .extern LL_Blink
 
   .section .init, "ax"
   .thumb_func
@@ -62,6 +63,13 @@ Reset_Handler:
   bics r0, r1
   mov sp, r0
 #endif
+  
+  /* Should work on Core1 */
+#ifdef RP2040_M0_1
+  movs r0,#2
+  movs r1,#250
+  bl LL_Blink
+#endif
 
 /* RHB inserted: Preset all RAM with an uniform pattern */
 #ifdef DO_RAM_PRESET
@@ -77,6 +85,8 @@ r00:
   str r2, [r0]
   adds r0, r0, #4
   b r00
+const:
+  .word RAM_PRESET_VALUE
 e00:
 /* RHB inserted: Scratch_X and _Y only inited by Core 0 */
 #ifdef RP2040_M0_0  
@@ -98,8 +108,6 @@ r02:
   adds r0, r0, #4
   b r02
 #endif
-const:
-  .word RAM_PRESET_VALUE
 e02:
 #endif
 /* RHB End of insertion */
@@ -138,5 +146,4 @@ e02:
 
   /* Jump to program start */
   b _start
-
 

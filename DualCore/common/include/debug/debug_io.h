@@ -28,7 +28,7 @@
 void task_handle_out(uint32_t arg);
 bool task_init_io(void);
 void task_handle_com( uint32_t param);
-// void dbg_printf( const char* format, ... );
+bool rx_chars_available(void);
 
 #if DEBUG_FEATURES > 0 && LOGTO_CONSOLE > 0
     uint8_t Console_Write(const char *data, uint32_t len );

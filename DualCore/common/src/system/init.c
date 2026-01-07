@@ -61,20 +61,14 @@ bool task_init_io     (void);
  *****************************************************************************/
 void Init_DefineTasks(void)
 {
+#ifdef RP2040_M0_0
   TaskRegisterTask(task_init_rtc, task_handle_rtc, TASK_RTC,      JOB_TASK_RTC,      "RTC task");
+#endif
   TaskRegisterTask(CMD_Init,      task_handle_com, TASK_COM,      JOB_TASK_DBGIO,    "Debug input");
   TaskRegisterTask(task_init_io,  task_handle_out, TASK_LOG,      JOB_TASK_DBGIO,    "Debug output");  
-#if USE_USB > 0
-  TaskRegisterTask(U2U_InitTask,  U2U_RunTask,     TASK_USBD,     JOB_TASK_USBD,     "U2U Traffic");
-#endif
+#ifdef RP2040_M0_0
   TaskRegisterTask(NULL,          task_periodic,   TASK_PERIODIC, JOB_TASK_PERIODIC, "periodic task");
-#if USE_LVGL > 0
-  TaskRegisterTask(task_init_lvgl, task_handle_lvgl, TASK_LVGL,    JOB_TASK_LVGL,     "LVGL task");
 #endif
-#if defined(USE_ADC1) || defined(USE_ADC2) || defined(USE_ADC3)
-  TaskRegisterTask(task_init_adc, task_handle_adc, TASK_ADC,      JOB_ADC,           "ADC task");
-#endif
-
 #if USE_LVGL > 0
   TaskRegisterTask(task_init_lvgl, task_handle_lvgl, TASK_LVGL,    JOB_TASK_LVGL,     "LVGL task");
 #endif

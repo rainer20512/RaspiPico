@@ -123,18 +123,19 @@ void IPC_Init_Core0(void)
 void IPC_Init_Core1(void)
 {
     SEND_msg1to0 = 1;
-    mutex_init(&m1to0);
+   // RHB ToDo mutex_init(&m1to0);
     irq_set_exclusive_handler(SIO_FIFO_IRQ_NUM(1), core1_sio_irq_handler);
     irq_set_enabled(SIO_FIFO_IRQ_NUM(1), true);
 }
 
-void IPC_StartCore1 ( IPC_entryfn entry )
+void IPC_StartCore1 ( IPC_entryfn entry, uint32_t *sp, uint32_t vector_table )
 {
   /* Bring core 1 to an well defined state */
   multicore_reset_core1();
 
   /* And start */
-  multicore_launch_core1_with_stack(entry, stack_core1, CORE1_STACKSIZE );
+  // multicore_launch_core1_with_stack(entry, stack_core1, CORE1_STACKSIZE );
+  multicore_launch_core1_raw (entry, sp, vector_table);
 }
 
 /*********************************************************************************

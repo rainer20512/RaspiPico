@@ -88,6 +88,7 @@ static uint32_t cnt;
 
 void lv_init(void);
 void lv_example_anim_2(void);
+extern void LL_Blink(uint32_t nrofblinks, uint32_t delayms );
 
 #if USE_SPI1 > 0 || USE_SPI0 > 0
   void spi_init_all ( void )
@@ -105,7 +106,7 @@ void lv_example_anim_2(void);
   #define spi_init_all() 
 #endif
 
-#if defined(RP2040_M0_0)
+#if 0
 int main(void) 
 {
     IPC_Init_Core0();
@@ -148,21 +149,54 @@ int main(void)
         }
     }
 }
-#elif defined(RP2040_M0_1)
+#endif
+
+bool rx_chars_available(void);
 
 int main(void) 
 {
-  pin_toggle_nowait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 15 );
-  IPC_Init_Core1();
-  #if CORE0_UART == 0
-    uart0_init();
-  #elif CORE0_UART == 1
-    uart1_init();      
-  #else
-    #error "No debug uart assigned"
-  #endif
-  DEBUG_PUTS("Core1 up and running.");
-  __wfi();
+    bool ret;
+    IPC_Init_Core1();
+    
+    #if CORE0_UART == 0
+      ret = uart0_init();
+    #elif CORE0_UART == 1
+      ret =uart1_init();      
+    #else
+      #error "No debug uart assigned"
+    #endif
+    if (!ret) LL_Blink(200,25);
 
-}
+    puts("Core1 up and running.");
+
+    ProfilerInitTo(JOB_TASK_INIT);
+
+    Init_DefineTasks();
+    LL_Blink(1,500);
+    TaskInitAll();
+    LL_Blink(2,500);
+
+#if UNIQUEID
+    check_fastrun ();
+    dump_unique_id();
 #endif
+#ifndef PICO_DEFAULT_LED_PIN
+  #error "No default LED pin!"
+#endif
+
+    ProfilerSwitchTo(JOB_TASK_MAIN);  
+
+    cnt = 0;
+    LL_Blink(8,50);
+    while (true) {
+        if ( rx_chars_available() ) TaskNotify(TASK_COM);
+ 
+        TaskRunAll();
+        if (!TaskIsRunableTask() )  {
+          ProfilerPush(JOB_SLEEP); 
+          // __wfi();
+          ProfilerPop();
+        } 
+    }
+}
+

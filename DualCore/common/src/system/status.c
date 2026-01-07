@@ -35,6 +35,17 @@ uint8_t pin_restore_cfg( uint8_t pin ) {
   bPinClaimed = 0;
 }
 
+/* active wait r/a 100 ms per tick */
+void pico_active_wait ( uint32_t ticks )
+{
+  uint32_t cnt;
+  while ( ticks-- ) {
+    for ( cnt = 0; cnt < 5000; cnt++) {
+      asm("mov r0,r0");
+    }
+  }
+}
+
 void pin_toggle_wait( uint8_t pin, uint32_t delay_ms, uint32_t cycles )
 {
   if ( !cycles || !delay_ms ) return;

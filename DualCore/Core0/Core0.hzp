@@ -306,6 +306,7 @@
           default_code_section=".boot"
           file_type="Assembly" />
       </file>
+      <file file_name="../common/src/boot/RP2040_LL_Blink.s" />
       <file file_name="RP2040_M0_0_MemoryMap.xml" />
       <file file_name="../common/src/boot/RP2040_Startup.s" />
       <file file_name="../common/src/boot/RP2040_VectorsSDK.s" />

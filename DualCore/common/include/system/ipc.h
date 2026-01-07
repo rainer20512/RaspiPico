@@ -22,7 +22,8 @@ typedef void (*IPC_entryfn) ( void );
 
 void IPC_Init_Core0     (void);
 void IPC_Init_Core1     (void);
-void IPC_StartCore1     ( IPC_entryfn entry );
+// void IPC_StartCore1     ( IPC_entryfn entry );
+void IPC_StartCore1     ( IPC_entryfn entry, uint32_t *sp, uint32_t vector_table );
 bool IPC_SignalCore0to1 ( void );
 bool IPC_SignalCore1to0 ( void );
 void IPC_AckCore0to1    ( uint32_t msgID ); 
