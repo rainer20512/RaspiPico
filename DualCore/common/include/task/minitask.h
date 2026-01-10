@@ -30,21 +30,15 @@
  */
 
 #define TASK_TMR              0
-#define TASK_USBD             1
-#define TASK_OW               2
+#define TASK_IPC0             1
+#define TASK_IPC1             2
 #define TASK_COM              3
 #define TASK_RTC              4
 #define TASK_LOG              5
-#define TASK_RFM              6
 #define TASK_PERIODIC         7
-#define TASK_EPD              8
 #define TASK_ADC              9
 #define TASK_STDIN            10
-#define TASK_XSPI             11
-#define TASK_LCD              12
 #define TASK_LVGL             13
-#define TASK_PULSE            20
-#define TASK_SEQUENCE         21
 #define TASK_THP              30
 
 /* functtion prototypes of Init and Run functions of task */

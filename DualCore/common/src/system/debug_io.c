@@ -34,7 +34,7 @@
 #include "dev/uarts.h"
 #include "pico/time.h"
 
-#define USE_UART_DMA  0
+#define USE_UART_DMA  1
 /* Private define ------------------------------------------------------------*/
 
 /* size of RX/TX buffers, sizes must be power of two  */
@@ -71,11 +71,12 @@ static void DebugOutputCompleteCB ( uint32_t size );
 #include "hardware/irq.h"
 #include "hardware/uart.h"
 
-#define PFX CONCAT(DREQ_UART,CORE0_UART)
+#define PFX CONCAT(DREQ_UART,DEBUG_UART)
 #define UART_TX_DMA_CHANNEL CONCAT(PFX,_TX)
 
 #if USE_UART_DMA > 0
-  void DMA_TX_handler(void)
+#if RP2040_M0_0 
+  void DMA_TX0_handler(void)
   {
     ProfilerPush(JOB_IRQ_DMA);
     if (dma_channel_get_irq0_status(uart_dma_chan)) {
@@ -84,10 +85,27 @@ static void DebugOutputCompleteCB ( uint32_t size );
     }
     ProfilerPop();
   }
+#endif
+
+#if RP2040_M0_1
+  void DMA_TX1_handler(void)
+  {
+    ProfilerPush(JOB_IRQ_DMA);
+    if (dma_channel_get_irq1_status(uart_dma_chan)) {
+      dma_channel_acknowledge_irq1 (uart_dma_chan);
+      DebugOutputCompleteCB ( tx_transfer_size );
+    }
+    ProfilerPop();
+  }
+#endif
+
 
   static bool uart_setup_dma_channel(void)
   {
       uart_dma_chan = dma_claim_unused_channel(true);
+      #if RP2040_M0_1
+      uart_dma_chan = dma_claim_unused_channel(true);
+      #endif
       dma_channel_config c = dma_channel_get_default_config(uart_dma_chan);
       channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
       channel_config_set_write_increment(&c, false);
@@ -96,18 +114,25 @@ static void DebugOutputCompleteCB ( uint32_t size );
       dma_channel_configure(
           uart_dma_chan,
           &c,
-          &uart_get_hw(CORE0_UART_INSTANCE())->dr, // Write address (only need to set this once)
+          &uart_get_hw(DEBUG_UART_INSTANCE())->dr, // Write address (only need to set this once)
           NULL,             // read address will be set later
           0,                // Transfer size will be set later
           false             // Don't start yet
       );
 
-      // Tell the DMA to raise IRQ line 0 when the channel finishes a block
-      dma_channel_set_irq0_enabled(uart_dma_chan, true);
-
-      // Configure the processor to run dma_handler() when DMA IRQ 0 is asserted
-      irq_set_exclusive_handler(DMA_IRQ_0, DMA_TX_handler);
-      irq_set_enabled(DMA_IRQ_0, true);
+      #if   RP2040_M0_0
+            // Tell the DMA to raise IRQ line 0 when the channel finishes a block
+            dma_channel_set_irq0_enabled(uart_dma_chan, true);
+            // Configure the processor to run dma_handler() when DMA IRQ 0 is asserted
+            irq_set_exclusive_handler(DMA_IRQ_0, DMA_TX0_handler);
+            irq_set_enabled(DMA_IRQ_0, true);
+      #elif RP2040_M0_1 || defined(CORE1_SIM)
+            // Tell the DMA to raise IRQ line 1 when the channel finishes a block
+            dma_channel_set_irq1_enabled(uart_dma_chan, true);
+            // Configure the processor to run dma_handler() when DMA IRQ 0 is asserted
+            irq_set_exclusive_handler(DMA_IRQ_1, DMA_TX1_handler);
+            irq_set_enabled(DMA_IRQ_1, true);
+      #endif
   }
 
   static void UsartStartTx(uint8_t *data, uint32_t txSize)
@@ -119,7 +144,7 @@ static void DebugOutputCompleteCB ( uint32_t size );
 #else 
   static void UsartStartTx(uint8_t *data, uint32_t txSize)
   {
-    #if CORE0_UART == 1
+    #if DEBUG_UART == 1
         uart1_out_chars((const char *)data, txSize );
     #else
         uart0_out_chars((const char *)data, txSize );
@@ -261,14 +286,12 @@ bool task_init_io(void)
     #if USE_UART_DMA > 0
         uart_setup_dma_channel();
     #endif
-    #if 0
-    #if CORE0_UART == 0
+    #if DEBUG_UART == 0
       uart0_set_rxchars_callback(Debug_RxCharAvailCB);
-    #elif CORE0_UART == 1
+    #elif DEBUG_UART == 1
       uart1_set_rxchars_callback(Debug_RxCharAvailCB);
     #endif
-    #endif
-    printf("Running on core %d, redirecting stdout to Uart%d\n", pico_get_coreID(),CORE0_UART);
+    printf("Running on core %d, redirecting stdout to Uart%d\n", pico_get_coreID(),DEBUG_UART);
 }
 
 void Interpret_line(LinBuffT *inbuf);
@@ -308,9 +331,9 @@ void task_handle_com( uint32_t param)
   int rc,i;
   /* read input characters until there are no more */
   do {
-    #if CORE0_UART == 0
+    #if DEBUG_UART == 0
       rc = uart0_in_chars(&c, 1);
-    #elif CORE0_UART == 1
+    #elif DEBUG_UART == 1
       rc = uart1_in_chars(&c, 1);
     #endif
     /* rc < 0 -> no more characters */
@@ -325,9 +348,9 @@ void task_handle_com( uint32_t param)
  */
 bool rx_chars_available(void)
 {
-  #if CORE0_UART == 0
+  #if DEBUG_UART == 0
     return uart0_rxchars_available();
-  #elif CORE0_UART == 1
+  #elif DEBUG_UART == 1
     return uart1_rxchars_available();
   #endif
 

@@ -111,9 +111,9 @@ int main(void)
 {
     IPC_Init_Core0();
     alarm_pool_init_default();
-    #if CORE0_UART == 0
+    #if DEBUG_UART == 0
       uart0_init();
-    #elif CORE0_UART == 1
+    #elif DEBUG_UART == 1
       uart1_init();      
     #else
       #error "No debug uart assigned"
@@ -155,26 +155,27 @@ bool rx_chars_available(void);
 
 int main(void) 
 {
+    LL_Blink(8,50);
     bool ret;
     IPC_Init_Core1();
+ 
     
-    #if CORE0_UART == 0
+    #if DEBUG_UART == 0
       ret = uart0_init();
-    #elif CORE0_UART == 1
+    #elif DEBUG_UART == 1
       ret =uart1_init();      
     #else
       #error "No debug uart assigned"
     #endif
-    if (!ret) LL_Blink(200,25);
+
+    if (!ret) LL_Blink(200,30);
 
     puts("Core1 up and running.");
 
     ProfilerInitTo(JOB_TASK_INIT);
 
     Init_DefineTasks();
-    LL_Blink(1,500);
     TaskInitAll();
-    LL_Blink(2,500);
 
 #if UNIQUEID
     check_fastrun ();
@@ -187,14 +188,12 @@ int main(void)
     ProfilerSwitchTo(JOB_TASK_MAIN);  
 
     cnt = 0;
-    LL_Blink(8,50);
+    LL_Blink(1,250);
     while (true) {
-        if ( rx_chars_available() ) TaskNotify(TASK_COM);
- 
         TaskRunAll();
         if (!TaskIsRunableTask() )  {
           ProfilerPush(JOB_SLEEP); 
-          // __wfi();
+          __wfi();
           ProfilerPop();
         } 
     }

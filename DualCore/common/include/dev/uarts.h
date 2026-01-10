@@ -22,16 +22,16 @@
 #define UART1_BAUDRATE            115200
 
 #ifdef RP2040_M0_0
-  #ifndef CORE0_UART
+  #ifndef DEBUG_UART
     #error "UART for Core0 is not set"
   #endif
 #else
-  #ifndef CORE0_UART
+  #ifndef DEBUG_UART
     #error "UART for Core1 is not set"
   #endif
 #endif
 
-#define CORE0_UART_INSTANCE()     __CONCAT(uart,CORE0_UART)
+#define DEBUG_UART_INSTANCE()     __CONCAT(uart,DEBUG_UART)
 
 #if USE_UART0 > 0
   bool uart0_init                   (void);

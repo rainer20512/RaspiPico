@@ -25,6 +25,8 @@ typedef enum ActiveJobEnum {
     JOB_TASK_TMR = 0,
     JOB_TASK_DBGIO,
     JOB_TASK_PERIODIC,
+    JOB_TASK_IPC0,
+    JOB_TASK_IPC1,
     JOB_TASK_RTC,
     JOB_TASK_INIT,
     JOB_TASK_MAIN,
@@ -36,9 +38,7 @@ typedef enum ActiveJobEnum {
 #endif
     JOB_ADC,
     JOB_SLEEP,
-    JOB_STOP0,
-    JOB_STOP1,
-    JOB_STOP2,
+    JOB_STOP,
     JOB_IRQ_UART,
     JOB_IRQ_SPI,
     JOB_IRQ_I2C,
@@ -58,6 +58,8 @@ typedef enum ActiveJobEnum {
     "TMR",          \
     "DEBUGIO",      \
     "PERIODIC",     \
+    "IPC0",         \
+    "IPC1",         \
     "RTC",          \
     "INIT",         \
     "MAIN",       
@@ -78,9 +80,7 @@ typedef enum ActiveJobEnum {
     JOBNAMES2     \
     "ADC",        \
     "SLEEP",      \
-    "STOP0",      \
-    "STOP1",      \
-    "STOP2",      \
+    "STOP",      \
     "IRQ_UART",   \
     "IRQ_SPI",    \
     "IRQ_I2C",    \

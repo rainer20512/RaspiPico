@@ -52,6 +52,7 @@
     <ProgramSection alignment="4" load="No" name=".scratch_x_run" />
   </MemorySegment>
   <MemorySegment name="SCRATCH_Y">
+    <ProgramSection alignment="4" load="No" name=".ipc_fixed" size="16" address_symbol="__ipcfixed_start" end_symbol="__ipcfixed_end"/>
     <ProgramSection alignment="4" load="No" name=".scratch_y_run" />
   </MemorySegment>
 </Root>

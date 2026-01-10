@@ -54,6 +54,7 @@ extern uint32_t         rtc_ms;        //!< \brief Date: Year (0-255) -> 2000 - 
 extern rtc_t            rtc;
 extern uint32_t         uptime_mins;
 
+uint32_t RTC_GetMs(void);
 
 void RTC_SetDateTime(uint8_t dd, uint8_t mm, uint8_t yy, uint8_t hr, uint8_t mi, uint8_t sec, uint16_t ms);
 

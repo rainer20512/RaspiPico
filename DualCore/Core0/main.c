@@ -143,7 +143,6 @@ int main()
     cnt = 0;
     // pin_toggle_nowait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 15 );
     while (true) {
-        if ( rx_chars_available() ) TaskNotify(TASK_COM);
         TaskRunAll();
         if (!TaskIsRunableTask() )  {
           ProfilerPush(JOB_SLEEP);

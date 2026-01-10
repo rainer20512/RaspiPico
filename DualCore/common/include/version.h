@@ -29,7 +29,7 @@ extern "C" {
 
 #define APP_STRING      APP_NAME " " VERSION_NUMBER 
 
-#define MCU_STRING      "for " MCU " family" 
+#define MCU_STRING      "for " MCU " " 
 
 #define BOARD_STRING    "on board " BOARD
 

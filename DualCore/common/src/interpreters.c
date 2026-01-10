@@ -60,7 +60,7 @@ const InterpreterModuleT mdl##name =  {pmt##name, cmd##name, sizeof(cmd##name) /
 
 
 #include "debug/debug_gpio_exti.h"
-// #include "debug_pwr_rcc.h"
+#include "debug/debug_dma.h"
 
 
 /*********************************************************************************
@@ -257,6 +257,9 @@ static bool Devices_Menu ( char *cmdline, size_t len, const void * arg )
     case 2:
       DBG_dump_nvic_config();
       break;
+    case 3:
+      DBG_dump_dma_config();
+      break;
     default:
       DEBUG_PUTS("RFM_Menu: command not implemented");
   } /* end switch */
@@ -274,12 +277,12 @@ static const CommandSetT cmdDevices[] = {
   { "SRAM",                   ctype_fn, {Devices_Menu},    VOID(0), "Show SRAM sections and usage" },
   { "EXTI",                   ctype_fn, {Devices_Menu},    VOID(1), "Show EXTI settings" },
   { "NVIC",                   ctype_fn, {Devices_Menu},    VOID(2), "Show NVIC settings" },
+  { "DMA",                    ctype_fn, {Devices_Menu},    VOID(3), "Show DMA channels" },
   { "GPIO [0|1]",             ctype_fn, {Dump_GPIO},       VOID(0), "Show GPIO 0-15 or 16-29"  },
   { "Cycle <pin> <num>",      ctype_fn, {Toggle_GPIO},     VOID(0), "Cycle GPIO <pin> <num> times"  },
   { "Alter <pin>",            ctype_fn, {Toggle_GPIO},     VOID(1), "Toggle output of GPIO <pin>"  },
   { "Pin Init",               ctype_fn, {Init_GPIO},       VOID(0), "Set Output Pin"  },
   { "Pin DeInit",             ctype_fn, {Init_GPIO},       VOID(1), "Reset Output Pin"  },
-  { "Disp Init",              ctype_fn, {Devices_Menu},    VOID(6), "Init 6 DD"  },
 };
 ADD_SUBMODULE(Devices);
 
@@ -949,8 +952,11 @@ bool Settings(char *cmdline, size_t len, const void * arg )
   return true;
 }
 #ifdef RP2040_M0_0
-  #define CORE1_VECTORTABLE   0x10100000
   #include "system/ipc.h"
+  #include "system/ipc_msg.h"
+#if 0  
+  #define CORE1_VECTORTABLE   0x10100000
+
   void Start_Core1(uint32_t launch)
   {
     uint32_t * c1vectors = (uint32_t *)CORE1_VECTORTABLE;
@@ -964,6 +970,7 @@ bool Settings(char *cmdline, size_t len, const void * arg )
       printf("Core1 Started...\n");
     }
   }
+#endif
 #endif
 
 void pico_active_wait ( uint32_t ticks );
@@ -1002,7 +1009,7 @@ static bool MainMenu(char *cmdline, size_t len, const void * arg )
               return false;
             } 
             CMD_get_one_word( &word, &wordlen );
-            Start_Core1(CMD_to_number ( word, wordlen ) );
+            IPC_Start_Core1(CMD_to_number ( word, wordlen ) );
             break;
         case 3:
             if ( CMD_argc() < 1 ) {
@@ -1011,8 +1018,8 @@ static bool MainMenu(char *cmdline, size_t len, const void * arg )
             } 
             CMD_get_one_word( &word, &wordlen );
             val = CMD_to_number ( word, wordlen );
-            IPC_SignalCore0to1();
-            printf("%d sent to Core1\n", val);
+            // IPC_SignalCore0to1(val, false);
+            printf("Setup of Core1 %s\n",Core0_Init_IPC_Comm() ? "ok" :"failed" );
               
             break;
 #endif
@@ -1033,9 +1040,11 @@ static bool MainMenu(char *cmdline, size_t len, const void * arg )
     }
     return true;
 } 
+static char strCore0[] = "Core0";
+static char strCore1[] = "Core1";
 static const char *pmtBasic (void)
-{
-  return "";
+{   
+  return get_core_num() ? strCore1 : strCore0;
 }
 
 
