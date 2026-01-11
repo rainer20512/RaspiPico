@@ -15,12 +15,15 @@
 
 #define IPC_MSG_0TO1_INIT     1         /* Initialize Core1 with essential runtime data */
 
-bool Core0_Handle_Payload(uint8_t msgID);
-void task_handle_ipc0    ( uint32_t arg );
-bool Core1_Handle_Payload(uint8_t msgID);
-void task_handle_ipc1    ( uint32_t arg );
+bool Core0_Handle_Payload       (uint8_t msgID);
+void task_handle_ipc0           ( uint32_t arg );
+bool Core1_Handle_Payload       (uint8_t msgID);
+void task_handle_ipc1           ( uint32_t arg );
 
-bool Core0_Init_IPC_Comm ( void );     /* Setup essential data in core 1 */ 
+void Core0_Setup_Core1_BootInfo ( void );   /* Seup core1 boot info */
+bool Core0_Init_IPC_Comm        ( void );   /* Setup essential IPC data in core 1 */ 
+
+void Core1_Read_BootInfo        ( void );   /* read/store bootinfo from core */
 
 /******************************************************************************** 
  * Data structure for IPC communication, we need one for each direction
@@ -32,6 +35,21 @@ typedef struct {
 } IPC_BuffT;
 
 /******************************************************************************** 
+ * data for core1 when booting. must be put zo fixed buffer _before_ Core1
+ * is booted by Core0
+ * must be sent before all other things
+ * core1 waits for this 
+ *******************************************************************************/
+typedef struct {
+  uint32_t  c1_uart_dma_chan;
+  uint32_t  c1_spi_dma_chan;
+} IPC_BootInfoT;
+
+#if RP2040_M0_1
+  /* my permanent storage for boot info from core0 */
+  extern IPC_BootInfoT core1_bootinfo;
+#endif
+/******************************************************************************** 
  * essential data to extablish core1 ipc comm
  * set up by core0, consumed by core 1
  * must be sent before all other things
@@ -42,4 +60,5 @@ typedef struct {
   IPC_BuffT *pbuf0to1;
   IPC_BuffT *pbuf1to0;
 } IPC_EssentialT;
+
 #endif /* __IPCMSG_H_ */

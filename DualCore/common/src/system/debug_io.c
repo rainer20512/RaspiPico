@@ -70,6 +70,7 @@ static void DebugOutputCompleteCB ( uint32_t size );
 #include "hardware/dma.h"
 #include "hardware/irq.h"
 #include "hardware/uart.h"
+#include "system/ipc_msg.h"
 
 #define PFX CONCAT(DREQ_UART,DEBUG_UART)
 #define UART_TX_DMA_CHANNEL CONCAT(PFX,_TX)
@@ -102,9 +103,10 @@ static void DebugOutputCompleteCB ( uint32_t size );
 
   static bool uart_setup_dma_channel(void)
   {
-      uart_dma_chan = dma_claim_unused_channel(true);
-      #if RP2040_M0_1
-      uart_dma_chan = dma_claim_unused_channel(true);
+      #if RP2040_M0_0
+        uart_dma_chan = dma_claim_unused_channel(true);
+      #elif RP2040_M0_1
+        uart_dma_chan = core1_bootinfo.c1_uart_dma_chan;
       #endif
       dma_channel_config c = dma_channel_get_default_config(uart_dma_chan);
       channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
@@ -270,7 +272,7 @@ extern void LL_Blink(uint32_t nrofblinks, uint32_t delayms );
 void Debug_RxCharAvailCB(void) 
 {
     #if RP2040_M0_1
-      LL_Blink(8, 80);
+      LL_Blink(4, 80);
     #endif
     ProfilerPush(JOB_IRQ_UART);
     TaskNotify(TASK_COM);

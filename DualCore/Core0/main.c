@@ -12,6 +12,7 @@
 #include "system/status.h"
 #include "system/profiling.h"
 #include "system/ipc.h"
+#include "system/ipc_msg.h"
 #include "task/minitask.h"
 #include "hardware/sync.h"
 
@@ -109,7 +110,6 @@ bool rx_chars_available(void);
 int main() 
 {
     bool ret;
-    LL_Blink(3,250);
 
     IPC_Init_Core0();
     alarm_pool_init_default();
@@ -130,6 +130,15 @@ int main()
     Init_DefineTasks();
     TaskInitAll();
 
+    /* Autostart Core1 */
+    #if CORE1_AUTOSTART > 0
+       IPC_Start_Core1(1);
+       /* Give Core1 some time to boot, at least 0,5s 
+        * Be sure not to slow core1 boot down by additional debug blinks! */
+       sleep_ms(500);
+       printf("Start & Setup of Core1 %s\n",Core0_Init_IPC_Comm() ? "ok" :"failed" );
+    #endif
+
 #if UNIQUEID
     check_fastrun ();
     dump_unique_id();
@@ -146,7 +155,7 @@ int main()
         TaskRunAll();
         if (!TaskIsRunableTask() )  {
           ProfilerPush(JOB_SLEEP);
-          // __wfi();
+          __wfi();
           ProfilerPop();
         }
     }

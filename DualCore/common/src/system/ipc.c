@@ -20,6 +20,8 @@
 
 /* Mutexes for both directions of communication
  * to ensure only one msg in each direction
+ * Both mutexes are claimed and init'ed by Core0
+ * Core1 will get a ptr to m1to0 to us it exclusively
  */
 __attribute((section(".mutex_array"))) mutex_t m0to1,m1to0;
 
@@ -65,6 +67,8 @@ __attribute((section(".mutex_array"))) mutex_t m0to1,m1to0;
 
       if ( launch > 0 ) {
           printf("Core1 Start = 0x%08x, SP=0x%08x\n", startfn,sp);
+          /* Setup Boot info */
+          Core0_Setup_Core1_BootInfo();
           /* And start */
           multicore_launch_core1_raw (startfn, &sp, *c1vectors);
           printf("Core1 Started...\n");

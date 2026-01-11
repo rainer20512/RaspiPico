@@ -2,9 +2,7 @@
 <session>
  <Bookmarks/>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
-  <Exceptions>
-   <Group group="V6M Exceptions" set="HardFault;Reset"/>
-  </Exceptions>
+  <Exceptions/>
  </Breakpoints>
  <ExecutionProfileWindow/>
  <FrameBuffer>
@@ -77,26 +75,27 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="12" y="128" useTextEdit="1" path="../common/src/minitask.c" left="0" top="59" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="41" y="71" useTextEdit="1" path="../common/src/system/init.c" left="0" top="6" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="24" y="25" useTextEdit="1" path="../common/include/config/config.h" left="0" top="14" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="12" y="128" useTextEdit="1" path="../common/src/minitask.c" left="0" top="61" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="41" y="71" useTextEdit="1" path="../common/src/system/init.c" left="0" top="4" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/hardware_watchdog/watchdog.c" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="1" y="1021" useTextEdit="1" path="../common/src/interpreters.c" left="0" top="954" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="12" y="78" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/common/pico_time/time.c" left="0" top="56" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="38" y="29" useTextEdit="1" path="../common/include/dev/uarts.h" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="2" y="147" useTextEdit="1" path="../common/src/boot/RP2040_Startup.s" left="0" top="80" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="25" y="60" useTextEdit="1" path="../common/src/boot/RP2040_Startup.s" left="0" selected="1" top="50" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="32" y="7" useTextEdit="1" path="flash_placement2040.xml" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="32" y="81" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_runtime_init/runtime_init.c" left="0" top="81" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="175" useTextEdit="1" path="../common/src/system/ipc.c" left="0" top="135" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="11" y="68" useTextEdit="1" path="../common/src/system/debug_io.c" left="0" selected="1" top="62" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="29" y="45" useTextEdit="1" path="../common/include/debug.h" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="175" useTextEdit="1" path="../common/src/system/ipc.c" left="0" top="175" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="4" y="273" useTextEdit="1" path="../common/src/system/debug_io.c" left="0" top="239" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="58" useTextEdit="1" path="include/debug.h" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="7" y="125" useTextEdit="1" path="../common/src/dev/uarts.c" left="0" top="59" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="20" y="164" useTextEdit="1" path="main.c" left="0" top="126" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="6" y="106" useTextEdit="1" path="main.c" left="0" top="39" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../common/include/system/profiling.h" left="0" top="47" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="90" useTextEdit="1" path="../common/src/system/ipc_msg.c" left="0" top="49" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="59" y="132" useTextEdit="1" path="../common/src/system/ipc_msg.c" left="0" top="66" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="8" y="61" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_multicore/include/pico/multicore.h" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="800" path="DualCore-Core1 THUMB Debug/DualCore-Core1.elf" left="0" top="767" codecName=""/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../common/include/system/ipc_msg.h" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="28" y="43" useTextEdit="1" path="../common/include/system/ipc_msg.h" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="119" y="46" useTextEdit="1" path="../common/src/debug/debug_dma.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="269" useTextEdit="1" path="../common/src/boot/thumb_crt0.s" left="0" top="231" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="24" y="28" useTextEdit="1" path="include/config/config.h" left="0" top="0" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="DualCore-Core1" fileDialogDefaultFilter="*.c;*.h" autoConnectTarget="CMSIS-DAP" buildConfiguration="THUMB Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="E:/GIT-Repos/RaspiPico/DualCore/common/src/debug" debugSearchPath="" autoConnectCapabilities="388479"/>
+ <ARMCrossStudioWindow activeProject="DualCore-Core1" fileDialogDefaultFilter="*.c;*.h" autoConnectTarget="CMSIS-DAP" buildConfiguration="THUMB Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="E:/GIT-Repos/RaspiPico/DualCore/Core1/include/config" debugSearchPath="" autoConnectCapabilities="388479"/>
 </session>

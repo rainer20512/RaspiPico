@@ -260,17 +260,15 @@ ctor_loop:
   b ctor_loop
 ctor_end:
 
-  movs r0,#2
-  movs r1,#250
-  bl LL_Blink
-
   /* RHB inserted: Runtime initialization */
   ldr r1, =runtime_init
   blx r1
 
+  /***********
   movs r0,#2
   movs r1,#125
   bl LL_Blink
+  ***********/
 
 
   .type __startup_complete, function

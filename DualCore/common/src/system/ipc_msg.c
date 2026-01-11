@@ -9,7 +9,7 @@
 
 #include "config/config.h"
 #include "pico/multicore.h"
-
+#include "hardware/dma.h"
 #include "system/ipc.h"
 #include "system/ipc_msg.h"
 #include "debug/debug_helper.h"
@@ -61,6 +61,22 @@
   }
 
   /******************************************************************************
+   * Setup boot info for Core1 :
+   * - dma channel for core1 uart
+   * - dma channel for core1 spi
+   * Must be setup in fixed buffer before core1 is started
+   * will be consumed by core 1 automatically
+   *****************************************************************************/
+  void Core0_Setup_Core1_BootInfo ( void )
+  { 
+
+    IPC_BootInfoT *boot1 = (IPC_BootInfoT*)ipc_fixedbuff;
+    boot1->c1_uart_dma_chan = dma_claim_unused_channel(true);
+    boot1->c1_spi_dma_chan  = dma_claim_unused_channel(true);
+    /* No send, will be consumed by core1 on boot */
+  }
+
+  /******************************************************************************
    * Setup essentials for Core1 :
    * - addr of runtime clock array
    * - addr of m0to1 Mutex
@@ -78,7 +94,6 @@
     txbuff->m1to0           = &m1to0;
     txbuff->pbuf0to1        =  &buf0to1;
     txbuff->pbuf1to0        =  &buf1to0;
-//    clock_get_clock_array(&(txbuff->runtime_clocks), &(txbuff->num_array_bytes));
 
     /* Send */
     return IPC_SignalCore0to1 (IPC_MSG_0TO1_INIT, true );
@@ -94,15 +109,30 @@
   IPC_BuffT *pbuf0to1;             /* data from core0 to core 1 */
   IPC_BuffT *pbuf1to0;             /* data from core1 to core 0 */
 
-  /* 
+  /****************************************************************************
    * fixed size and position buffer
-   */
-
+   ****************************************************************************/
   #define IPC_FIXEDBUFPOS       0x20041000
   uint8_t *ipc_fixedbuffptr =  (uint8_t *)IPC_FIXEDBUFPOS;
 
+  /****************************************************************************
+   * my permanent storage for boot info from core0 
+   ****************************************************************************/
+  IPC_BootInfoT core1_bootinfo;
+
   extern IPC_PacketT RECV_msg0to1;
   extern mutex_t *pm1to0;
+
+  /******************************************************************************
+   * Get boot info for Core1 :
+   * - fetch from fixedbuff
+   * - store into core1 private storage
+   *****************************************************************************/
+  void Core1_Read_BootInfo ( void )
+  { 
+    IPC_BootInfoT *boot1 = (IPC_BootInfoT*)ipc_fixedbuffptr;
+    core1_bootinfo = *boot1;
+  }
 
   /******************************************************************************
    * Got setup essentials for Core1 :
@@ -115,10 +145,7 @@
    *****************************************************************************/
   bool Core1_Handle_Init_IPC_Comm(void)
   {
-    void clock_get_clock_array(uint32_t **addr, uint32_t *size);
-    uint32_t size;
-    uint32_t *myClocks;
-
+ 
     IPC_EssentialT *txbuff = (IPC_EssentialT *)IPC_FIXEDBUFPOS;
     pm1to0    = txbuff->m1to0;
     pbuf0to1  = txbuff->pbuf0to1;

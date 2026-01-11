@@ -64,12 +64,14 @@ Reset_Handler:
   mov sp, r0
 #endif
   
-  /* Should work on Core1 */
+/* Should work on Core1 */
+/***********
 #ifdef RP2040_M0_1
   movs r0,#2
   movs r1,#250
   bl LL_Blink
 #endif
+***********/
 
 /* RHB inserted: Preset all RAM with an uniform pattern */
 #ifdef DO_RAM_PRESET

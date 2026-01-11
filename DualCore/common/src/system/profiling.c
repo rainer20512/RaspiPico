@@ -238,7 +238,7 @@ void ProfilerPop()
   ********************************************************************************/
 void ProfilerIncrementStopTime( uint32_t stop_us, uint32_t StopMode )
 {
-  Increment(&ProfilerTimes[JOB_STOP0+StopMode], stop_us );
+  Increment(&ProfilerTimes[JOB_STOP+StopMode], stop_us );
 }
 
 

@@ -974,6 +974,8 @@ bool Settings(char *cmdline, size_t len, const void * arg )
 #endif
 
 void pico_active_wait ( uint32_t ticks );
+void sleep_ms(uint32_t ms);
+
 /*********************************************************************************
   * @brief  MainMenu
   *         
@@ -1010,6 +1012,7 @@ static bool MainMenu(char *cmdline, size_t len, const void * arg )
             } 
             CMD_get_one_word( &word, &wordlen );
             IPC_Start_Core1(CMD_to_number ( word, wordlen ) );
+            CMD_get_one_word( &word, &wordlen );
             break;
         case 3:
             if ( CMD_argc() < 1 ) {

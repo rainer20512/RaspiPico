@@ -82,7 +82,7 @@ static void dump_unique_id(void) {
 static uint32_t cnt;
 
 #include "system/util.h"
-
+#include "system/ipc_msg.h"
 #include "dev/GC9A01.h"
 
 
@@ -158,7 +158,7 @@ int main(void)
     LL_Blink(8,50);
     bool ret;
     IPC_Init_Core1();
- 
+    Core1_Read_BootInfo();
     
     #if DEBUG_UART == 0
       ret = uart0_init();
@@ -167,6 +167,7 @@ int main(void)
     #else
       #error "No debug uart assigned"
     #endif
+    spi_init_all();
 
     if (!ret) LL_Blink(200,30);
 
