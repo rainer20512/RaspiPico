@@ -35,6 +35,7 @@
 #define TASK_COM              3
 #define TASK_RTC              4
 #define TASK_LOG              5
+#define TASK_FSM              6
 #define TASK_PERIODIC         7
 #define TASK_ADC              9
 #define TASK_STDIN            10

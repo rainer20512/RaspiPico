@@ -136,7 +136,7 @@ int main()
        /* Give Core1 some time to boot, at least 0,5s 
         * Be sure not to slow core1 boot down by additional debug blinks! */
        sleep_ms(500);
-       printf("Start & Setup of Core1 %s\n",Core0_Init_IPC_Comm() ? "ok" :"failed" );
+       printf("Start & Setup of Core1 %s\n",Core0_Init_IPC_Comm(NULL,NULL) ? "ok" :"failed" );
     #endif
 
 #if UNIQUEID

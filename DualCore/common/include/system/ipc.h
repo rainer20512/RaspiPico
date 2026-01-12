@@ -18,11 +18,16 @@
 #endif
 
 /* Timeout for mutex lock or wait for ack */
-#define MUTEX_LOCK_TMO 2000
+#define MUTEX_LOCK_TMO 1000
+
 
 
 /* Type of entry-function for Core1 */
 typedef void (*IPC_entryfn) ( void );
+
+/* Type of ACk-Msg callback */
+typedef void (*IPC_ResultCB) ( bool );
+
 
 typedef union IPC_PacketType {
   uint32_t raw;
@@ -37,14 +42,15 @@ typedef union IPC_PacketType {
 #define MSG_FLAG_PLD    0x40  /* Flag for: Message has additional payload */
 #define MSG_FLAG_FIXPLD 0x20  /* Flag for: Message has payload in fixed ipc data */
 
-void IPC_Init_Core0     (void);
-void IPC_Init_Core1     (void);
-void IPC_Start_Core1    (uint32_t launch);
-bool IPC_SignalCore0to1 ( uint8_t msgID, bool bHasPayload );
-void IPC_AckCore0to1    ( IPC_PacketT msg );
-bool IPC_CheckAckCore0  (uint32_t timeout);
-bool IPC_SignalCore1to0 ( uint8_t msgID, bool bHasPayload );
-void IPC_AckCore1to0    ( IPC_PacketT msg );
+void IPC_Init_Core0       (void);
+void IPC_Init_Core1       (void);
+void IPC_Start_Core1      (uint32_t launch);
+void IPC_SignalCore0to1   ( uint8_t msgID, bool bHasPayload, IPC_ResultCB ackCB );
+void IPC_AckCore0to1      ( IPC_PacketT msg );
+bool IPC_CheckAckCore0    (uint32_t timeout);
+void IPC_SignalCore1to0   ( uint8_t msgID, bool bHasPayload, IPC_ResultCB ackCB );
+void IPC_AckCore1to0      ( IPC_PacketT msg );
+bool IPC_ClaimMutexNoWait (bool bClaim);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

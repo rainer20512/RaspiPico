@@ -53,6 +53,7 @@ void Init_OtherDevices(void)
 #endif
 
 void task_handle_out  (uint32_t);
+void task_handle_fsm  (uint32_t);
 bool task_init_io     (void);
 
 /******************************************************************************
@@ -71,6 +72,8 @@ void Init_DefineTasks(void)
 #endif
   TaskRegisterTask(CMD_Init,      task_handle_com,  TASK_COM,      JOB_TASK_DBGIO,    "Debug input");//
   TaskRegisterTask(task_init_io,  task_handle_out,  TASK_LOG,      JOB_TASK_DBGIO,    "Debug output");  
+  TaskRegisterTask(NULL,          task_handle_fsm,  TASK_FSM,      JOB_TASK_FSM,      "State machine");  
+
 #ifdef RP2040_M0_0
   TaskRegisterTask(NULL,          task_periodic,    TASK_PERIODIC, JOB_TASK_PERIODIC, "periodic task");
 #endif

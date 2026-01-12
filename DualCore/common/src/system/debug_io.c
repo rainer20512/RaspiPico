@@ -271,9 +271,11 @@ extern void LL_Blink(uint32_t nrofblinks, uint32_t delayms );
 */
 void Debug_RxCharAvailCB(void) 
 {
+    /*****************
     #if RP2040_M0_1
       LL_Blink(4, 80);
     #endif
+    *****************/
     ProfilerPush(JOB_IRQ_UART);
     TaskNotify(TASK_COM);
     ProfilerPop();

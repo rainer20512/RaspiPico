@@ -17,15 +17,21 @@
 #include "system/ipc_msg.h"
 #include "task/minitask.h"
 
+/*-Call back when ACK was received, used by both cores */
+IPC_ResultCB onAck;
 
-/* Mutexes for both directions of communication
- * to ensure only one msg in each direction
- * Both mutexes are claimed and init'ed by Core0
- * Core1 will get a ptr to m1to0 to us it exclusively
- */
-__attribute((section(".mutex_array"))) mutex_t m0to1,m1to0;
+
+
 
 #if defined(RP2040_M0_0)
+
+    /* Mutexes for both directions of communication
+     * to ensure only one msg in each direction
+     * Both mutexes are claimed and init'ed by Core0
+     * Core1 will get a ptr to m1to0 to us it exclusively
+     */
+    __attribute((section(".mutex_array"))) mutex_t m0to1,m1to0;
+
     /* 
      * last received messages for message on both directions
      * a message consists of flags, msgID, SendID
@@ -46,6 +52,7 @@ __attribute((section(".mutex_array"))) mutex_t m0to1,m1to0;
 #if defined(RP2040_M0_0)
 
     #define CORE1_VECTORTABLE   0x10100000
+
 
     /* Forward decls ---------------------------------------------------------------*/
     void core0_sio_irq_handler(void);
@@ -93,6 +100,21 @@ __attribute((section(".mutex_array"))) mutex_t m0to1,m1to0;
         #endif
 
     }
+    /*********************************************************************************
+     * @brief  bClaim = true:  Claim mutex for core 0, must be changed for Core1!
+     *         bClaim = false: Release mutex
+     ********************************************************************************/
+    bool IPC_ClaimMutexNoWait (bool bClaim)
+    {   
+        bool ret=true;
+        if ( bClaim ) {
+          bool ret = mutex_try_enter(&m0to1, NULL);
+          if ( !ret ) DEBUG_PRINTF("Core0 IPC-Mutex could not be claimed");
+        } else {
+          mutex_exit(&m0to1);
+        }
+        return ret;
+    }
 
     /*********************************************************************************
      * @brief  handle a received fifo message on core 0
@@ -100,21 +122,23 @@ __attribute((section(".mutex_array"))) mutex_t m0to1,m1to0;
     void core0_handle_fifo(void)
     {
         uint16_t ack;
+        bool bAck;
         DEBUG_PRINTF("Core0 FIFO Recv: 0x%08x\n", RECV_msg1to0.raw);
         /* first check, whether it's an ACK message */
         if ( RECV_msg1to0.cooked.flags & MSG_FLAG_ACK ) {
           /* ACK msg: check ID and inc Send0ID */
           ack = RECV_msg1to0.cooked.SendID;
           DEBUG_PRINTF("Core0 FIFO Recv Ack: %d\n", ack );
-          if ( ack == SEND_msg0to1 ) {
+          bAck = ack == SEND_msg0to1;
+          if (bAck ) {
             SEND_msg0to1 += 1;
             /* If there is additional Payload, then handle it */
             if ( RECV_msg1to0.cooked.flags & MSG_FLAG_PLD ) Core0_Handle_Payload(RECV_msg1to0.cooked.MsgID);
           } else {
             DEBUG_PRINTF("Core0 FIFO Recv wrong Ack: %d vs %d\n", SEND_msg0to1, RECV_msg1to0.cooked.SendID);
           }
-          /* release mutex in any case */
-          mutex_exit(&m0to1);
+          /* Call callback */
+          if ( onAck ) onAck( bAck );
         } else {
           /* Normal message: handle message, send acknowledge and release Mutex*/
           TaskNotify(TASK_IPC0);
@@ -145,7 +169,7 @@ __attribute((section(".mutex_array"))) mutex_t m0to1,m1to0;
      * @brief  Signal Core1, that Core0 has a message for Core1
      * @note   MUST be executed by Core 0 !
      ********************************************************************************/
-    bool IPC_SignalCore0to1 ( uint8_t msgID, bool bHasPayload )
+    void IPC_SignalCore0to1 ( uint8_t msgID, bool bHasPayload, IPC_ResultCB ackCB )
     {
       IPC_PacketT msg={0};
   
@@ -154,23 +178,18 @@ __attribute((section(".mutex_array"))) mutex_t m0to1,m1to0;
       msg.cooked.SendID = SEND_msg0to1;
       if ( bHasPayload )      msg.cooked.flags |= MSG_FLAG_PLD;
 
-      /* aquire mutex to ensure no other msg to Core1 is still waiting */
-      /* Mutex will be released on reception of ACK for this msg */
-      bool ret = mutex_enter_timeout_ms(&m0to1, MUTEX_LOCK_TMO);
-      if ( ret ) {
-          /* Mutex aquired, send ID */
-        #if defined(CORE1_SIM)
-          /* Fake a core1-fifo message reception */
-          RECV_msg0to1 = msg;
-          TaskNotify(TASK_IPC1);
-        #else
-          multicore_fifo_push_blocking(msg.raw);
-        #endif
-      } else {
-        /* Mutex NOT aquired, error */
-        DEBUG_PRINTF("Core0->1 Mutex could not be aquired SendID=%d\n",SEND_msg0to1);
-      }
-      return ret;
+      /* remember ACK callback */
+      onAck = ackCB;
+
+      /* We assume that a corresponding mutex has been claimed before */
+      /* so at this place we just send w/o mutex */
+      #if defined(CORE1_SIM)
+        /* Fake a core1-fifo message reception */
+        RECV_msg0to1 = msg;
+        TaskNotify(TASK_IPC1);
+      #else
+        multicore_fifo_push_blocking(msg.raw);
+      #endif
     }
 
     /*********************************************************************************
@@ -212,26 +231,44 @@ __attribute((section(".mutex_array"))) mutex_t m0to1,m1to0;
     }
 
     /*********************************************************************************
+     * @brief  bClaim = true:  Claim mutex for core 0, must be changed for Core1!
+     *         bClaim = false: Release mutex
+     ********************************************************************************/
+    bool IPC_ClaimMutexNoWait (bool bClaim)
+    {   
+        bool ret=true;
+        if ( bClaim ) {
+          bool ret = mutex_try_enter(pm1to0, NULL);
+          if ( !ret ) DEBUG_PRINTF("Core0 IPC-Mutex could not be claimed");
+        } else {
+          mutex_exit(pm1to0);
+        }
+        return ret;
+    }
+
+   /*********************************************************************************
      * @brief  handle a received fifo message on core 1
      ********************************************************************************/
     void core1_handle_fifo(void)
     {
         uint16_t ack;
+        bool bAck;
         DEBUG_PRINTF("Core1 FIFO Recv: 0x%08x\n", RECV_msg0to1.raw);
         /* first check, whether it's an ACK message */
         if ( RECV_msg0to1.cooked.flags & MSG_FLAG_ACK ) {
           /* ACK msg: check ID and inc Send0ID */
           ack = RECV_msg0to1.cooked.SendID;
           DEBUG_PRINTF("Core1 FIFO Recv Ack: %d\n", ack );
-          if ( ack == SEND_msg1to0 ) {
+          bAck = ack == SEND_msg1to0 ;
+          if ( bAck) {
             SEND_msg1to0 += 1;
             /* If there is additional Payload, then handle it */
             if ( RECV_msg0to1.cooked.flags & MSG_FLAG_PLD ) Core1_Handle_Payload(RECV_msg0to1.cooked.MsgID);
           } else {
             DEBUG_PRINTF("Core1 FIFO Recv wrong Ack: %d vs %d\n", SEND_msg1to0, RECV_msg0to1.cooked.SendID);
           }
-          /* release mutex in any case */
-          mutex_exit(pm1to0);
+          /* Call callback */
+          if ( onAck ) onAck( bAck );
         } else {
           /* Normal message: handle message, send acknowledge and release Mutex*/
           TaskNotify(TASK_IPC1);
@@ -258,12 +295,11 @@ __attribute((section(".mutex_array"))) mutex_t m0to1,m1to0;
         multicore_fifo_clear_irq();
     }
 
-
     /*********************************************************************************
      * @brief  Signal Core1, that Core0 has a message for Core1
      * @note   MUST be executed by Core 1 !
      ********************************************************************************/
-    bool IPC_SignalCore1to0 ( uint8_t msgID, bool bHasPayload )
+    void IPC_SignalCore1to0 ( uint8_t msgID, bool bHasPayload, IPC_ResultCB ackCB )
     {
       IPC_PacketT msg={0};
   
@@ -272,17 +308,12 @@ __attribute((section(".mutex_array"))) mutex_t m0to1,m1to0;
       msg.cooked.SendID = SEND_msg1to0;
       if ( bHasPayload ) msg.cooked.flags |= MSG_FLAG_PLD;
 
-      /* aquire mutex to ensure no other msg to Core1 is still waiting */
-      /* Mutex will be released on reception of ACK for this msg */
-      bool ret = mutex_enter_timeout_ms(pm1to0, MUTEX_LOCK_TMO);
-      if ( ret ) {
-        /* Mutex aquired, send ID */
-        multicore_fifo_push_blocking(msg.raw);
-      } else {
-        /* Mutex NOT aquired, error */
-        DEBUG_PRINTF("Core1->0 Mutex could not be aquired SendID=%d\n",SEND_msg1to0);
-      }
-      return ret;
+      /* remember ACK callback */
+      onAck = ackCB;
+
+      /* We assume that a corresponding mutex has been claimed before */
+      /* so at this place we just send w/o mutex */
+      multicore_fifo_push_blocking(msg.raw);
     }
 
     /*********************************************************************************

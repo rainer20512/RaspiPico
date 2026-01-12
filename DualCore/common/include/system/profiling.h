@@ -24,6 +24,7 @@
 typedef enum ActiveJobEnum {
     JOB_TASK_TMR = 0,
     JOB_TASK_DBGIO,
+    JOB_TASK_FSM,
     JOB_TASK_PERIODIC,
     JOB_TASK_IPC0,
     JOB_TASK_IPC1,
@@ -57,6 +58,7 @@ typedef enum ActiveJobEnum {
 #define JOBNAMES0   \
     "TMR",          \
     "DEBUGIO",      \
+    "FSM",          \
     "PERIODIC",     \
     "IPC0",         \
     "IPC1",         \

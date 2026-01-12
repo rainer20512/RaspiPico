@@ -12,7 +12,13 @@
 #include "hardware/dma.h"
 #include "system/ipc.h"
 #include "system/ipc_msg.h"
+#include "system/ipc_fsm.h"
 #include "debug/debug_helper.h"
+
+
+static repeating_timer_t  wait_timer; /* timer for wait states in state machine */
+static IPC_FmsT ipcfsm;               /* IPC state machine */
+void FSM_Ipc ( IPC_FmsT *fsm );
 
 #if  RP2040_M0_0
   #include <string.h>
@@ -33,6 +39,23 @@
   extern IPC_PacketT RECV_msg1to0;
 
   /******************************************************************************
+   * Echo function ( for testing )
+   * Take to 0to1 buffer copy to 1to0, increment every single element by 1 
+   * and send back directly with ack
+   *****************************************************************************/
+  bool Core0_Handle_Echo(void)
+  {
+    DEBUG_PRINTF("Core0 Echo:%s\n",buf1to0.buff);
+    strcpy(buf0to1.buff, buf1to0.buff);
+    buf0to1.uSize = buf1to0.uSize;
+    char *p = buf0to1.buff;
+    while ( *p ) {
+      (*p++)++;
+    }
+    /* pbuf1to0 is payload for ack message */
+    return true; 
+  }
+  /******************************************************************************
    * Handle the Message with ID "msgID".
    * returns true, if handling of msg generates new payload
    * if handling of msg does not generate new payload, return false
@@ -41,8 +64,18 @@
    *****************************************************************************/
   bool Core0_Handle_Payload(uint8_t msgID)
   {
-    DEBUG_PRINTF("Core0 received msg #%d\n", msgID);
-    return false;
+    bool ret = false;
+    DEBUG_PRINTF("Core0 received payload for msg #%d\n", msgID);
+
+    switch ( msgID ) {
+      case IPC_MSG_1TO0_ECHO:
+      case IPC_MSG_0TO1_ECHO:
+        ret = Core0_Handle_Echo();
+        break;
+      default:
+        DEBUG_PRINTF("No handler for IPC msg #%d\n", msgID);
+    } /* switch */
+    return ret;
   }
   /******************************************************************************
    * Handle a previously received msg. All message parameters are stored in
@@ -55,7 +88,7 @@
     /* Check, whether there is a payload at all */
     if ( RECV_msg1to0.cooked.flags & MSG_FLAG_PLD ) {
         /* reset payload flag , if handler does not generate payload */
-        if ( Core0_Handle_Payload(RECV_msg1to0.cooked.MsgID) ) RECV_msg1to0.cooked.flags &= ~MSG_FLAG_PLD;
+        if ( !Core0_Handle_Payload(RECV_msg1to0.cooked.MsgID) ) RECV_msg1to0.cooked.flags &= ~MSG_FLAG_PLD;
     }
     IPC_AckCore0to1(RECV_msg1to0);
   }
@@ -85,21 +118,47 @@
    * core1 initialization is finished
    * NOTE: msg content is passed via fixed buffer
    *****************************************************************************/
-  bool Core0_Init_IPC_Comm ( void )
+  bool Core0_Init_IPC_Comm_Internal ( void* userdata, IPC_ResultCB pfAck )
   { 
     extern mutex_t m1to0;
-    void clock_get_clock_array(uint32_t **addr, uint32_t *size);
 
-    IPC_EssentialT *txbuff = (IPC_EssentialT *)ipc_fixedbuff;
+    IPC_EssentialT *txbuff  = (IPC_EssentialT *)ipc_fixedbuff;
     txbuff->m1to0           = &m1to0;
     txbuff->pbuf0to1        =  &buf0to1;
     txbuff->pbuf1to0        =  &buf1to0;
 
     /* Send */
-    return IPC_SignalCore0to1 (IPC_MSG_0TO1_INIT, true );
+    IPC_SignalCore0to1 (IPC_MSG_0TO1_INIT, true, pfAck );
+    return true;
+  }
+
+  bool Core0_SendEcho_Internal ( void* userdata, IPC_ResultCB pfAck )
+  { 
+    strcpy(buf0to1.buff, "The quick brown fox jumped over the crazy dog");
+    buf0to1.uSize = strlen(buf0to1.buff)+1;
+    /* Send */
+    IPC_SignalCore0to1 (IPC_MSG_0TO1_ECHO, true, pfAck );
+    return true;
+  }
+
+
+  bool Core0_Init_IPC_Comm ( void* arg, IPC_ResultCB onCompletion )
+  {
+    FSM_Init(&ipcfsm, arg, Core0_Init_IPC_Comm_Internal, FSM_Ipc );
+    if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
+    FSM_Start(&ipcfsm);
+  }
+
+  bool Core0_SendEcho ( void* arg, IPC_ResultCB onCompletion )
+  {
+    FSM_Init(&ipcfsm, arg, Core0_SendEcho_Internal, FSM_Ipc );
+    if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
+    FSM_Start(&ipcfsm);
   }
 
 #endif
+
+  
 
 
 #if  RP2040_M0_1 || defined(CORE1_SIM)
@@ -154,6 +213,23 @@
     /* No payload for ack message */
     return false; 
   }
+  /******************************************************************************
+   * Echo function ( for testing )
+   * Take to 0to1 buffer copy to 1to0, increment every single element by 1 
+   * and send back directly with ack
+   *****************************************************************************/
+  bool Core1_Handle_Echo(void)
+  {
+    DEBUG_PRINTF("Core1 Echo:%s\n",pbuf0to1->buff);
+    strcpy(pbuf1to0->buff, pbuf0to1->buff);
+    pbuf1to0->uSize = pbuf0to1->uSize;
+    char *p = pbuf1to0->buff;
+    while ( *p ) {
+      (*p++)++;
+    }
+    /* pbuf1to0 is payload for ack message */
+    return true; 
+  }
 
   /******************************************************************************
    * Handle the Message with ID "msgID".
@@ -165,11 +241,15 @@
   bool Core1_Handle_Payload(uint8_t msgID)
   {
     bool ret = false;
-    DEBUG_PRINTF("Core1 received msg #%d\n", msgID);
+    DEBUG_PRINTF("Core1 received payload for msg #%d\n", msgID);
 
     switch ( msgID ) {
       case IPC_MSG_0TO1_INIT:
         ret = Core1_Handle_Init_IPC_Comm();
+        break;
+      case IPC_MSG_0TO1_ECHO:
+      case IPC_MSG_1TO0_ECHO:
+        ret = Core1_Handle_Echo();
         break;
       default:
         DEBUG_PRINTF("No handler for IPC msg #%d\n", msgID);
@@ -187,9 +267,151 @@
     /* Check, whether there is a payload at all */
     if ( RECV_msg0to1.cooked.flags & MSG_FLAG_PLD ) {
         /* reset payload flag , if handler does not generate payload */
-        if ( Core1_Handle_Payload(RECV_msg0to1.cooked.MsgID) ) RECV_msg0to1.cooked.flags &= ~MSG_FLAG_PLD;
+        if ( !Core1_Handle_Payload(RECV_msg0to1.cooked.MsgID) ) RECV_msg0to1.cooked.flags &= ~MSG_FLAG_PLD;
     }
     IPC_AckCore1to0(RECV_msg0to1);
   }
 
+  bool Core1_SendEcho_Internal ( void* userdata, IPC_ResultCB pfAck )
+  { 
+    strcpy(pbuf1to0->buff, "Wer das liest ist doof");
+    pbuf1to0->uSize = strlen(pbuf1to0->buff)+1;
+    /* Send */
+    IPC_SignalCore1to0 (IPC_MSG_1TO0_ECHO, true, pfAck );
+    return true;
+  }
+
+  bool Core1_SendEcho ( void* arg, IPC_ResultCB onCompletion )
+  {
+    FSM_Init(&ipcfsm, arg, Core1_SendEcho_Internal, FSM_Ipc );
+    if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
+    FSM_Start(&ipcfsm);
+  }
+
 #endif
+
+
+
+/*=============================================================================
+ = IPC comm State Machine
+ ============================================================================*/
+/******************************************************************************
+ * States for IPC call Statemachine
+ * State 0 is the first state by design
+ *****************************************************************************/
+typedef enum {
+  IPC_STATE_START = 0,
+  IPC_STATE_REDO_CLAIM,
+  IPC_STATE_SEND,
+  IPC_STATE_GOTACK,
+  IPC_STATE_FINISHWMUTEX,
+  IPC_STATE_FINISHNOMUTEX,
+} IPC_FSM_STATES;
+
+  /*-----------------------------------------------------------------------------
+   * FSM Helper functions: Timeout Callback when waiting for mutex 
+   *---------------------------------------------------------------------------*/
+  bool mutex_wait_cb(repeating_timer_t *rt) 
+  {
+      /* we passed the fsm data in timers user_data field */
+      IPC_FmsT *fsm = rt->user_data;
+
+      /* this callback ist called when first mutex aquisition failed and waittime
+         expired. So here we do a second try
+       */
+      if ( IPC_ClaimMutexNoWait(true) ) {
+        /* if successful: send message*/
+        FSM_Goto( fsm, IPC_STATE_SEND );
+      } else {
+        /* Set fsm result to fail and terminate */
+        FSM_SetResult(fsm, SM_FINALSTATE_FAIL);
+        FSM_Goto( fsm, IPC_STATE_FINISHNOMUTEX );
+      }
+      return false; // cancel timer
+  }
+
+  /*-----------------------------------------------------------------------------
+   * FSM Helper functions:Timeout when waiting for Ack-Message 
+   *---------------------------------------------------------------------------*/
+bool ack_wait_cb(repeating_timer_t *rt) 
+  {
+      /* we passed the fsm data in timers user_data field */
+      IPC_FmsT *fsm = rt->user_data;
+
+      /* this callback ist called when waiting for acknowledge expired */
+      /* we got no ACK, so final state is "failed" */
+      FSM_SetResult(fsm, SM_FINALSTATE_FAIL);
+      FSM_Goto( fsm, IPC_STATE_FINISHWMUTEX );
+      DEBUG_PRINTF("Timeout when waiting for ACK\n");  
+      return false; // cancel timer
+  }
+
+  /*-----------------------------------------------------------------------------
+   * FSM Helper functions: Callback when ACK was received, 
+   * will be executed in interrupt context
+   *---------------------------------------------------------------------------*/
+  void FSM_AckCB ( bool )
+  {
+    FSM_Goto(&ipcfsm, IPC_STATE_GOTACK);
+  }
+
+#ifdef RP2040_M0_0
+  #define SMNAME  "FSM_CORE0"
+#else
+  #define SMNAME  "FSM_CORE1"
+#endif
+  /******************************************************************************
+   * State machine for IPC message sending
+   * will always be called initially with state 0
+   * - addr of m0to1 Mutex
+   * - addr of buf0to1 and buf1to0
+   * Must be the first msg to be sent to core 1, core1 will wait for this before
+   * core1 initialization is finished
+   * NOTE: msg content is passed via fixed buffer
+   *****************************************************************************/
+  void FSM_Ipc ( IPC_FmsT *fsm )
+  {
+      DEBUG_PRINTF(SMNAME" in state %d\n", fsm->current_state);
+      switch ( fsm->current_state )
+      {
+        case IPC_STATE_START:
+          /* Initial state: try to claim mutex */
+          if ( IPC_ClaimMutexNoWait(true) ) {
+            /* if successful: send message*/
+            FSM_Goto( fsm, IPC_STATE_SEND );
+          } else {
+            /* wait and try again one time */
+            add_repeating_timer_ms (MUTEX_LOCK_TMO, mutex_wait_cb, fsm, &wait_timer);
+          }
+          break;
+        case IPC_STATE_SEND:
+          /* Assemble and send message */
+          if ( fsm->sendfunc(NULL, FSM_AckCB) ) {
+            add_repeating_timer_ms (MUTEX_LOCK_TMO, ack_wait_cb, fsm, &wait_timer);
+          } else {
+            /* Send failed: terminate */
+            FSM_SetResult(fsm, SM_FINALSTATE_FAIL);
+            FSM_Goto( fsm, IPC_STATE_FINISHWMUTEX );
+          }
+          break;
+        case IPC_STATE_GOTACK:
+            /* successful sent a message and got an ACK */
+            cancel_repeating_timer(&wait_timer);  /* stop ACK wait Timer */
+            FSM_SetResult(fsm, SM_FINALSTATE_OK);
+            FSM_Goto( fsm, IPC_STATE_FINISHWMUTEX );
+          break;
+        case IPC_STATE_FINISHWMUTEX:
+          /* */
+          IPC_ClaimMutexNoWait(false);
+          /* fallthru! */
+        case IPC_STATE_FINISHNOMUTEX:
+          /* Terminate the state machine, be sure the result has been set before */
+          FSM_Terminate(fsm);
+          break;
+        default:
+          /* unhandeled state */
+          DEBUG_PRINTF("FSM_Core0: unknown state #%d\n");
+          FSM_Terminate(fsm);
+      } // switch
+  }
+
