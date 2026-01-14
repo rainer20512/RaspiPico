@@ -474,7 +474,7 @@ bool mstimer_callback(repeating_timer_t *rt) {
     ++rtc_ms;
     #if USE_LVGL > 0
       lv_tick_inc(1);
-      TaskNotify(TASK_LVGL);
+      // TaskNotify(TASK_LVGL);
     #endif
     ProfilerPop();
     return true; // keep repeating

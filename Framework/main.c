@@ -109,6 +109,7 @@ void lv_example_anim_2(void);
 #include "../lvgl/lvgl.h"
 /* style with no border an 0 radius */
 lv_style_t my_style;
+repeating_timer_t lvgl_update_timer;
 
 void lv_example_scale_3(void);
 
@@ -134,24 +135,29 @@ bool task_init_lvgl(void)
     return true;
 }
 
+repeating_timer_t lvgl_update_timer;
 
-void Lvgl_TimerCB ( uint32_t arg)
+bool Lvgl_TimerCB ( repeating_timer_t *my_timer )
 {
-   UNUSED(arg);
+   UNUSED(my_timer);
    TaskNotify(TASK_LVGL);
+   /* cancel repeating timer */
+   return false;
 }
-
 
 void task_handle_lvgl( uint32_t arg )
 {
     UNUSED(arg);
     uint32_t time_till_next = lv_timer_handler();
 
-    #if 0
+    #if 1
         if(time_till_next == LV_NO_TIMER_READY) time_till_next = LV_DEF_REFR_PERIOD; /*handle LV_NO_TIMER_READY. Another option is to `sleep` for longer*/
         // os_delay_ms(time_till_next);
-        MsTimerSetAbs ( MILLISEC_TO_TIMERUNIT(time_till_next), Lvgl_TimerCB, 0 );
-     #endif
+        add_repeating_timer_ms (time_till_next, Lvgl_TimerCB, NULL, &lvgl_update_timer);
+        // MsTimerSetAbs ( MILLISEC_TO_TIMERUNIT(time_till_next), Lvgl_TimerCB, 0 );
+    #else
+       TaskNotify(TASK_LVGL);
+    #endif
 }  
 
 
@@ -178,6 +184,7 @@ int main() {
 
     cnt = 0;
     pin_toggle_nowait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 15 );
+    TaskNotify(TASK_LVGL);
     while (true) {
 //        stdio_putchar('c');
 //        stdio_printf("%06d Hello, world!\n", cnt++);
