@@ -1052,6 +1052,7 @@
         </folder>
         <folder Name="system">
           <file file_name="include/system/circbuf.h" />
+          <file file_name="include/system/dma_irq.h" />
           <file file_name="include/system/periodic.h" />
           <file file_name="include/system/profiling.h" />
           <file file_name="include/system/rtc.h" />
@@ -1080,6 +1081,7 @@
         <folder Name="system">
           <file file_name="src/system/circbuf.c" />
           <file file_name="src/system/debug_io.c" />
+          <file file_name="src/system/dma_irq.c" />
           <file file_name="src/system/periodic.c" />
           <file file_name="src/system/profiling.c" />
           <file file_name="src/system/rtc.c" />

@@ -67,7 +67,7 @@ void DebugOutputCompleteCB ( uint32_t size );
 
 /* Private functions  ---------------------------------------------------------*/
 #include "hardware/dma.h"
-#include "hardware/irq.h"
+#include "system/dma_irq.h"
 #include "hardware/uart.h"
 
 #define PFX CONCAT(DREQ_UART,PICO_DEFAULT_UART)
@@ -76,7 +76,7 @@ void DebugOutputCompleteCB ( uint32_t size );
 void DMA_TX_handler(void)
 {
   ProfilerPush(JOB_IRQ_DMA);
-  dma_channel_acknowledge_irq0 (uart_dma_chan);
+  dma_channel_acknowledge_irq (uart_dma_chan);
   DebugOutputCompleteCB ( tx_transfer_size );
   ProfilerPop();
 }
@@ -98,12 +98,9 @@ static bool uart_setup_dma_channel(void)
         false             // Don't start yet
     );
 
-    // Tell the DMA to raise IRQ line 0 when the channel finishes a block
-    dma_channel_set_irq0_enabled(uart_dma_chan, true);
-
-    // Configure the processor to run dma_handler() when DMA IRQ 0 is asserted
-    irq_set_exclusive_handler(DMA_IRQ_0, DMA_TX_handler);
-    irq_set_enabled(DMA_IRQ_0, true);
+    dma_channel_irq_enable(uart_dma_chan, true);
+    // Register DMA_TX_handler
+    dma_channel_set_handler(uart_dma_chan, DMA_TX_handler);
 }
 
 static void UsartStartTx(uint8_t *data, uint32_t txSize)
