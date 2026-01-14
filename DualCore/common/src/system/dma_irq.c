@@ -85,7 +85,7 @@ void DMA_Global_handler ( void )
   #define pend   (dma_hw->ints0)
 #elif RP2040_M0_1 || defined(CORE1_SIM)
   #define ena  (dma_hw->inte1)
-  #define pend   (dma_hw->ints0)
+  #define pend   (dma_hw->ints1)
 #endif
 
   /* get all pending and enabled DMA request bits */
