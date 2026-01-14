@@ -21,7 +21,7 @@ static pfn_spi_done_cb *tx_done_cb;
 #if LV_USE_SPI_DMA > 0
 
 #include "hardware/dma.h"
-#include "hardware/irq.h"
+#include "system/dma_irq.h"
 #include "hardware/uart.h"
 #include "system/profiling.h"
 #include "debug/debug_helper.h"
@@ -31,13 +31,10 @@ static pfn_spi_done_cb *tx_done_cb;
 #elif DISP_SPI_NUM == 0
   #define SPI_TX_DMA_CHANNEL  DREQ_SPI0_TX
   #define SPI_HW              spi0
-  #define SPI_ACK             dma_channel_acknowledge_irq0
-  #define SPI_ENABLE_IRQ(ena) dma_channel_set_irq0_enabled(spi_dma_chan, ena);
 #elif DISP_SPI_NUM == 1
   #define SPI_TX_DMA_CHANNEL  DREQ_SPI1_TX
   #define SPI_HW              spi1
   #define SPI_ACK             dma_channel_acknowledge_irq1
-  #define SPI_ENABLE_IRQ(ena) dma_channel_set_irq1_enabled(spi_dma_chan, ena);
 #else
   #error "no assignemnt for DISP_SPI_NUM"
 #endif
@@ -48,8 +45,8 @@ extern bool bSpiDMA;
 void SPI_TX_handler(void)
 {
   ProfilerPush(JOB_IRQ_DMA);
-  SPI_ACK (spi_dma_chan);
-  SPI_ENABLE_IRQ(false);
+  dma_channel_acknowledge_irq(spi_dma_chan);
+  dma_channel_irq_enable( spi_dma_chan, false);
 
 
   // Drain RX FIFO, then wait for shifting to finish (which may be *after*
@@ -89,13 +86,8 @@ bool spi_setup_dma(void)
 
 
     // Configure the processor to run SPI_TX_handler() when DMA IRQ is asserted
-    #if DISP_SPI_NUM == 0
-      irq_set_exclusive_handler(DMA_IRQ_0, SPI_TX_handler);
-      irq_set_enabled(DMA_IRQ_0, true);
-    #elif DISP_SPI_NUM == 1
-      irq_set_exclusive_handler(DMA_IRQ_1, SPI_TX_handler);
-      irq_set_enabled(DMA_IRQ_1, true);
-    #endif
+    dma_channel_set_handler(spi_dma_chan, SPI_TX_handler);
+    dma_channel_irq_enable(spi_dma_chan, true);
 
     return true;
 }
@@ -103,8 +95,8 @@ bool spi_setup_dma(void)
 static void StartTxDma(const uint8_t *data, uint32_t txSize)
 {
   /* clear "old" dma Interrupts and enable spi dma interrupt */
-  SPI_ACK (spi_dma_chan);
-  SPI_ENABLE_IRQ(true);
+  dma_channel_acknowledge_irq(spi_dma_chan);
+  dma_channel_irq_enable( spi_dma_chan, true);
   /* setup and start dma */
   dma_channel_set_read_addr   (spi_dma_chan, data, false);
   dma_channel_set_trans_count (spi_dma_chan, txSize, true);
