@@ -29,7 +29,7 @@
 #define USE_UART1         1
 #define USE_SPI0          0  
 #define USE_SPI1          1  
-#define CORE1_AUTOSTART   0
+#define CORE1_AUTOSTART   1
 
 
 /*

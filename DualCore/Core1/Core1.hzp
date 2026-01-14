@@ -246,6 +246,7 @@
           recurse="No" />
         <folder Name="system">
           <file file_name="../common/include/system/circbuf.h" />
+          <file file_name="../common/include/system/dma_irq.h" />
           <file file_name="../common/include/system/ipc.h" />
           <file file_name="../common/include/system/ipc_fsm.h" />
           <file file_name="../common/include/system/ipc_msg.h" />
@@ -279,6 +280,7 @@
         <folder Name="system">
           <file file_name="../common/src/system/circbuf.c" />
           <file file_name="../common/src/system/debug_io.c" />
+          <file file_name="../common/src/system/dma_irq.c" />
           <file file_name="../common/src/system/ipc.c" />
           <file file_name="../common/src/system/ipc_fsm.c" />
           <file file_name="../common/src/system/ipc_msg.c" />
