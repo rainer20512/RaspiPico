@@ -1095,6 +1095,7 @@
         </folder>
         <file file_name="src/cmdline.c" />
         <file file_name="src/interpreters.c" />
+        <file file_name="src/lvgl_task.c" />
         <file file_name="main.c" />
       </folder>
       <file file_name="lv_example_anim_2.c" />

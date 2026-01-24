@@ -100,15 +100,47 @@ How to program/debug RP2040 target with Rpi Debug Probe          RHB 17.11.2025
 30. tv_tlsf.c: Aus irgendeinem grund wird __builtin_ffs() nicht gelinkt
     Daher in dieser Datei zwangsweise die handgestrickte Version von
     tlsf_ffs verwenden
+
+31. "getenv" gibt es nicht. daher in src/libs/expat/xmlparse.c die funktion
+    getDebugLevel so ändern:
+    static unsigned long
+    getDebugLevel(const char *variableName, unsigned long defaultDebugLevel) {
+    /* RHB ***** 031 ****
+      const char *const valueOrNull = getenv(variableName);
+      if (valueOrNull == NULL) {
+        return defaultDebugLevel;
+      }
+      const char *const value = valueOrNull;
+
+      char *afterValue = NULL;
+      unsigned long debugLevel = strtoul(value, &afterValue, 10);
+
+      return debugLevel;
+    ***** 031 *****/
+      return defaultDebugLevel;
+
+    }
+
+
         
 -------------------------------------------------------------------------------
-* rumgemache mit Crossworks V.4.X
+LVGL Release aktualisieren
 -------------------------------------------------------------------------------
 
-A) Passender Target-Adapter für RPI DebugProbe ist "CMSIS-DAP"
-   a) in den Einstellungen des Adapters die Speed des Adapters auf irgendwas < 10MHz runterdrehen
-   b) in dem Skriptfle PR2040_Target.js in der Zeile
-            if (TargetInterface.getProjectProperty("Target") == "RP2040_M0_0" && (TargetInterface.peekWord(0x40004014) & 0x88) == 0x08)
-      "Target" durch "Target Processor" ersetzen
-   c) Jetzt sollte ein connect möglich sein
+40. bestehenden lvgl-Unterordner umbenennen. vom Aktuellen Release alle Dateien
+    aus der Wurzel und die subdirs "src" und ggf "examples" in einen neuen
+    lvgl-Projektordner kopieren.
 
+41. die alte und die neue lvgl_conf_template.h vergleichen, ob es signifikante
+    Änderungen/Erweiterungen gibt. Bei wenigen/keinen Änderungen die alte lv_conf.h
+    ins neue lvgl-Verzeichnis zurückkopieren
+
+42. spezifische Treiberdateien von alt nach neu kopieren:
+      lvgl/src/drivers/display/gc9a01/*
+
+43. in src/lv_conf_internal.h das #include von lv_conf.h um eine Ebene verringern:
+      #include "../lv_conf.h"                /* Else assume lv_conf.h is next to the lvgl folder. */
+
+44. die Anpassungen aus *** 030 *** in src/stdlib/builtin/lv_tlsf.c einbauen
+
+45. in src/libs/expat/xmlparse.c:8552 die Änderungen wg. fehlendem "getenv" einbauen

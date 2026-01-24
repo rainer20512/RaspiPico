@@ -37,6 +37,7 @@ uint32_t My_Delay(uint32_t waittime )
 
 /******************************************************************************
  * return ms since start
+ * implemented mainly for the use of LVGL
  *****************************************************************************/
 #include "pico/time.h"
 uint32_t get_ms_since_start(void)

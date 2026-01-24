@@ -704,6 +704,14 @@ void DBG_dump_coreID(void)
   DEBUG_PRINTF("CPUID=%d\n",pico_get_coreID() );
 }
 
+/******************************************************************************
+ * Dump the list of active channels of the used dma controller
+ *****************************************************************************/
+void DBG_dump_dma_channels(void)
+{
+  
+
+}
 #endif // #if DEBUG_FEATURES > 0
 
 /**

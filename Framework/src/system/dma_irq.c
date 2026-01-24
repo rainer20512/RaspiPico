@@ -16,8 +16,6 @@
 
 #include "system/dma_irq.h"
 
-#define MAX_DMA_CHANNELS      16
-
 /*-----------------------------------------------------------------------------
  * List of user DMA handlers for every channel
  *---------------------------------------------------------------------------*/
@@ -37,7 +35,17 @@ void DMA_Global_handler ( void );
 #endif
 
 /* check, whether a dma channel is assigned */
-#define dma_channel_assigned( ch )   ( user_dma_handlers[ch] != NULL )  
+#define is_dma_channel_assigned( ch )   ( user_dma_handlers[ch] != NULL )  
+
+/******************************************************************************
+ * returns true, if dma channel "channel" is assigned
+ *****************************************************************************/
+bool dma_channel_assigned (uint channel)
+{
+  if ( channel >= MAX_DMA_CHANNELS ) return false;
+
+  return ( user_dma_handlers[channel] != NULL );
+}
 
 /******************************************************************************
  * returns true, if NO dma channels is assigned
@@ -45,10 +53,11 @@ void DMA_Global_handler ( void );
 static bool no_channel_assigned ( void )
 {
   for ( uint i=0; i < MAX_DMA_CHANNELS; i++ )
-    if ( dma_channel_assigned(i) ) return false;
+    if ( is_dma_channel_assigned(i) ) return false;
 
   return true;
 }
+
 
 /******************************************************************************
  * DMA user must call this instead of SDK'S irq_set_exclusive_handler or

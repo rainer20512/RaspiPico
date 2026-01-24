@@ -8549,7 +8549,7 @@ unsignedCharToPrintable(unsigned char c) {
 
 static unsigned long
 getDebugLevel(const char *variableName, unsigned long defaultDebugLevel) {
-/* RHB 
+/* RHB ***** 031 ****
   const char *const valueOrNull = getenv(variableName);
   if (valueOrNull == NULL) {
     return defaultDebugLevel;
@@ -8560,7 +8560,7 @@ getDebugLevel(const char *variableName, unsigned long defaultDebugLevel) {
   unsigned long debugLevel = strtoul(value, &afterValue, 10);
 
   return debugLevel;
-*/
+***** 031 *****/
   return defaultDebugLevel;
 
 }
