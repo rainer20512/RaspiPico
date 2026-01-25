@@ -22,6 +22,7 @@ static pfn_spi_done_cb *tx_done_cb;
 
 #include "hardware/dma.h"
 #include "system/dma_irq.h"
+#include "system/ipc_msg.h"
 #include "hardware/uart.h"
 #include "system/profiling.h"
 #include "debug/debug_helper.h"
@@ -69,7 +70,11 @@ void SPI_TX_handler(void)
 
 bool spi_setup_dma(void)
 {
+#if RP2040_M0_0
     spi_dma_chan = dma_claim_unused_channel(true);
+#elif RP2040_M0_1
+    spi_dma_chan = core1_bootinfo.c1_spi_dma_chan;
+      #endif
     dma_channel_config c = dma_channel_get_default_config(spi_dma_chan);
     channel_config_set_transfer_data_size(&c, DMA_SIZE_8);
     channel_config_set_write_increment(&c, false);

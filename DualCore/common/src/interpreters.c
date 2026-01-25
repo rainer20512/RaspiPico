@@ -694,7 +694,7 @@ ADD_SUBMODULE(Test);
 #endif
 
 #if USE_LVGL > 0
-#include "../lvgl/lvgl.h"
+#include "../../lvgl/lvgl.h"
 
 void lv_example_scale_3(void);
 extern lv_style_t my_style;
@@ -1055,9 +1055,8 @@ static const CommandSetT cmdBasic[] = {
 #endif
 #if USE_LVGL > 0
   { "LVGL TEst",       ctype_sub, .exec.sub = &mdlLVGL,        0,       "LVGL test submenu" },
-  { "Devices",         ctype_sub, .exec.sub = &mdlDevices,     0,       "Peripheral devices submenu" },
 #endif
-
+  { "Devices",         ctype_sub, .exec.sub = &mdlDevices,     0,       "Peripheral devices submenu" },
 #if DEBUG_MODE > 0
   { "Level",           ctype_fn,  .exec.fn = MainMenu,        VOID(0),  "Set Debuglevel"  },
 #endif

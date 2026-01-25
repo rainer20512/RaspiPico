@@ -90,7 +90,7 @@ void lv_init(void);
 void lv_example_anim_2(void);
 extern void LL_Blink(uint32_t nrofblinks, uint32_t delayms );
 
-#if USE_SPI1 > 0 || USE_SPI0 > 0
+#if (USE_SPI1 > 0 || USE_SPI0 > 0 ) && USE_LVGL > 0
   void spi_init_all ( void )
   {
     #if USE_SPI0 > 0
@@ -190,6 +190,12 @@ int main(void)
 
     cnt = 0;
     LL_Blink(1,250);
+
+#if USE_LVGL > 0
+    // Trigger the refresh-loop of LVGL
+    TaskNotify(TASK_LVGL);
+#endif
+
     while (true) {
         TaskRunAll();
         if (!TaskIsRunableTask() )  {
