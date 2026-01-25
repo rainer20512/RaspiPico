@@ -237,6 +237,8 @@ static bool Dump_GPIO ( char *cmdline, size_t len, const void * arg )
 }
 
 void DBG_sram(void);
+void DBG_dump_dma_config(void);
+
 
 static bool Devices_Menu ( char *cmdline, size_t len, const void * arg )
 {
@@ -257,6 +259,9 @@ static bool Devices_Menu ( char *cmdline, size_t len, const void * arg )
     case 2:
       DBG_dump_nvic_config();
       break;
+    case 3:
+      DBG_dump_dma_config();
+      break;
     default:
       DEBUG_PUTS("RFM_Menu: command not implemented");
   } /* end switch */
@@ -274,6 +279,7 @@ static const CommandSetT cmdDevices[] = {
   { "SRAM",                   ctype_fn, {Devices_Menu},    VOID(0), "Show SRAM sections and usage" },
   { "EXTI",                   ctype_fn, {Devices_Menu},    VOID(1), "Show EXTI settings" },
   { "NVIC",                   ctype_fn, {Devices_Menu},    VOID(2), "Show NVIC settings" },
+  { "DMA",                    ctype_fn, {Devices_Menu},    VOID(3), "Show DMA channels" },
   { "GPIO [0|1]",             ctype_fn, {Dump_GPIO},       VOID(0), "Show GPIO 0-15 or 16-29"  },
   { "Cycle <pin> <num>",      ctype_fn, {Toggle_GPIO},     VOID(0), "Cycle GPIO <pin> <num> times"  },
   { "Alter <pin>",            ctype_fn, {Toggle_GPIO},     VOID(1), "Toggle output of GPIO <pin>"  },

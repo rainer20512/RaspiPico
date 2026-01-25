@@ -1041,6 +1041,7 @@
         </folder>
         <folder Name="debug">
           <file file_name="include/debug.h" />
+          <file file_name="src/debug/debug_dma.c" />
           <file file_name="include/debug/debug_gpio_exti.h" />
           <file file_name="include/debug/debug_helper.h" />
           <file file_name="include/debug/debug_io.h" />

@@ -85,6 +85,10 @@ bool spi_setup_dma(void)
 
 
     // Configure the processor to run SPI_TX_handler() when DMA IRQ is asserted
+    // Channel will be enabled later
+    dma_channel_set_handler(spi_dma_chan, SPI_TX_handler);
+
+#if 0
     #if DISP_SPI_NUM == 0
       irq_set_exclusive_handler(DMA_IRQ_0, SPI_TX_handler);
       irq_set_enabled(DMA_IRQ_0, true);
@@ -92,7 +96,7 @@ bool spi_setup_dma(void)
       irq_set_exclusive_handler(DMA_IRQ_1, SPI_TX_handler);
       irq_set_enabled(DMA_IRQ_1, true);
     #endif
-
+#endif
     return true;
 }
 
