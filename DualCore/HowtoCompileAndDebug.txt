@@ -167,3 +167,15 @@ LVGL Release aktualisieren
 44. die Anpassungen aus *** 030 *** in src/stdlib/builtin/lv_tlsf.c einbauen
 
 45. in src/libs/expat/xmlparse.c:8552 die Änderungen wg. fehlendem "getenv" einbauen
+
+-------------------------------------------------------------------------------
+Core 1 auf Core 0 simulieren
+-------------------------------------------------------------------------------
+
+80. Im Core0-Projekt USE_LVGL auf 1 setzen ( normalerweise 0, 1 in Core1 )
+
+81. In den Projekt-Properties CORE1_SIM definieren
+
+82. Neu bauen
+
+83. Nun rennt der gesamte Core1-Kram auf dem Core0

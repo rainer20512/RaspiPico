@@ -145,6 +145,7 @@ void FSM_Ipc ( IPC_FmsT *fsm );
   bool Core0_Init_IPC_Comm ( void* arg, IPC_ResultCB onCompletion )
   {
     FSM_Init(&ipcfsm, arg, Core0_Init_IPC_Comm_Internal, FSM_Ipc );
+    FSM_SetWaitRetries(&ipcfsm, IPC_INIT_WAITRETRIES);
     if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
     FSM_Start(&ipcfsm);
   }
@@ -295,6 +296,15 @@ void FSM_Ipc ( IPC_FmsT *fsm );
 /*=============================================================================
  = IPC comm State Machine
  ============================================================================*/
+
+#ifdef RP2040_M0_0
+  #define SMNAME  "FSM_CORE0"
+  #define IPC_CLAIM_MUTEX(b) IPC_Core0_ClaimMutexNoWait(b)
+#else
+  #define SMNAME  "FSM_CORE1"
+  #define IPC_CLAIM_MUTEX(b) IPC_Core1_ClaimMutexNoWait(b)
+#endif
+
 /******************************************************************************
  * States for IPC call Statemachine
  * State 0 is the first state by design
@@ -303,6 +313,7 @@ typedef enum {
   IPC_STATE_START = 0,
   IPC_STATE_REDO_CLAIM,
   IPC_STATE_SEND,
+  IPC_STATE_WAITACK,
   IPC_STATE_GOTACK,
   IPC_STATE_FINISHWMUTEX,
   IPC_STATE_FINISHNOMUTEX,
@@ -319,7 +330,7 @@ typedef enum {
       /* this callback ist called when first mutex aquisition failed and waittime
          expired. So here we do a second try
        */
-      if ( IPC_ClaimMutexNoWait(true) ) {
+      if ( IPC_CLAIM_MUTEX(true) ) {
         /* if successful: send message*/
         FSM_Goto( fsm, IPC_STATE_SEND );
       } else {
@@ -332,18 +343,23 @@ typedef enum {
 
   /*-----------------------------------------------------------------------------
    * FSM Helper functions:Timeout when waiting for Ack-Message 
+   * this callback ist called only when waiting for acknowledge timed out !!!
    *---------------------------------------------------------------------------*/
 bool ack_wait_cb(repeating_timer_t *rt) 
   {
       /* we passed the fsm data in timers user_data field */
       IPC_FmsT *fsm = rt->user_data;
-
-      /* this callback ist called when waiting for acknowledge expired */
-      /* we got no ACK, so final state is "failed" */
-      FSM_SetResult(fsm, SM_FINALSTATE_FAIL);
-      FSM_Goto( fsm, IPC_STATE_FINISHWMUTEX );
-      DEBUG_PRINTF("Timeout when waiting for ACK\n");  
-      return false; // cancel timer
+      if ( fsm->wait_retries-- > 0 ) {
+        /* additional retry chances available: give it a retry */
+        FSM_Goto( fsm, IPC_STATE_WAITACK );
+        DEBUG_PRINTF("Retrying when waiting for ACK\n");  
+      } else {
+        /* we got no ACK, no more retries, so final state is "failed" */
+        FSM_SetResult(fsm, SM_FINALSTATE_FAIL);
+        FSM_Goto( fsm, IPC_STATE_FINISHWMUTEX );
+        DEBUG_PRINTF("Timeout when waiting for ACK\n");
+      }
+      return false; // cancel timer in any case
   }
 
   /*-----------------------------------------------------------------------------
@@ -355,11 +371,6 @@ bool ack_wait_cb(repeating_timer_t *rt)
     FSM_Goto(&ipcfsm, IPC_STATE_GOTACK);
   }
 
-#ifdef RP2040_M0_0
-  #define SMNAME  "FSM_CORE0"
-#else
-  #define SMNAME  "FSM_CORE1"
-#endif
   /******************************************************************************
    * State machine for IPC message sending
    * will always be called initially with state 0
@@ -376,7 +387,7 @@ bool ack_wait_cb(repeating_timer_t *rt)
       {
         case IPC_STATE_START:
           /* Initial state: try to claim mutex */
-          if ( IPC_ClaimMutexNoWait(true) ) {
+          if ( IPC_CLAIM_MUTEX(true) ) {
             /* if successful: send message*/
             FSM_Goto( fsm, IPC_STATE_SEND );
           } else {
@@ -387,13 +398,18 @@ bool ack_wait_cb(repeating_timer_t *rt)
         case IPC_STATE_SEND:
           /* Assemble and send message */
           if ( fsm->sendfunc(NULL, FSM_AckCB) ) {
-            add_repeating_timer_ms (MUTEX_LOCK_TMO, ack_wait_cb, fsm, &wait_timer);
+            /* if successful: wait for ACK*/
+            FSM_Goto( fsm, IPC_STATE_WAITACK );
           } else {
             /* Send failed: terminate */
             FSM_SetResult(fsm, SM_FINALSTATE_FAIL);
             FSM_Goto( fsm, IPC_STATE_FINISHWMUTEX );
           }
           break;
+        case IPC_STATE_WAITACK:
+            /* Setup timer to wait for ACK */
+            add_repeating_timer_ms (MUTEX_LOCK_TMO, ack_wait_cb, fsm, &wait_timer);
+            break;
         case IPC_STATE_GOTACK:
             /* successful sent a message and got an ACK */
             cancel_repeating_timer(&wait_timer);  /* stop ACK wait Timer */
@@ -402,7 +418,7 @@ bool ack_wait_cb(repeating_timer_t *rt)
           break;
         case IPC_STATE_FINISHWMUTEX:
           /* */
-          IPC_ClaimMutexNoWait(false);
+          IPC_CLAIM_MUTEX(false);
           /* fallthru! */
         case IPC_STATE_FINISHNOMUTEX:
           /* Terminate the state machine, be sure the result has been set before */

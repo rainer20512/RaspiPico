@@ -26,11 +26,19 @@ void FSM_Init( IPC_FmsT *fsm, void* sendarg, ICP_FsmSendFunc sendfunc, ICP_SmFun
   fsm->fsm_result   = SM_FINALSTATE_FAIL;     /* set to fail initially */
   fsm->current_state= 0;                      /* initial state is always 0 */
   fsm->sendarg      = sendarg;                /* runtime argument to sendfunc */
-  fsm->sendfunc     = sendfunc;       
+  fsm->sendfunc     = sendfunc; 
+  fsm->wait_retries = 1;                      /* wait for ACK one time per default */      
   fsm->statemachine = statemachine;   
   fsm->cb           = NULL;                   /* callback is optional */
 }
 
+/*********************************************************************************
+ * @brief Set the number of retries when waiting for ACK
+ ********************************************************************************/
+void FSM_SetWaitRetries ( IPC_FmsT *fsm, uint32_t retries )
+{
+  fsm->wait_retries = MAX(1, retries );
+}
 
 void FSM_SetCB     ( IPC_FmsT *fsm, ICP_FsmFinalCBT pfcb )
 {
@@ -67,7 +75,7 @@ void FSM_Goto      ( IPC_FmsT *fsm, uint32_t new_state )
  ********************************************************************************/
 void FSM_Terminate ( IPC_FmsT *fsm )
 {
-    fsm->current_state = SM_STATE_TERMINATED;
+    fsm->fsm_status = SM_STATE_TERMINATED;
     if ( fsm->cb ) fsm->cb(fsm->fsm_result == SM_FINALSTATE_OK); 
 }
 

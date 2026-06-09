@@ -51,17 +51,19 @@ typedef struct IPC_FmsT {
   IPC_StatusEnum fsm_status;    /* status: running/terminated  */
   IPC_FinalResultT fsm_result;  /* result when terminated: ok or fail */
   uint32_t current_state;       /* current FSM state, will be initiated to 0 */
+  uint32_t wait_retries;        /* How often the wait for ACK may be retried */
   void *sendarg;                /* runtime argument to sendfunc */
   ICP_FsmSendFunc sendfunc;     /* IPC message send function */
   ICP_SmFunc statemachine;      /* state machine function */ 
   ICP_FsmFinalCBT cb;           /* optional callback on termination */
 } IPC_FmsT;
 
-void FSM_Init      ( IPC_FmsT *fsm, void* sendarg, ICP_FsmSendFunc sendfunc, ICP_SmFunc statemachine);
-void FSM_SetCB     ( IPC_FmsT *fsm, ICP_FsmFinalCBT pfcb );
-void FSM_Start     ( IPC_FmsT *fsm);
-void FSM_Goto      ( IPC_FmsT *fsm, uint32_t new_state );
-void FSM_Terminate ( IPC_FmsT *fsm );
-void FSM_SetResult ( IPC_FmsT *fsm, IPC_FinalResultT result);
+void FSM_Init           ( IPC_FmsT *fsm, void* sendarg, ICP_FsmSendFunc sendfunc, ICP_SmFunc statemachine);
+void FSM_SetWaitRetries ( IPC_FmsT *fsm, uint32_t retries );
+void FSM_SetCB          ( IPC_FmsT *fsm, ICP_FsmFinalCBT pfcb );
+void FSM_Start          ( IPC_FmsT *fsm);
+void FSM_Goto           ( IPC_FmsT *fsm, uint32_t new_state );
+void FSM_Terminate      ( IPC_FmsT *fsm );
+void FSM_SetResult      ( IPC_FmsT *fsm, IPC_FinalResultT result);
 
 #endif /* __IPC_FMS_H_ */

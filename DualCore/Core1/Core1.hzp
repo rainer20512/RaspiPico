@@ -83,6 +83,10 @@
     <folder Name="Documentation">
       <file file_name="../HowtoCompileAndDebug.txt" />
     </folder>
+    <folder Name="GUI">
+      <file file_name="../GUI/gui_def.c" />
+      <file file_name="../GUI/gui_def.h" />
+    </folder>
     <folder Name="lvgl">
       <folder
         Name="examples"

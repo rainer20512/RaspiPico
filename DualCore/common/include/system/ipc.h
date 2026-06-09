@@ -42,15 +42,16 @@ typedef union IPC_PacketType {
 #define MSG_FLAG_PLD    0x40  /* Flag for: Message has additional payload */
 #define MSG_FLAG_FIXPLD 0x20  /* Flag for: Message has payload in fixed ipc data */
 
-void IPC_Init_Core0       (void);
-void IPC_Init_Core1       (void);
-void IPC_Start_Core1      (uint32_t launch);
-void IPC_SignalCore0to1   ( uint8_t msgID, bool bHasPayload, IPC_ResultCB ackCB );
-void IPC_AckCore0to1      ( IPC_PacketT msg );
-bool IPC_CheckAckCore0    (uint32_t timeout);
-void IPC_SignalCore1to0   ( uint8_t msgID, bool bHasPayload, IPC_ResultCB ackCB );
-void IPC_AckCore1to0      ( IPC_PacketT msg );
-bool IPC_ClaimMutexNoWait (bool bClaim);
+void IPC_Init_Core0       		(void);
+void IPC_Init_Core1       		(void);
+void IPC_Start_Core1      		(uint32_t launch);
+void IPC_SignalCore0to1   		( uint8_t msgID, bool bHasPayload, IPC_ResultCB ackCB );
+void IPC_AckCore0to1      		( IPC_PacketT msg );
+bool IPC_CheckAckCore0    		(uint32_t timeout);
+void IPC_SignalCore1to0   		( uint8_t msgID, bool bHasPayload, IPC_ResultCB ackCB );
+void IPC_AckCore1to0      		( IPC_PacketT msg );
+bool IPC_Core0_ClaimMutexNoWait (bool bClaim);
+bool IPC_Core1_ClaimMutexNoWait (bool bClaim);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

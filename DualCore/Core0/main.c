@@ -130,7 +130,7 @@ int main()
     TaskInitAll();
 
     /* Autostart Core1 */
-    #if CORE1_AUTOSTART > 0
+    #if CORE1_AUTOSTART > 0 && !defined(CORE1_SIM)
        IPC_Start_Core1(1);
        /* Give Core1 some time to boot, at least 0,5s 
         * Be sure not to slow core1 boot down by additional debug blinks! */

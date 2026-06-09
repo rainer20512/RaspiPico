@@ -15,6 +15,8 @@
 
 #define IPC_FIXEDBUFSIZE      16
 
+#define IPC_INIT_WAITRETRIES  5         /* Number of Retries when waiting for initial ACK */
+
 #define IPC_MSG_0TO1_INIT     1         /* Initialize Core1 with essential runtime data */
 #define IPC_MSG_0TO1_ECHO     2         /* Core1 Simply echoes a msg from core0 (for test purposes)*/
 #define IPC_MSG_1TO0_ECHO     3         /* Core0 Simply echoes a msg from core1 (for test purposes)*/

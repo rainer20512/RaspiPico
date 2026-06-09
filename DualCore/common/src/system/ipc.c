@@ -104,7 +104,7 @@ IPC_ResultCB onAck;
      * @brief  bClaim = true:  Claim mutex for core 0, must be changed for Core1!
      *         bClaim = false: Release mutex
      ********************************************************************************/
-    bool IPC_ClaimMutexNoWait (bool bClaim)
+    bool IPC_Core0_ClaimMutexNoWait (bool bClaim)
     {   
         bool ret=true;
         if ( bClaim ) {
@@ -234,7 +234,7 @@ IPC_ResultCB onAck;
      * @brief  bClaim = true:  Claim mutex for core 0, must be changed for Core1!
      *         bClaim = false: Release mutex
      ********************************************************************************/
-    bool IPC_ClaimMutexNoWait (bool bClaim)
+    bool IPC_Core1_ClaimMutexNoWait (bool bClaim)
     {   
         bool ret=true;
         if ( bClaim ) {

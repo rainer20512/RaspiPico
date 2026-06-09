@@ -697,6 +697,7 @@ ADD_SUBMODULE(Test);
 #include "../../lvgl/lvgl.h"
 
 void lv_example_scale_3(void);
+void gui_test_master(uint32_t num);
 extern lv_style_t my_style;
 static lv_obj_t * obj=NULL;
 bool bSpiDMA=false;
@@ -813,6 +814,15 @@ bool bSpiDMA=false;
             lv_example_scale_3();
             printf("Scale Example\n"); 
             break;
+        case 10:
+            if ( CMD_argc() < 1 ) {
+              printf("Usage: 'GUI test [n]\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            temp = CMD_to_number ( word, wordlen );
+            gui_test_master(temp);
+            break;
         default:
           DEBUG_PUTS("Lvgl-Menu: command not implemented");
       } /* end switch */
@@ -837,6 +847,7 @@ bool bSpiDMA=false;
         { "Set Border Radius <r>",  ctype_fn, .exec.fn = LVGL_Menu,VOID(7), "Border radius <r> Pixels" },
         { "SPI-DMA [0|1]",          ctype_fn, .exec.fn = LVGL_Menu,VOID(8), "Enable/Disable SPI-DMA" },
         { "Scale-Example",          ctype_fn, .exec.fn = LVGL_Menu,VOID(9), "Display scale example" },
+        { "GUI-Test x",	         	ctype_fn, .exec.fn = LVGL_Menu,VOID(10),"GUI Test #x" },
     };
     ADD_SUBMODULE(LVGL);
 #endif
