@@ -32,12 +32,14 @@
 /* Private define ------------------------------------------------------------*/
 #define CMD_SEPARATOR       ';' /* character to separate cmds from each other */
 #define MODULE_MAXDEPTH      5  /* Interpreter modules maybe stacked to this  */ 
+#define HANDLER_MAXDEPTH     2  /* line handlers may be stacked to this       */
 
 /* Private macro -------------------------------------------------------------*/
 
 /* Private types---- ---------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
+void handle_cmd_line ( char *cmdline, size_t len );
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -64,6 +66,19 @@ static int32_t module_ptr = -1;
  * is maintained solely by CMD_Push and CMD_Pop
  */
 static const InterpreterModuleT *act_module;
+
+/*
+ * A "stack" of input line handlers and prompt functions
+ * initialized by CMD_Init()
+ */
+static pFnLineHandler line_handlers[HANDLER_MAXDEPTH+1];
+static pFnPrompt      pmpt_handlers[HANDLER_MAXDEPTH+1];
+
+/*
+ * The "stack pointer" to the line handlers. 
+ * initialized by CMD_Init()
+ */
+static int32_t line_handler_ptr = -1;
 
 
 /* Private functions ---------------------------------------------------------*/
@@ -161,6 +176,41 @@ bool CMD_Push ( const InterpreterModuleT * mdlNew )
   return true;
 }
 
+
+/*********************************************************************************
+ * @brief Pop the actual Line handler from Stack. 
+ *
+ * @note The initial handler cannot be popped and will remain on TOS
+ *       when trying to pop
+ ********************************************************************************/
+void CMD_Handler_Pop ( void )
+{
+  if ( line_handler_ptr == 0 ) {
+    DEBUG_PUTS("Interpreter module stack underflow");
+    return;
+  }
+
+  line_handler_ptr--;
+}
+
+/*********************************************************************************
+ * @brief Push a new input line on top of stack
+ * @param linehnd     - the new input line handler
+ * ********************************************************************************/
+bool CMD_Handler_Push (pFnLineHandler linehnd, pFnPrompt prompt)
+{
+  if ( line_handler_ptr + 1 > HANDLER_MAXDEPTH -1 ) {
+    DEBUG_PUTS("Line handler stack overflow");
+    return false;
+  }
+ 
+  line_handler_ptr++;
+  line_handlers[line_handler_ptr] = linehnd;
+  pmpt_handlers[line_handler_ptr] = prompt;
+  prompt();
+  return true;
+}
+
 /*********************************************************************************
  * @brief Pop the actual Module from Stack. 
  *
@@ -187,7 +237,7 @@ void CMD_Pop ( void )
 bool CMD_Init ( void )
 {
   CMD_Push(&mdlBasic);
-  CMD_Prompt();
+  CMD_Handler_Push(handle_cmd_line, CMD_Prompt);
   return true;
 }
 
@@ -197,7 +247,6 @@ bool CMD_Init ( void )
  * Words are separated by one or more blanks
  *--------------------------------------------------------------------------------
  *------------------------------------------------------------------------------*/
-#define MAX_WORDS     10
 #define IS_LC(a)      ((a) >= 'a' && (a) <= 'z')
 #define TO_UC(a)      (a) &= ~0x20
 /*
@@ -215,7 +264,7 @@ static uint16_t words[MAX_WORDS];
 /*
  * total number of words and actual word in command line
  */
-static uint16_t word_num, act_word; 
+uint16_t word_num, act_word; 
 
 /*
  * list of partial matches and number of partial matches
@@ -274,7 +323,7 @@ uint16_t CMD_argc ( void )
  *
  * @note   when false is returned, the list of words will be truncated
  ********************************************************************************/
-static bool parse_line ( char *cmdline, size_t len )
+bool CMD_parse_line ( char *cmdline, size_t len )
 {
   uint32_t p = 0;
   
@@ -317,7 +366,7 @@ static bool parse_line ( char *cmdline, size_t len )
 /********************************************************************************
  * @brief convert a given word to upper case letters
  ********************************************************************************/
-static void word_to_uc ( char *word, size_t wordlen ) 
+void CMD_word_to_uc ( char *word, size_t wordlen ) 
 {
   uint32_t p=0;
   
@@ -339,7 +388,7 @@ static void word_to_uc ( char *word, size_t wordlen )
  *         1 - partial match ( word 1 is identical to the beginning of word2 )
  *         2 - full match ( word 1 is identical to word2 )
  ********************************************************************************/
-static uint32_t compare_words( const char * word1, size_t word1len,  const char * word2, size_t word2len )
+uint32_t CMD_compare_words( const char * word1, size_t word1len,  const char * word2, size_t word2len )
 {
   size_t len = min(word1len, word2len );
   char c;
@@ -362,34 +411,33 @@ static uint32_t compare_words( const char * word1, size_t word1len,  const char 
   return 0;
 }
 
+/********************************************************************************
+ * @brief returns true, if the given word is the word for exit 
+ *        i.e. 'exit' or '^D'
+ ********************************************************************************/
+static bool CMD_is_exitword( char *word, size_t wordlen ) 
+{
+  /* check for '^D' */
+  if ( wordlen == 1 && *word == 0x04 ) return true;
+  
+  /* check for 'EXIT' */
+  if ( CMD_compare_words(word, wordlen, "EXIT", 4 ) > 0 ) return true;
+
+  return false;
+}
 
 
 /********************************************************************************
  * @brief returns true, if the given word is the word for help
  *        i.e. 'help' or '?'
  ********************************************************************************/
-static bool is_helpword( char *word, size_t wordlen ) 
+bool CMD_is_helpword( char *word, size_t wordlen ) 
 {
   /* check for '?' */
   if ( wordlen == 1 && *word == '?' ) return true;
   
   /* check for 'HELP' */
-  if ( compare_words(word, wordlen, "HELP", 4 ) > 0 ) return true;
-
-  return false;
-}
-
-/********************************************************************************
- * @brief returns true, if the given word is the word for exit 
- *        i.e. 'exit' or '^D'
- ********************************************************************************/
-static bool is_exitword( char *word, size_t wordlen ) 
-{
-  /* check for '^D' */
-  if ( wordlen == 1 && *word == 0x04 ) return true;
-  
-  /* check for 'EXIT' */
-  if ( compare_words(word, wordlen, "EXIT", 4 ) > 0 ) return true;
+  if ( CMD_compare_words(word, wordlen, "HELP", 4 ) > 0 ) return true;
 
   return false;
 }
@@ -480,7 +528,7 @@ static int16_t get_matches( char *word, size_t wordlen )
 
   match_cnt = 0;
   for ( uint32_t i = 0; i < act_module->num_cmd; i++ ) {
-    switch( compare_words( word, wordlen, act_module->commandlist[i].command, strlen(act_module->commandlist[i].command)) ) {
+    switch( CMD_compare_words( word, wordlen, act_module->commandlist[i].command, strlen(act_module->commandlist[i].command)) ) {
       case 2:
         /* exact match: return with corresponding index */
         return i;
@@ -531,16 +579,16 @@ static bool execute_entry ( char *word, size_t wordlen, uint32_t idx )
 static void handle_word( char *word, size_t wordlen )
 {
    /* first convert given word to UC */
-   word_to_uc( word, wordlen );
+   CMD_word_to_uc( word, wordlen );
 
    /* handle help command */
-   if ( is_helpword( word, wordlen ) ) {
+   if ( CMD_is_helpword( word, wordlen ) ) {
       CMD_PrintHelp();
       return;
    }
 
    /* handle exit command */
-   if ( is_exitword( word, wordlen ) ) {
+   if ( CMD_is_exitword( word, wordlen ) ) {
       CMD_Pop();
       return;
    }
@@ -570,21 +618,18 @@ static void handle_word( char *word, size_t wordlen )
      }
    }
 
-/*
-   printf("%d ",act_word );
-    for ( uint32_t j = 0; j < wordlen; j++ ){
-      putchar(word[j]);
-    }
-*/
    printf("\n");
 }
 
-static void handle_line ( char *cmdline, size_t len )
+/******************************************************************************
+ * Standard input command line handler 
+ *****************************************************************************/
+void handle_cmd_line ( char *cmdline, size_t len )
 {
 
   char *word;
   size_t wordlen;
-  if (!parse_line ( cmdline, len ) ) {
+  if (!CMD_parse_line ( cmdline, len ) ) {
     printf("Too many words, max is %d\n", MAX_WORDS);
   }
 
@@ -613,13 +658,14 @@ void Interpret_line(LinBuffT *inbuf)
   /* read all portions of the input buffer */
   do {
     more = LinBuff_GetsTo(inbuf, (uint8_t **)&cmdline, &len, CMD_SEPARATOR );
-    if ( len > 0 ) handle_line( cmdline, len );
+    /* Call the actual line handler */
+    if ( len > 0 ) line_handlers[line_handler_ptr]( cmdline, len );
     if ( more ) LinBuff_Getc(inbuf, (uint8_t *)&drop);
   } while ( more );
 
   /* Reset input buffer to 'empty' */
   LinBuff_SetEmpty(inbuf);
-  CMD_Prompt();
+  pmpt_handlers[line_handler_ptr]();
 }
 
 

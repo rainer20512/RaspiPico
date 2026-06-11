@@ -86,6 +86,10 @@
     <folder Name="GUI">
       <file file_name="../GUI/gui_def.c" />
       <file file_name="../GUI/gui_def.h" />
+      <file file_name="../GUI/gui_edit.c" />
+      <file file_name="../GUI/gui_edit.h" />
+      <file file_name="../GUI/gui_worker.c" />
+      <file file_name="../GUI/gui_worker.h" />
     </folder>
     <folder Name="lvgl">
       <folder

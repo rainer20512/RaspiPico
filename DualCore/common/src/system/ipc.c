@@ -51,6 +51,10 @@ IPC_ResultCB onAck;
 
 #if defined(RP2040_M0_0)
 
+    /* 
+     * is defined in Core1 memory map file (RP2040_M1_1_MemoryMap.xml) and must
+     * match the flash start value for core 1
+     */
     #define CORE1_VECTORTABLE   0x10100000
 
 

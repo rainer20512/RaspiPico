@@ -19,8 +19,16 @@
  extern "C" {
 #endif
 
-/* Public types---- ---------------------------------------------------------*/
+/* Public defines -----------------------------------------------------------*/
+#define MAX_WORDS     10  /* max number of cmdline elements we can handle    */
 
+/* Public vars -----------------------------------------------------------*/
+/*
+ * total number of words and actual word in command line
+ */
+extern uint16_t word_num, act_word; 
+
+/* Public types---- ---------------------------------------------------------*/
 typedef struct InterpreterModule InterpreterModuleT;
 
 /*
@@ -29,9 +37,11 @@ typedef struct InterpreterModule InterpreterModuleT;
 typedef const char * ( *pFnGetPrompt) (void);
 
 /*
- * Function type to execute a command
+ * Function type to execute a command, to handle input and to print prompt
  */
-typedef bool ( *pFnInterpreterExec ) ( char *cmd, size_t len, const void * arg );
+typedef bool ( *pFnInterpreterExec )  ( char *cmd, size_t len, const void * arg );
+typedef void (*pFnLineHandler)        ( char *cmdline, size_t len );
+typedef void (*pFnPrompt)             ( void );
 
 /*
  * Enumeration for different types of menu entries
@@ -63,14 +73,20 @@ typedef struct InterpreterModule {
   const uint32_t           num_cmd;
 } InterpreterModuleT;
 
-void CMD_PrintHelp(void);
-void CMD_Prompt(void);
+void      CMD_word_to_uc ( char *word, size_t wordlen );
+bool      CMD_is_helpword( char *word, size_t wordlen );
+bool      CMD_is_numeric ( char *word, size_t wordlen );
+bool      CMD_parse_line ( char *cmdline, size_t len );
+uint32_t  CMD_compare_words( const char * word1, size_t word1len,  const char * word2, size_t word2len );
+
 bool CMD_Push ( const InterpreterModuleT * mdlNew );
 void CMD_Pop ( void );
+bool CMD_Handler_Push (pFnLineHandler linehnd, pFnPrompt prompt);
+void CMD_Handler_Pop ( void );
+
 bool CMD_Init ( void );
 bool CMD_get_one_word ( char **start, size_t *len );
 uint16_t CMD_argc ( void );
-bool CMD_is_numeric( char *word, size_t wordlen );
 uint32_t CMD_to_number ( char *word, size_t wordlen );
 
 void task_handle_com(uint32_t);

@@ -1,125 +1,137 @@
 #include "../GUI/gui_def.h"
 #if USE_LVGL > 0
-	
-#define GUI_TEST 	1
-static lv_style_t defstyle;
-
-lv_style_t * gui_set_style ( GUI_Style_T *act )
-{
-	/* Check, whether the Object has been allocated already */
-	if ( !act->style ) { 
-    	lv_style_init(&defstyle);
-		act->style = &defstyle;
-    }  
-
-	/* assign _All_ style properties */
-    lv_style_set_bg_color		(&defstyle, act->bgcolor);
-    lv_style_set_bg_opa			(&defstyle, act->bgopa);
-    lv_style_set_text_color		(&defstyle, act->txtcolor);
-	lv_style_set_width			(&defstyle, act->def_width);
-	lv_style_set_height			(&defstyle, act->def_height);
-    lv_style_set_border_color	(&defstyle, act->bordercolor);
-    lv_style_set_border_width	(&defstyle, act->borderwidth);
-    lv_style_set_radius			(&defstyle, act->borderradius);
-    lv_style_set_shadow_color	(&defstyle, act->shadowcolor);
-    lv_style_set_shadow_offset_x(&defstyle, act->sh_x);
-    lv_style_set_shadow_offset_y(&defstyle, act->sh_y);
-    lv_style_set_shadow_width	(&defstyle, act->shadow_width);
-    lv_style_set_shadow_opa		(&defstyle, act->shadow_opa);
-    lv_style_set_text_align	    (&defstyle, act->align);
-    	
-	return &defstyle;	
-}
-
-lv_obj_t *gui_set_label( GUI_Label_T *lbl )
-{
-	lv_style_value_t ret;
-	/* Check, whether lbl has been allocated at all */
-	if( ! lbl->obj ) {
-	    lbl->obj = lv_label_create(lv_screen_active());
-    }
-    /* If a style is assigned, activate it */
-	if ( lbl->style ) lv_obj_add_style(lbl->obj, lbl->style, 0); 	
-
-    lv_label_set_text(lbl->obj, lbl->txt);
-
-    /* if we have a label assigned alignment, then use it instead of styles alignment */
-    if ( lbl->align != LV_ALIGN_DEFAULT ) {
-	    lv_obj_align(lbl->obj, lbl->align, lbl->x0, lbl->y0);
-    } else {
-    	lv_obj_set_pos(lbl->obj, lbl->x0, lbl->y0);
-    }
-
-    return lbl->obj;
-}
-#if GUI_TEST > 0
 
 #include <stdio.h>
+#include <malloc.h>
 
-lv_style_t *mystyle;
-lv_obj_t   *mylbl, *mylbl2;
+const GUI_Style_T def_style = 
+    { .def_width= 120, 
+      .def_height = 20, 
+      .align = LV_ALIGN_TOP_MID,  
+      .bgopa=128, 
+      .borderwidth=2, 
+      .borderradius = 5, 
+      .shadow_width=4, 
+      .shadow_opa=128, 
+      .sh_x=4, 
+      .sh_y = 4,   
+      .bgcolor    = {0x40, 0x40, 0x40},
+      .bordercolor= {0x00, 0x00, 0x00},
+      .txtcolor   = {0xff, 0x00, 0x00},  
+      .shadowcolor= {0x80, 0x80, 0x80},
+    };
 
-char lbltext[]  = "Ein Label";
-char lbltext2[] = "Label zwei";
+GUI_Style_T cur_style = def_style;
 
-GUI_Style_T st = {0};
-GUI_Label_T lbl = {0};
-GUI_Label_T lbl2 = {0};
+const  GUI_Edit_T edit_style = {
+  .count        = 14,
+  .editname     = "Style",
+  .gui_element  = { 
+    { "Width",        GUI_UINT16, offsetof(GUI_Style_T, def_width) },
+    { "Height",       GUI_UINT16, offsetof(GUI_Style_T, def_height) }, 
+    { "Align",        GUI_UINT8,  offsetof(GUI_Style_T, align) }, 
+    { "Backgr.opaq",  GUI_UINT8,  offsetof(GUI_Style_T, bgopa) }, 
+    { "BorderWidth",  GUI_UINT8,  offsetof(GUI_Style_T, borderwidth) }, 
+    { "BorderRadius", GUI_UINT8,  offsetof(GUI_Style_T, borderradius) }, 
+    { "Shadow Width", GUI_UINT8,  offsetof(GUI_Style_T, shadow_width) }, 
+    { "Shadow opaq",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_opa) }, 
+    { "Shadow xref",  GUI_UINT8,  offsetof(GUI_Style_T, sh_x) }, 
+    { "Shadow yref",  GUI_UINT8,  offsetof(GUI_Style_T, sh_y) }, 
+    { "BGColor",      GUI_RGB888, offsetof(GUI_Style_T, bgcolor) }, 
+    { "BorderColor",  GUI_RGB888, offsetof(GUI_Style_T, bordercolor) }, 
+    { "TextColor",    GUI_RGB888, offsetof(GUI_Style_T, txtcolor) }, 
+    { "ShadowColor",  GUI_RGB888, offsetof(GUI_Style_T, shadowcolor) }, 
+  },
+};
 
-void gui_test1(void)
-{
-	st.def_width	= 120;
-	st.def_height	= 20;
-  	st.align		= LV_ALIGN_TOP_MID;
-	st.bgcolor 		= lv_color_hex(0x404040);  
-    st.bgopa   	 	= 128;
-  	st.txtcolor		= lv_color_hex(0xff0000);
-  	st.bordercolor	= lv_color_hex(0x000000);
- 	st.borderwidth	= 0;
-  	st.borderradius = 5;
-  	st.shadowcolor  = lv_color_hex(0x808080);
-    st.shadow_opa   = 128;
-    st.shadow_width = 8;
-    st.sh_x         = 4;
-    st.sh_y         = 4;
 
-    mystyle = gui_set_style(&st);
+const char lbltext[]  = "Def. Label";
+const GUI_Label_T def_label =
+  { .style = NULL,
+    .align = LV_ALIGN_CENTER,
+    .x0    = 120,
+    .y0    = 120,
+    .txt   = lbltext,
+};
 
-    lbl.style 	= mystyle;
-    lbl.align   = LV_ALIGN_CENTER;
-  	lbl.txt	= lbltext;
+GUI_Label_T cur_label = def_label;
 
-	mylbl = gui_set_label(&lbl);
-
-}
+const  GUI_Edit_T edit_label = {
+  .count        = 4,
+  .editname     = "Label",
+  .gui_element  = { 
+    { "Align",        GUI_UINT8,  offsetof(GUI_Label_T, align) }, 
+    { "X0",           GUI_UINT16, offsetof(GUI_Label_T, x0) }, 
+    { "Y0",           GUI_UINT16, offsetof(GUI_Label_T, y0) }, 
+    { "Text",         GUI_STRING, offsetof(GUI_Label_T, txt) }, 
+  },
+};
 
 void gui_test2(void)
 {
-
-  	lbl2.align	= LV_ALIGN_CENTER;
-  	lbl2.txt	= lbltext2;
-	lbl2.y0     = 60;
-	mylbl2 = gui_set_label(&lbl2);
 }
 
-void gui_test_master(uint32_t num)
+/******************************************************************************
+ * @brief Create a new LVGL style from GUI_Style_T variable
+ *        the lvgl style variabel is dynamically allocated from heap
+ *        user is repsonsible for freeing if no longer needed
+ *****************************************************************************/     
+lv_style_t * gui_new_style ( GUI_Style_T *act, lv_style_t *style )
 {
-	printf("Gui Test %d starting\n", num);
-	switch(num) {
-    	case 1:
-        	gui_test1();
-            break;
-    	case 2:
-        	gui_test2();
-            break;
-    	default: 
-        	puts("Unknown Test");
-            return;
+
+	/* Check, whether style has been allocated already */
+	if ( !style ) { 
+      style = malloc ( sizeof(lv_style_t) );
+      if ( !style ) {
+        puts("malloc of style failed");
+        return NULL;
+      }
+      lv_style_init(style);
     }
-	printf("Gui Test %d finished\n", num);
+
+	/* assign _All_ style properties */
+    lv_style_set_bg_color		(style, act->bgcolor);
+    lv_style_set_bg_opa			(style, act->bgopa);
+    lv_style_set_text_color		(style, act->txtcolor);
+	lv_style_set_width			(style, act->def_width);
+	lv_style_set_height			(style, act->def_height);
+    lv_style_set_border_color	(style, act->bordercolor);
+    lv_style_set_border_width	(style, act->borderwidth);
+    lv_style_set_radius			(style, act->borderradius);
+    lv_style_set_shadow_color	(style, act->shadowcolor);
+    lv_style_set_shadow_offset_x(style, act->sh_x);
+    lv_style_set_shadow_offset_y(style, act->sh_y);
+    lv_style_set_shadow_width	(style, act->shadow_width);
+    lv_style_set_shadow_opa		(style, act->shadow_opa);
+    lv_style_set_text_align	    (style, act->align);
+    	
+	return style;	
 }
 
-#endif /* GUI_TEST */
+/******************************************************************************
+ * @brief Create a new LVGL style from GUI_Style_T variable
+ *        the lvgl style variabel is dynamically allocated from heap
+ *        user is repsonsible for freeing if no longer needed
+ *****************************************************************************/     
+lv_obj_t * gui_new_label ( GUI_Label_T *act, lv_style_t *style, lv_obj_t *lbl)
+{
+	/* Check, whether label has been allocated already */
+	if ( !lbl ) { 
+        lbl = malloc ( sizeof(lv_obj_t*) );
+        if ( !lbl ) {
+            puts("malloc of label failed");
+            return NULL;
+        }
+        lbl = lv_label_create(lv_screen_active());
+    }
+  
+    if ( style) lv_obj_add_style(lbl, style, 0);
+    lv_label_set_text(lbl,act->txt);
+    lv_obj_align(lbl, act->align, act->x0, act->y0);
+
+
+}
+
 
 #endif /* USE_LVGL > 0 */ 
 
