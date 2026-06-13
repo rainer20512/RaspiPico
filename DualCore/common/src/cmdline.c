@@ -379,7 +379,7 @@ void CMD_word_to_uc ( char *word, size_t wordlen )
 
 /********************************************************************************
  * @brief  compare word1 and word2 on an case insensitve base. word1 is expected
- * @param  word1    - ptr to first word, HAS TO BE IN UC !
+ * @param  word1    - ptr to first word
  * @param  word1len - length of first word
  * @param  word2    - ptr to second word
  * @param  word2len - length of second word
@@ -391,13 +391,13 @@ void CMD_word_to_uc ( char *word, size_t wordlen )
 uint32_t CMD_compare_words( const char * word1, size_t word1len,  const char * word2, size_t word2len )
 {
   size_t len = min(word1len, word2len );
-  char c;
+  char c1,c2;
 
   /* check for identical up to the lenth of the shorter word */
   for ( uint32_t i = 0; i < len; i++ ) {
-    c = *(word2++);
-    if (IS_LC(c) ) TO_UC(c);
-    if ( c != *(word1++) ) return 0;
+    c2 = *(word2++); if (IS_LC(c2) ) TO_UC(c2);
+    c1 = *(word1++); if (IS_LC(c1) ) TO_UC(c1);
+    if ( c2 != c1 ) return 0;
   }
 
   /* words match up to the length of the shorter word */

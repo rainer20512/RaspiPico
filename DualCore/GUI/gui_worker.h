@@ -42,12 +42,6 @@ typedef struct {
   uint16_t        elem_offset;
 } GUI_editelem_T;
 
-typedef struct {
-  uint16_t count;
-  const char *editname;
-  GUI_editelem_T gui_element[];
-} GUI_edit_T;
-
 
 typedef struct {
   lv_obj_t 		*obj;					/* Reference to underlying lvgl object, only used by lvgl task */	
