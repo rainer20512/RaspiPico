@@ -644,7 +644,7 @@
  *  #define LV_FONT_CUSTOM_DECLARE   LV_FONT_DECLARE(my_font_1) LV_FONT_DECLARE(my_font_2)
  *  @endcode
  */
-#define LV_FONT_CUSTOM_DECLARE
+#define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(rb_font_round_24) LV_FONT_DECLARE(w_font_stencil_40)
 
 /** Always set a default font */
 #define LV_FONT_DEFAULT &lv_font_montserrat_14

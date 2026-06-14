@@ -40,7 +40,7 @@ extern const char *EditNames[];
 typedef enum {
   STYLE_DEFWIDTH     = 0,
   STYLE_DEFHEIGHT    = 1,
-  STYLE_ALIGN        = 2,
+  STYLE_TEXTALIGN    = 2,
   STYLE_BGOPA        = 3,
   STYLE_BORDERWIDTH  = 4,
   STYLE_BORDERRADIUS = 5,
@@ -67,7 +67,7 @@ typedef struct {
   uint8_t		bgopa;					/* BG opacity */	
   lv_color_t 	txtcolor;		        /* Text color */
   uint16_t 		def_width, def_height;	/* default width and height in px */
-  uint8_t       align;				/* Text Alignment */
+  uint8_t       textalign;				/* Text Alignment */
   lv_color_t	bordercolor;			
   uint8_t 		borderwidth;
   uint8_t		borderradius;
@@ -83,7 +83,7 @@ typedef struct {
 extern const GUI_Style_T def_style;             /* default style settings */
 extern       GUI_Style_T cur_style;             /* actual style settings  */
 
-lv_style_t * gui_new_style ( GUI_Style_T *act, lv_style_t *style );
+lv_style_t * GUI_new_or_update_style ( GUI_Style_T *act, lv_style_t *style );
 
 /* Bitfield for set properties of a GUI_Label_T */
 /* Order has to be the same as in corresponding Edit receipe !!! */
@@ -114,7 +114,7 @@ typedef struct {
 extern const GUI_Label_T def_label;             /* default label settings */
 extern       GUI_Label_T cur_label;             /* actual label settings  */
 
-lv_obj_t* gui_new_label ( GUI_Label_T *act, lv_style_t *style, lv_obj_t *lbl);
+lv_obj_t* GUI_new_or_update_label ( GUI_Label_T *act, lv_obj_t *lbl);
 void      GUI_dump_coords ( lv_obj_t * obj );
 
 #endif /* USE_LVGL */

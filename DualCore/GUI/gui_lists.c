@@ -7,24 +7,40 @@
 /* linked list of all GUI elements, initially empty */
 List_Elem_T * GUI_item_list = NULL;
 
-/* Append a new List entry at the end of list */
-List_Elem_T *LL_append( List_Elem_T **llist, GUI_Elem_T type, char *name, void *entry )
+/*-----------------------------------------------------------------------------
+ * @brief Create a new List entry from heap and initialize all fields, 
+ * @param type     - Type of associated GUI element
+ * @param lvgl_obj - corresponding lvgl object ( style or lv_obj_t ), or NULL
+ *                   if no lvgl object is associated so far
+ * @param name     - ptr to objects name within object data 
+ * @param entry    - typeless ptr to GUI element data
+ * @retval - new entry or NULL when no memory on heap     
+
+ * @note  no insertion into list
+ *---------------------------------------------------------------------------*/
+List_Elem_T *LL_New_Element( GUI_Elem_T type, void *lvgl_obj, char *name, void *entry )
 {
     List_Elem_T *newentry = malloc(sizeof(List_Elem_T));
     if ( !newentry )  { 
       printf("malloc failed");
-      return NULL;
+    } else {
+      newentry->ll_type      = type;
+      newentry->ll_lvgl_obj  = lvgl_obj;
+      newentry->ll_name      = name; 
+      newentry->ll_entry     = entry;
+      /* Not insertet in any list at this point */
+      newentry->ll_next      = NULL;
     }
+    return newentry;
+}
 
-    /* create new entry */
-    newentry->ll_type  = type;
-    newentry->ll_name  = name; 
-    newentry->ll_entry = entry;
+/* Append a new List entry at the end of list */
+List_Elem_T *LL_append( List_Elem_T **llist, List_Elem_T *newentry )
+{
     /* Its the last entry ! */
     newentry->ll_next  = NULL;
 
     /* Append to list */
-
     while ( *llist != NULL )
       llist = &(*llist)->ll_next;
 
@@ -83,6 +99,38 @@ List_Elem_T *LL_iterate_by_type ( List_Elem_T *llist, GUI_Elem_T search_type )
     return llist;
 }
     
+/*-----------------------------------------------------------------------------
+ * @brief  Find element of certain Type and Name
+ * @param  llist       - ptr to linked list head
+ * @param  search_type - EntryType to search for, LL_NOTYPE = any type
+ * @param  name        - name to search for (case sensitive )
+ * @retval ptr to found entry, NULL if no match
+ *---------------------------------------------------------------------------*/
+List_Elem_T *LL_find_by_type_n_name ( List_Elem_T *llist, GUI_Elem_T search_type, const char *name )
+{   
+     while ( llist) {
+      if ( (search_type == GUI_ELEM_NOTYPE || search_type == llist->ll_type ) && strcmp(llist->ll_name, name) == 0 ) return llist;
+      llist = llist->ll_next;
+    }
+    return NULL;
+}
+
+/*-----------------------------------------------------------------------------
+ * @brief  Find element of certain Type and associated lvgl object
+ * @param  llist       - ptr to linked list head
+ * @param  search_type - EntryType to search for, LL_NOTYPE = any type
+ * @param  lvgl_obj    - ptr to lvgl obj
+ * @retval ptr to found entry, NULL if no match
+ *---------------------------------------------------------------------------*/
+List_Elem_T *LL_find_by_type_n_obj  ( List_Elem_T *llist, GUI_Elem_T search_type, void *lvgl_obj )
+{
+     while ( llist) {
+      if ( (search_type == GUI_ELEM_NOTYPE || search_type == llist->ll_type ) && llist->ll_lvgl_obj == lvgl_obj ) return llist;
+      llist = llist->ll_next;
+    }
+    return NULL;
+}
+
 /*-----------------------------------------------------------------------------
  * @brief  delete the list entry delptr points to 
  * @param  llist  - linked list to use

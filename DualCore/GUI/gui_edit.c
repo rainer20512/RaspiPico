@@ -23,7 +23,7 @@ const  GUI_Edit_T edit_style = {
   .gui_element   = { 
     { "Width",        GUI_UINT16, offsetof(GUI_Style_T, def_width) },
     { "Height",       GUI_UINT16, offsetof(GUI_Style_T, def_height) }, 
-    { "Align",        GUI_UINT8,  offsetof(GUI_Style_T, align) }, 
+    { "TextAlign",    GUI_UINT8,  offsetof(GUI_Style_T, textalign) }, 
     { "Backgr.opaq",  GUI_UINT8,  offsetof(GUI_Style_T, bgopa) }, 
     { "BorderWidth",  GUI_UINT8,  offsetof(GUI_Style_T, borderwidth) }, 
     { "BorderRadius", GUI_UINT8,  offsetof(GUI_Style_T, borderradius) }, 
@@ -71,6 +71,9 @@ static union {
       struct str str;
     } GUI_Edit_tempval;
 
+/* module global variable to copy string data out of inbuf */
+char tempstr[GUI_MAX_NAMELEN];
+
 /* the following two variables are set/maintained by "GUI_Edit" */
 uint8_t          *act_obj;    /* actual edited object   */
 const GUI_Edit_T *act_edit;   /* object's edit receipe  */
@@ -105,32 +108,48 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const GUI_editelem_T *editelem, 
     /* copy data and output with specified format */
     /* GUI String requires special handling       */
     GUI_Edit_tempval.u32=0;
-    if (editelem->elem_type != GUI_STRING )
-       memmove(GUI_Edit_tempval.u8, bytes+editelem->elem_offset, GUI_ByteLen[editelem->elem_type] );
-    else
-      /* In case of string store ptr to string */
-       GUI_Edit_tempval.str.text = (char *)bytes+editelem->elem_offset;
-
-    switch(editelem->elem_type) {
-      case GUI_UINT8:
-        printf("%u", GUI_Edit_tempval.u8[0] );
-        break;
-      case GUI_UINT16:
-        printf("%u", GUI_Edit_tempval.u16[0] );
-        break;
-      case GUI_RGB888:
-        printf("0x%02x%02x%02x",  GUI_Edit_tempval.rgb.blue, GUI_Edit_tempval.rgb.green, GUI_Edit_tempval.rgb.red );
-        break;
-      case GUI_UINT32:
-        printf("%u", GUI_Edit_tempval.u32 );
-        break;
+    switch ( editelem->elem_type ) {
       case GUI_STRING:
-        printf("%s", GUI_Edit_tempval.str.text );
-        break;
+      case GUI_STYLE:
+          switch ( editelem->elem_type ) {
+            case GUI_STRING:
+               /* In case of string store ptr to string */
+               GUI_Edit_tempval.str.text = (char *)bytes+editelem->elem_offset;
+               break;
+            case GUI_STYLE:
+               /* In case of Style: find Style in GUI item list and print the name */
+               List_Elem_T *ll_elem = LL_find_by_type_n_obj( GUI_item_list, GUI_ELEM_STYLE, *(lv_style_t **)(bytes+editelem->elem_offset) );
+               GUI_Edit_tempval.str.text = (char *)ll_elem->ll_name;
+               break;
+          }
+          printf("%s", GUI_Edit_tempval.str.text );
+          break;
+      case GUI_UINT8:
+      case GUI_UINT16:
+      case GUI_RGB888:
+      case GUI_UINT32:
+          /* handle all tpye of numbers by just copying the raw bytes to tempval */
+          memmove(GUI_Edit_tempval.u8, bytes+editelem->elem_offset, GUI_ByteLen[editelem->elem_type] );
+          /* And print with different formats/ lengths */
+          switch(editelem->elem_type) {
+            case GUI_UINT8:
+              printf("%u", GUI_Edit_tempval.u8[0] );
+              break;
+            case GUI_UINT16:
+              printf("%u", GUI_Edit_tempval.u16[0] );
+              break;
+            case GUI_RGB888:
+              printf("0x%02x%02x%02x",  GUI_Edit_tempval.rgb.blue, GUI_Edit_tempval.rgb.green, GUI_Edit_tempval.rgb.red );
+              break;
+            case GUI_UINT32:
+              printf("%u", GUI_Edit_tempval.u32 );
+              break;
+          } //inner switch
+          break;
       default:
         printf("<No output format defined for %d",editelem->elem_type);
         return;
-    }
+    } // outer switch;
 }
 
 /******************************************************************************
@@ -211,6 +230,7 @@ void GUI_PrintHelp(void)
        "'exit' or'x' to exit edit mode\n"\
        "'s(ave)' to store current structure in global item list\n"\
        "'l(ist)' to list all elements of current type in item list\n"\
+       "'g(et) <name>' to load entry <name> into editor\n"\
        "'h' or '?' for help");
 }
 
@@ -227,6 +247,22 @@ void GUI_Handler_Pop ( void )
 
 #define min(a,b)    ((a)<(b)?a:b)
 /*********************************************************************************
+ * @brief  copy the string tempval ( by char array/length ) to Null terminated
+ *         destination
+ *         destination _must_ be of minimal length GUI_MAX_NAMELEN
+ * @param  dest - buffer of minimal length GUI_MAX_NAMELEN
+ ********************************************************************************/
+static char *GUI_tempval_to_str(char *dest)
+{
+      /* copy string into data structure */
+      size_t len = min(GUI_MAX_NAMELEN-1, GUI_Edit_tempval.str.len);
+      strncpy(dest, GUI_Edit_tempval.str.text, len);
+      /* incoming string is (vector, length) type so append \0 in any case */
+      *(dest+len)='\0';
+      return dest;
+}
+
+/*********************************************************************************
  * @brief  update the "idx"th element of actual data element
  *         new value is stored in GUI_Edit_tempval union
  * @param  bIsNull - true, if new value is <Unset> 
@@ -239,10 +275,10 @@ static void GUI_Edit_update( uint32_t idx, bool bIsUnset )
 
     /* Handle <Unset> first */
     if ( bIsUnset ) {
-      *used &= ~( 1 << idx );
+       *used &= ~( 1 << idx );
       return;
     } else {
-      *used |= ( 1 << idx );
+       *used |= ( 1 << idx );
     }
 
     /* get the referenced edit element */
@@ -250,62 +286,169 @@ static void GUI_Edit_update( uint32_t idx, bool bIsUnset )
 
     /* Get the correct storage position of data */
     uint8_t *datapos = act_obj + editelem->elem_offset;
-
+    lv_style_t **keks = (lv_style_t **)datapos;
     /* Store data, strings require special handling */
-     if ( editelem->elem_type != GUI_STRING ) {
+    if ( editelem->elem_type == GUI_STRING ) {
+        /* copy string into data structure */
+        GUI_tempval_to_str((char *)datapos);
+    } else if ( editelem->elem_type == GUI_STYLE ) {
+        /* copy string into tempbuf  and find style ba name*/
+        GUI_tempval_to_str(tempstr);
+        List_Elem_T *ll_elem = LL_find_by_type_n_name(GUI_item_list, GUI_ELEM_STYLE, tempstr);
+        /* if found, copy lvgl obj ptr to structure, otherwise reset "used" bit */
+        if ( ll_elem ) {
+           *(lv_style_t **)datapos = (lv_style_t *)(ll_elem->ll_lvgl_obj);
+        } else {
+           printf("%s %s not found\n",EditNames[GUI_STYLE],tempstr);
+           *used &= ~( 1 << idx );
+        }
+      
+    } else {
         memmove(datapos, GUI_Edit_tempval.u8, GUI_ByteLen[editelem->elem_type] );
 
         /* Reverse byte order in RGB value */
         if ( editelem->elem_type == GUI_RGB888 ) {
           uint8_t c = *datapos; *datapos = *(datapos+2); *(datapos+2)=c;
         }
-    } else {
-      /* copy string into data structure */
-      size_t len = min(GUI_MAX_NAMELEN-1, GUI_Edit_tempval.str.len);
-      strncpy(datapos, GUI_Edit_tempval.str.text, len);
-      /* incoming string is (vector, length) type so append \0 in any case */
-      *(datapos+len)='\0';
     }
-}
-
-/******************************************************************************
- * @brief  Store a complete GUI-Element into global GUI element list
- * @param  data     - raw element data
- * @param  editdata - edit receipe for raw data
- ******************************************************************************/
-void GUI_save_entry(uint8_t *data, const GUI_Edit_T *editdata )
-{
-  /* create a full copy of actual data structure */
-  uint8_t *copy = malloc(editdata->total_size);
-  if ( !copy ) {
-    printf("malloc failed!\n");
-    return;
-  }
-  memcpy_fast(copy, data, editdata->total_size);
-
-  /* find position of "name" field and pass that to list entry */
-  char *name = (char *)(copy + act_edit->name_ofs);
-  LL_append(&GUI_item_list, editdata->gui_elem_type, name, copy );
 }
 
 /******************************************************************************
  * @brief  List all globel GUI elements of actual edit type,
  * @param  editdata - edit receipe for raw data
  ******************************************************************************/
-void GUI_list_entries(const GUI_Edit_T *editdata )
+void GUI_list_entries(const GUI_Elem_T elemtype )
 {
   List_Elem_T* ptr = GUI_item_list;
   uint32_t i=0;
 
-  printf("All Elements of type %s in global list\n", EditNames[act_edit->gui_elem_type] );
+  printf("All Elements of type %s in global list\n", EditNames[elemtype] );
 
   /* Iterate thr all elements of current edit type */
-  while ( ptr = LL_iterate_by_type ( ptr, editdata->gui_elem_type ) ) {
+  while ( ptr = LL_iterate_by_type ( ptr, elemtype ) ) {
     printf("%2d: %s\n", ++i, ptr->ll_name);
     ptr = LL_next(ptr);
   }
 }
 
+/******************************************************************************
+ * @brief  Create a new or update a LVGL element from GUI-Element
+ * @param  data     - raw GUI element data
+ * @param  editdata - edit receipe for raw data
+ * @retval untyped ptr to updated or new created LVGL obj or NULL, if creation failed
+ ******************************************************************************/
+void *GUI_Create_or_update_LVGL(uint8_t *data, const GUI_Edit_T *editdata, void *lvgl_obj )
+{
+    /* We have different handlers, depending from GUI element data type */
+    switch(editdata->gui_elem_type) {
+      case GUI_ELEM_NOTYPE:
+        printf("Err: Cannot create untyped LVGL object\n");
+        break;
+      case GUI_ELEM_STYLE:
+        return  GUI_new_or_update_style ( (GUI_Style_T *)data, (lv_style_t *)lvgl_obj );
+        break;
+      case GUI_ELEM_LABEL:
+        return  GUI_new_or_update_label ( (GUI_Label_T *)data, (lv_obj_t *)lvgl_obj );
+        break;
+
+      default:
+        printf("Err: No LVGL Update handler for LVGL %s\n", EditNames[editdata->gui_elem_type]);
+    }
+}
+
+/******************************************************************************
+ * @brief  update an existing GUI-Element in global GUI element list
+ *         and update the corresponging LVGL object
+ * @param  ll_elem  - ptr to exisiting GUI element list entry
+ * @param  data     - raw changed element data to be updated
+ * @param  editdata - edit receipe for raw data
+ ******************************************************************************/
+static void GUI_update_entry(List_Elem_T *ll_elem, uint8_t *data, const GUI_Edit_T *editdata )
+{
+    /* overwrite the complete GUI element data structure */
+    uint8_t *dest = ll_elem->ll_entry;
+    memcpy_fast(dest, data, editdata->total_size);
+
+    /* Update associated LVGL obj */
+    ll_elem->ll_lvgl_obj = GUI_Create_or_update_LVGL( data, editdata, ll_elem->ll_lvgl_obj );
+
+    printf("%s %s updated\n",EditNames[editdata->gui_elem_type],ll_elem->ll_name);
+}
+
+/******************************************************************************
+ * @brief  Store a completely new GUI-Element into global GUI element list
+ *         and create the corresponding LVGL object
+ * @param  data     - raw element data
+ * @param  editdata - edit receipe for raw data
+ ******************************************************************************/
+static void GUI_create_entry(uint8_t *data, const GUI_Edit_T *editdata )
+{
+    /* create a full copy of actual data structure */
+    uint8_t *copy = malloc(editdata->total_size);
+    if ( !copy ) {
+      printf("malloc failed!\n");
+      return;
+    }
+    memcpy_fast(copy, data, editdata->total_size);
+
+  /* Create associated LVGL obj */
+  void *lvgl_obj = GUI_Create_or_update_LVGL( data, editdata, NULL );
+
+  List_Elem_T *new;
+  /* find position of "name" field in raw data */
+  char *name = (char *)(copy + act_edit->name_ofs);
+  new = LL_New_Element( editdata->gui_elem_type, lvgl_obj, name, copy );
+  LL_append(&GUI_item_list, new );
+  printf("%s %s created\n",EditNames[editdata->gui_elem_type],name);
+}
+
+/******************************************************************************
+ * @brief  Store a completely new GUI-Element into global GUI element list
+ *          or update an existing GUI-Element which is defined by type and name
+ * @param  data     - raw element data
+ * @param  editdata - edit receipe for raw data
+ ******************************************************************************/
+void GUI_save_or_update_entry(uint8_t *data, const GUI_Edit_T *editdata )
+{
+  List_Elem_T *ll_elem;
+
+  /* find position of "name" field in raw data */
+  char *name = (char *)(data + act_edit->name_ofs);
+
+  /* first try to find the element in list */
+  ll_elem = LL_find_by_type_n_name (GUI_item_list, editdata->gui_elem_type, name );  
+  
+  if ( ll_elem ) {
+    /* Element already in list: Update it */
+    GUI_update_entry(ll_elem, data, editdata);
+  } else {
+    /* Element not in list: Create LVGL obj and GUI list entry */
+    GUI_create_entry(data, editdata);
+  }
+
+  GUI_list_entries(editdata->gui_elem_type);
+}
+
+
+/********************************************************************************
+ * @brief load an GUI Element 
+ ********************************************************************************/
+static void GUI_load_entry( char *word, size_t wordlen, const GUI_Edit_T *editdata )
+{
+  GUI_Edit_tempval.str.text = word;
+  GUI_Edit_tempval.str.len = wordlen;
+  GUI_tempval_to_str(tempstr);
+
+  List_Elem_T *ll_elem = LL_find_by_type_n_name ( GUI_item_list, editdata->gui_elem_type, tempstr );
+  if ( !ll_elem ) {
+    printf("Err: %s %s not in item list\n",EditNames[editdata->gui_elem_type],tempstr);
+  } else {
+    /* copy element data to current obj data */
+    memcpy_fast(act_obj, ll_elem->ll_entry, editdata->total_size);
+    printf("%s %s loaded\n",EditNames[editdata->gui_elem_type],tempstr);
+  }
+
+}
 
 /********************************************************************************
  * @brief returns true, if the given word is the word for NULL ( unset )
@@ -376,6 +519,21 @@ static bool GUI_is_listword( char *word, size_t wordlen )
   return false;
 }
 
+/********************************************************************************
+ * @brief returns true, if the given word is the word for list 
+ *        i.e. 'list' or 'L'
+ ********************************************************************************/
+static bool GUI_is_getword( char *word, size_t wordlen ) 
+{
+  /* check for 'G' */
+  if ( wordlen == 1 && *word == 'G' ) return true;
+  
+  /* check for 'GET' */
+  if ( CMD_compare_words(word, wordlen, "GET", 3 ) > 0 ) return true;
+
+  return false;
+}
+
 
 /*********************************************************************************
  * @brief  Execute command in GUI edit mode
@@ -412,14 +570,14 @@ static bool GUI_Edit_execute_entry ( char *word, size_t wordlen, uint32_t idx )
     }
     
     /* Thereafter check for number or string*/
-    if ( editelem->elem_type != GUI_STRING ) {
-        GUI_Edit_tempval.u32 = CMD_to_number( word, wordlen );
-    } else {
+    if ( editelem->elem_type == GUI_STRING || editelem->elem_type == GUI_STYLE ) {
         /* Strings require a separate handling: pass reference to the string 
-         * to Updater, updater will copy string out of inbuf into data structure
+         * to Updater, updater will handle string accordingly
          */
          GUI_Edit_tempval.str.text = word;
          GUI_Edit_tempval.str.len = wordlen;
+    } else {
+         GUI_Edit_tempval.u32 = CMD_to_number( word, wordlen );
     }
 
     /* and update raw element data */
@@ -464,13 +622,25 @@ static void GUI_handle_word( char *word, size_t wordlen )
    /* handle save command */
    if ( GUI_is_saveword( word, wordlen ) ) {
       putchar('\n');
-      GUI_save_entry(act_obj, act_edit );
+      GUI_save_or_update_entry(act_obj, act_edit );
       return;
    }
 
    /* handle list command */
    if ( GUI_is_listword( word, wordlen ) ) {
-      GUI_list_entries(act_edit);
+      GUI_list_entries(act_edit->gui_elem_type);
+      return;
+   }
+
+   /* handle get command */
+   if ( GUI_is_getword( word, wordlen ) ) {
+      /* read entryname to load */
+      if ( CMD_argc() < 1 ) {
+        printf("Missing entryname to load\n");
+        return;
+      }     
+      CMD_get_one_word( &word, &wordlen );
+      GUI_load_entry(word, wordlen, act_edit);
       return;
    }
 

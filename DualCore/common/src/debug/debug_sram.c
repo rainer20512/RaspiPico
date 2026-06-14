@@ -114,6 +114,14 @@ static void DBG_dump_sram_areas(void)
   DO_DUMP_RAMAREA("RAM",__RAM_segment);
   DO_DUMP_RAMAREA("SCRATCH_X",__SCRATCH_X_segment);
   DO_DUMP_RAMAREA("SCRATCH_Y",__SCRATCH_Y_segment);
+  DO_DUMP_RAMAREA("Heap",__heap);
+  DEBUG_PUTC('\n');
+}
+
+void DBG_heap_useage(void)
+{
+  DBG_setPadLen(6);
+  DO_DUMP_RAMAREA("Heap",__heap);
   DEBUG_PUTC('\n');
 }
 

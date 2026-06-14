@@ -10,16 +10,13 @@ lv_obj_t   *mylbl, *mylbl2;
 
 void AssignStyle ( void )
 {
-  mystyle = gui_new_style ( &cur_style, NULL );
 }
 
 void AssignLabel ( void )
 {
-  mylbl = gui_new_label ( &cur_label, mystyle, NULL );
-  GUI_dump_coords(mylbl);
 }
 
-
+void DBG_heap_useage(void);
 void gui_test_master(uint32_t num)
 {
 	printf("Gui Test %d starting\n", num);
@@ -44,6 +41,9 @@ void gui_test_master(uint32_t num)
     	case 4:
             GUI_dump_coords(mylbl);
             GUI_dump_coords(mylbl2);
+            break;
+    	case 99:
+            DBG_heap_useage();
             break;
     	default: 
         	puts("Unknown Test");
