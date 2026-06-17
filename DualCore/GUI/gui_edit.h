@@ -15,11 +15,12 @@ typedef enum {
   GUI_UINT32 = 3,
   GUI_STRING = 4,
   GUI_STYLE  = 5,
+  GUI_FONT   = 6,
 } GUI_edittype_T;
 
 /* and corresponding length in bytes          */
 /* enum and const must match in element count */
-#define BYTELENGTHS  {1, 2, 3, 4, 4}
+#define BYTELENGTHS  {1, 2, 3, 4, 4, 4}
 
 typedef struct {
   const char      *elem_name;   /* User freindly name of GUI-Element          */

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "../GUI/gui_def.h"
 #include "../GUI/gui_edit.h"
+#include "../GUI/gui_lists.h"
 
 lv_style_t *mystyle;
 lv_obj_t   *mylbl, *mylbl2;
@@ -16,10 +17,33 @@ void AssignLabel ( void )
 {
 }
 
+/******************************************************************************
+ * @brief Load all known fonts _once_ into GUI elem list
+ *****************************************************************************/     
+void GUI_Load_Fonts(void)
+{
+  List_Elem_T *font;
+  /* Find first dont in global list. I found, fonts are loaded already, 
+   * do nothing then */
+  if ( LL_find_nth(GUI_item_list, GUI_ELEM_FONT, 1) ) return;
+
+  /* Otherwise iterate thru all defined fonts and insert them into global item list */
+  /* List of defined fonts _MUST BE_ terminated by NULL,NULL */
+  uint32_t i = 0; 
+  while ( AllFonts[i].font ) {
+     font = LL_New_Element(GUI_ELEM_FONT,  (void *)AllFonts[i].font, AllFonts[i].fontname, &AllFonts[i]);
+     LL_append(&GUI_item_list, font);
+     i++;
+  }
+
+  printf("%d fonts loaded\n", i);
+
+}
+
 void DBG_heap_useage(void);
 void gui_test_master(uint32_t num)
 {
-	printf("Gui Test %d starting\n", num);
+    GUI_Load_Fonts();
 	switch(num) {
     	case 1:
         	GUI_Edit(&edit_style, &cur_style, AssignStyle);
@@ -49,7 +73,6 @@ void gui_test_master(uint32_t num)
         	puts("Unknown Test");
             return;
     }
-	printf("Gui Test %d finished\n", num);
 }
 
 

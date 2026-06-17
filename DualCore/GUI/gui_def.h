@@ -27,13 +27,22 @@
 /* Different types of GUI elements */
 typedef enum {
   GUI_ELEM_NOTYPE       = 0,              /* No type specified */
-  GUI_ELEM_STYLE        = 1,              
-  GUI_ELEM_LABEL        = 2,
+  GUI_ELEM_FONT         = 1,
+  GUI_ELEM_STYLE        = 2,              
+  GUI_ELEM_LABEL        = 3,
 } GUI_Elem_T;
 
 /* Corresponding user friendly names of these of GUI elements */
-#define GUI_EDITNAMES   {"NoType", "Style", "Label", }
+#define GUI_EDITNAMES   {"NoType", "Font", "Style", "Label", }
 extern const char *EditNames[];
+
+typedef struct {
+  char             fontname[GUI_MAX_NAMELEN];
+  const lv_font_t* font;
+} GUI_Font_T;
+
+extern GUI_Font_T AllFonts[];
+
 
 /* Bitfield for set properties of a GUI_Style_T */
 /* Order has to be the same as in corresponding Edit receipe !!! */
@@ -50,8 +59,9 @@ typedef enum {
   STYLE_SHADOWYREF   = 9,
   STYLE_BGCOLOR      = 10,
   STYLE_BORDERCOLOR  = 11,
-  STYLE_TXTCOLOR     = 12,
-  STYLE_SHADOWCOLOR  = 13,
+  STYLE_TEXTCOLOR    = 12,
+  STYLE_TEXTFONT     = 13,
+  STYLE_SHADOWCOLOR  = 14,
 } Style_Used_T;
 
 #define STYLE_HAS_PROP(style, id) ( (style)->used &  (  1 << (id) ) )
@@ -62,20 +72,21 @@ typedef enum {
 
 /* Properties of a style, not all LVGL style properties supported */
 typedef struct {
-  uint32_t      used;                   /* bitfield of used properties */
-  lv_color_t 	bgcolor;		        /* Background color */
-  uint8_t		bgopa;					/* BG opacity */	
-  lv_color_t 	txtcolor;		        /* Text color */
-  uint16_t 		def_width, def_height;	/* default width and height in px */
-  uint8_t       textalign;				/* Text Alignment */
-  lv_color_t	bordercolor;			
-  uint8_t 		borderwidth;
-  uint8_t		borderradius;
-  lv_color_t 	shadowcolor;		    /* Shadow color */
-  uint8_t		shadow_opa;				/* Shadows opacity */
-  uint8_t 		shadow_width;			/* Width of shadow */
-  uint8_t		sh_x, sh_y;				/* Shadows x and y offset */
-  char          name[GUI_MAX_NAMELEN];  /* User friendly name */      
+  uint32_t        used;                     /* bitfield of used properties */
+  lv_color_t      bgcolor;                  /* Background color */
+  uint8_t         bgopa;					/* BG opacity */	
+  lv_color_t      textcolor;		        /* Text color */
+  const lv_font_t *textfont;                /* Textfont */
+  uint16_t        def_width, def_height;	/* default width and height in px */
+  uint8_t         textalign;				/* Text Alignment */
+  lv_color_t      bordercolor;			
+  uint8_t         borderwidth;
+  uint8_t         borderradius;
+  lv_color_t      shadowcolor;              /* Shadow color */
+  uint8_t         shadow_opa;				/* Shadows opacity */
+  uint8_t         shadow_width;     		/* Width of shadow */
+  uint8_t         sh_x, sh_y;				/* Shadows x and y offset */
+  char            name[GUI_MAX_NAMELEN];    /* User friendly name */      
 } GUI_Style_T;
 
 
@@ -116,6 +127,6 @@ extern       GUI_Label_T cur_label;             /* actual label settings  */
 
 lv_obj_t* GUI_new_or_update_label ( GUI_Label_T *act, lv_obj_t *lbl);
 void      GUI_dump_coords ( lv_obj_t * obj );
-
+void      GUI_Load_Fonts(void);
 #endif /* USE_LVGL */
 #endif /* _GUIDEF_H_ */

@@ -4,21 +4,30 @@
 #include <stdio.h>
 #include <malloc.h>
 
+GUI_Font_T AllFonts[] =
+{
+  {"Montserrat14", &lv_font_montserrat_14 },
+  {"Round24",      &rb_font_round_24 },
+  {"Stencil40",    &w_font_stencil_40 },
+  {NULL, NULL },  /* Mandatory list Terminator */
+};
+
 const GUI_Style_T def_style = 
-    { .used         = 0x7FFF,
+    { .used         = 0xFFFF,
       .def_width    = 120, 
       .def_height   = 20, 
       .textalign    = LV_TEXT_ALIGN_CENTER,  
       .bgopa        = 128, 
       .borderwidth  = 2, 
       .borderradius = 5, 
-      .shadow_width = 4, 
+      .shadow_width = 0, 
       .shadow_opa   = 128, 
       .sh_x         = 4, 
       .sh_y         = 4,   
       .bgcolor      = {0x40, 0x40, 0x40},
       .bordercolor  = {0x00, 0x00, 0x00},
-      .txtcolor     = {0xff, 0x00, 0x00},  
+      .textcolor    = {0xff, 0x00, 0x00}, 
+      .textfont     = &w_font_stencil_40,
       .shadowcolor  = {0x80, 0x80, 0x80},
       .name         = "Predef01",
     };
@@ -31,7 +40,7 @@ const GUI_Label_T def_label =
     .align   = LV_ALIGN_CENTER,
     .x0      = 0,
     .y0      = 0,
-    .caption = "Label01",
+    .caption = "-3,5",
     .name    = "Label01",
 };
 
@@ -39,6 +48,8 @@ GUI_Label_T cur_label = def_label;
 
 /* user friendly names of these of GUI elements */
 const char *EditNames[]  = GUI_EDITNAMES;
+
+
 
 void GUI_dump_coords ( lv_obj_t * obj )
 {
@@ -75,7 +86,8 @@ lv_style_t * GUI_new_or_update_style ( GUI_Style_T *act, lv_style_t *style )
 	/* assign _All_ style properties */
     if ( STYLE_HAS_PROP(act, STYLE_BGCOLOR))      lv_style_set_bg_color         (style, act->bgcolor);      else lv_style_remove_prop(style, LV_STYLE_BG_COLOR);
     if ( STYLE_HAS_PROP(act, STYLE_BGOPA))        lv_style_set_bg_opa           (style, act->bgopa);        else lv_style_remove_prop(style, LV_STYLE_BG_OPA);
-    if ( STYLE_HAS_PROP(act, STYLE_TXTCOLOR))     lv_style_set_text_color       (style, act->txtcolor);     else lv_style_remove_prop(style, LV_STYLE_TEXT_COLOR);
+    if ( STYLE_HAS_PROP(act, STYLE_TEXTCOLOR))    lv_style_set_text_color       (style, act->textcolor);    else lv_style_remove_prop(style, LV_STYLE_TEXT_COLOR);
+    if ( STYLE_HAS_PROP(act, STYLE_TEXTFONT))     lv_style_set_text_font        (style, act->textfont);     else lv_style_remove_prop(style, LV_STYLE_TEXT_FONT);
 	if ( STYLE_HAS_PROP(act, STYLE_DEFWIDTH))     lv_style_set_width            (style, act->def_width);    else lv_style_remove_prop(style, LV_STYLE_WIDTH);
 	if ( STYLE_HAS_PROP(act, STYLE_DEFHEIGHT))    lv_style_set_height           (style, act->def_height);   else lv_style_remove_prop(style, LV_STYLE_HEIGHT);
     if ( STYLE_HAS_PROP(act, STYLE_BORDERCOLOR))  lv_style_set_border_color     (style, act->bordercolor);  else lv_style_remove_prop(style, LV_STYLE_BORDER_COLOR);
@@ -87,7 +99,6 @@ lv_style_t * GUI_new_or_update_style ( GUI_Style_T *act, lv_style_t *style )
     if ( STYLE_HAS_PROP(act, STYLE_SHADOWWIDTH))  lv_style_set_shadow_width     (style, act->shadow_width); else lv_style_remove_prop(style, LV_STYLE_SHADOW_WIDTH);
     if ( STYLE_HAS_PROP(act, STYLE_SHADOWOPA))    lv_style_set_shadow_opa       (style, act->shadow_opa);   else lv_style_remove_prop(style, LV_STYLE_SHADOW_OPA);
     if ( STYLE_HAS_PROP(act, STYLE_TEXTALIGN))    lv_style_set_text_align	    (style, act->textalign);    else lv_style_remove_prop(style, LV_STYLE_TEXT_ALIGN);
-    lv_style_set_text_font(style, &w_font_stencil_40);
     /* update using widgets about style change */
     lv_obj_report_style_change( style);
 	return style;	

@@ -10,7 +10,7 @@ List_Elem_T * GUI_item_list = NULL;
 /*-----------------------------------------------------------------------------
  * @brief Create a new List entry from heap and initialize all fields, 
  * @param type     - Type of associated GUI element
- * @param lvgl_obj - corresponding lvgl object ( style or lv_obj_t ), or NULL
+ * @param lvgl_obj - corresponding lvgl object ( lv_font_t, style or lv_obj_t ), or NULL
  *                   if no lvgl object is associated so far
  * @param name     - ptr to objects name within object data 
  * @param entry    - typeless ptr to GUI element data
@@ -62,7 +62,7 @@ List_Elem_T *LL_find_nth ( List_Elem_T *llist, GUI_Elem_T search_type, uint32_t 
      if ( position < 1 ) return NULL;
      while ( llist) {
       if ( search_type == GUI_ELEM_NOTYPE || search_type == llist->ll_type ) {
-        if ( position-- == 0 ) break;
+        if ( --position == 0 ) break;
       }
       llist = llist->ll_next;
      }

@@ -1,28 +1,30 @@
-/**
- * Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
- *
- * SPDX-License-Identifier: BSD-3-Clause
- */
+#include <stdio.h>
 
-// Pin definitions for original RasPi Pico board
 #include "pico.h"
 #include "boards/pico.h"  
-#include <stdio.h>
 #include "pico/stdlib.h"
+
 #include "system/status.h"
 #include "system/profiling.h"
 #include "system/ipc.h"
 #include "system/ipc_msg.h"
+#include "system/util.h"
+
 #include "task/minitask.h"
 #include "hardware/sync.h"
-
-#include <stdlib.h>
+#include "dev/GC9A01.h"
+#include "dev/uarts.h"
 
 // Pico W devices use a GPIO on the WIFI chip for the LED,
 // so when building for Pico W, CYW43_WL_GPIO_LED_PIN will be defined
 #ifdef CYW43_WL_GPIO_LED_PIN
 #include "pico/cyw43_arch.h"
 #endif
+
+#ifndef PICO_DEFAULT_LED_PIN
+  #error "No default LED pin!"
+#endif
+
 
 #ifndef LED_DELAY_MS
 #define LED_DELAY_MS 250
@@ -36,6 +38,7 @@
 void Init_DefineTasks(void);
 
 /*
+#include <stdlib.h>
 int __putchar(int c, __printf_tag_ptr u) {
   (void)(u);
   return stdio_putchar(c);
@@ -79,14 +82,8 @@ static void dump_unique_id(void) {
 #endif
 
 
-#include "system/util.h"
-
-#include "dev/GC9A01.h"
-#include "dev/uarts.h"
 
 extern void LL_Blink(uint32_t nrofblinks, uint32_t delayms );
-void lv_init(void);
-void lv_example_anim_2(void);
 
 #if ( USE_SPI1 > 0 || USE_SPI0 > 0 ) && USE_LVGL > 0
   void spi_init_all ( void )
@@ -142,10 +139,6 @@ int main()
     check_fastrun ();
     dump_unique_id();
 #endif
-#ifndef PICO_DEFAULT_LED_PIN
-  #error "No default LED pin!"
-#endif
-
     ProfilerSwitchTo(JOB_TASK_MAIN);  
 
 #if USE_LVGL > 0

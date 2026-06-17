@@ -12,7 +12,7 @@
 
 /* Edit receipe for Style structure */
 const  GUI_Edit_T edit_style = {
-  .count         = 15,
+  .count         = 16,
   .gui_elem_type = GUI_ELEM_STYLE,
   /* the foloowing two items are used to find used bits and name when */
   /* structure will be converted to raw data in "gui_edit"            */
@@ -20,21 +20,26 @@ const  GUI_Edit_T edit_style = {
   .name_ofs      = offsetof(GUI_Style_T, name),
   .total_size    = sizeof  (GUI_Style_T),
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
-  .gui_element   = { 
+  .gui_element   = {  
+/*01*/
     { "Width",        GUI_UINT16, offsetof(GUI_Style_T, def_width) },
     { "Height",       GUI_UINT16, offsetof(GUI_Style_T, def_height) }, 
     { "TextAlign",    GUI_UINT8,  offsetof(GUI_Style_T, textalign) }, 
     { "Backgr.opaq",  GUI_UINT8,  offsetof(GUI_Style_T, bgopa) }, 
     { "BorderWidth",  GUI_UINT8,  offsetof(GUI_Style_T, borderwidth) }, 
+/*06*/
     { "BorderRadius", GUI_UINT8,  offsetof(GUI_Style_T, borderradius) }, 
     { "Shadow Width", GUI_UINT8,  offsetof(GUI_Style_T, shadow_width) }, 
     { "Shadow opaq",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_opa) }, 
     { "Shadow xref",  GUI_UINT8,  offsetof(GUI_Style_T, sh_x) }, 
     { "Shadow yref",  GUI_UINT8,  offsetof(GUI_Style_T, sh_y) }, 
+/*11*/
     { "BGColor",      GUI_RGB888, offsetof(GUI_Style_T, bgcolor) }, 
     { "BorderColor",  GUI_RGB888, offsetof(GUI_Style_T, bordercolor) }, 
-    { "TextColor",    GUI_RGB888, offsetof(GUI_Style_T, txtcolor) }, 
+    { "TextColor",    GUI_RGB888, offsetof(GUI_Style_T, textcolor) }, 
+    { "TextFont",     GUI_FONT,   offsetof(GUI_Style_T, textfont) }, 
     { "ShadowColor",  GUI_RGB888, offsetof(GUI_Style_T, shadowcolor) }, 
+/*16*/
     { "StyleName",    GUI_STRING, offsetof(GUI_Style_T, name) }, 
   },
 };
@@ -92,6 +97,9 @@ void handle_gui_edit_input ( char *cmdline, size_t len );
  ******************************************************************************/
 static void GUI_edit_dump_one ( uint8_t *bytes, const GUI_editelem_T *editelem, bool used, uint32_t textlen ) 
 {
+    List_Elem_T *ll_elem;
+    GUI_Elem_T  search_elem;
+
     printf(editelem->elem_name);
     if ( textlen > 0 ) {
       size_t namelen = strlen(editelem->elem_name);
@@ -111,14 +119,17 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const GUI_editelem_T *editelem, 
     switch ( editelem->elem_type ) {
       case GUI_STRING:
       case GUI_STYLE:
+      case GUI_FONT:
           switch ( editelem->elem_type ) {
             case GUI_STRING:
                /* In case of string store ptr to string */
                GUI_Edit_tempval.str.text = (char *)bytes+editelem->elem_offset;
                break;
             case GUI_STYLE:
-               /* In case of Style: find Style in GUI item list and print the name */
-               List_Elem_T *ll_elem = LL_find_by_type_n_obj( GUI_item_list, GUI_ELEM_STYLE, *(lv_style_t **)(bytes+editelem->elem_offset) );
+            case GUI_FONT:
+               /* In case of Style/Font: find Style/Font in GUI item list and print the name */
+               search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
+               ll_elem = LL_find_by_type_n_obj( GUI_item_list, search_elem, *(void **)(bytes+editelem->elem_offset) );
                GUI_Edit_tempval.str.text = (char *)ll_elem->ll_name;
                break;
           }
@@ -287,30 +298,50 @@ static void GUI_Edit_update( uint32_t idx, bool bIsUnset )
     /* Get the correct storage position of data */
     uint8_t *datapos = act_obj + editelem->elem_offset;
     lv_style_t **keks = (lv_style_t **)datapos;
-    /* Store data, strings require special handling */
-    if ( editelem->elem_type == GUI_STRING ) {
-        /* copy string into data structure */
+    GUI_Elem_T search_elem;
+    uint32_t search_idx;
+    List_Elem_T *ll_elem;
+    bool bNumeric;
+    switch ( editelem->elem_type ) {
+      case GUI_STRING:
+        /* copy string into data structure directly */
         GUI_tempval_to_str((char *)datapos);
-    } else if ( editelem->elem_type == GUI_STYLE ) {
-        /* copy string into tempbuf  and find style ba name*/
-        GUI_tempval_to_str(tempstr);
-        List_Elem_T *ll_elem = LL_find_by_type_n_name(GUI_item_list, GUI_ELEM_STYLE, tempstr);
+        break;
+      case GUI_STYLE:
+      case GUI_FONT:
+        /* Fonts and styles may be secified in two ways: by name or position in list ( starting with 1 ) */
+        search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
+        if ( CMD_is_numeric (GUI_Edit_tempval.str.text, GUI_Edit_tempval.str.len )) {
+          /* Specified by number: convert to num and search for nth entry */
+          ll_elem = LL_find_nth ( GUI_item_list,  search_elem, CMD_to_number(GUI_Edit_tempval.str.text, GUI_Edit_tempval.str.len ) );
+        } else {
+          /* Specified by name: Get String copy from inbuf */
+          GUI_tempval_to_str(tempstr);
+          /* copy string into tempbuf  and find style/font by name*/
+          ll_elem = LL_find_by_type_n_name(GUI_item_list, search_elem, tempstr);
+        }
         /* if found, copy lvgl obj ptr to structure, otherwise reset "used" bit */
         if ( ll_elem ) {
-           *(lv_style_t **)datapos = (lv_style_t *)(ll_elem->ll_lvgl_obj);
+           *(void **)datapos = ll_elem->ll_lvgl_obj;
         } else {
-           printf("%s %s not found\n",EditNames[GUI_STYLE],tempstr);
+           printf("%s %s not found\n",EditNames[editelem->elem_type],tempstr);
            *used &= ~( 1 << idx );
         }
-      
-    } else {
+        break;
+      case GUI_UINT8:
+      case GUI_UINT16:
+      case GUI_RGB888:
+      case GUI_UINT32:
+        /* All Number formats: copy required number of bytes to data element */
         memmove(datapos, GUI_Edit_tempval.u8, GUI_ByteLen[editelem->elem_type] );
-
         /* Reverse byte order in RGB value */
         if ( editelem->elem_type == GUI_RGB888 ) {
           uint8_t c = *datapos; *datapos = *(datapos+2); *(datapos+2)=c;
         }
-    }
+        break;
+      default:
+        printf("No Update receipe for data type %d\n",editelem->elem_type );
+    } // case
 }
 
 /******************************************************************************
@@ -570,12 +601,20 @@ static bool GUI_Edit_execute_entry ( char *word, size_t wordlen, uint32_t idx )
     }
     
     /* Thereafter check for number or string*/
-    if ( editelem->elem_type == GUI_STRING || editelem->elem_type == GUI_STYLE ) {
-        /* Strings require a separate handling: pass reference to the string 
+    if ( editelem->elem_type == GUI_STRING || editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_FONT) {
+        /* Strings, Fonts and Styles require a separate handling: pass reference to the string 
          * to Updater, updater will handle string accordingly
          */
          GUI_Edit_tempval.str.text = word;
          GUI_Edit_tempval.str.len = wordlen;
+         if ( editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_FONT ) {
+            /* in Case of Styles/Fonts: if Parameter is '?', list all styles/fonts */
+            if ( wordlen == 1 && *word =='?' ) {
+              GUI_Elem_T search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
+              GUI_list_entries(search_elem);
+              return true;
+            }
+         }
     } else {
          GUI_Edit_tempval.u32 = CMD_to_number( word, wordlen );
     }
