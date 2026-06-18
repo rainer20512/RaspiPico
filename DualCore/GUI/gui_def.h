@@ -30,10 +30,11 @@ typedef enum {
   GUI_ELEM_FONT         = 1,
   GUI_ELEM_STYLE        = 2,              
   GUI_ELEM_LABEL        = 3,
+  GUI_ELEM_ARC          = 4,
 } GUI_Elem_T;
 
 /* Corresponding user friendly names of these of GUI elements */
-#define GUI_EDITNAMES   {"NoType", "Font", "Style", "Label", }
+#define GUI_EDITNAMES   {"NoType", "Font", "Style", "Label", "Arc", }
 extern const char *EditNames[];
 
 typedef struct {
@@ -50,18 +51,19 @@ typedef enum {
   STYLE_DEFWIDTH     = 0,
   STYLE_DEFHEIGHT    = 1,
   STYLE_TEXTALIGN    = 2,
-  STYLE_BGOPA        = 3,
-  STYLE_BORDERWIDTH  = 4,
-  STYLE_BORDERRADIUS = 5,
-  STYLE_SHADOWWIDTH  = 6,
-  STYLE_SHADOWOPA    = 7,
-  STYLE_SHADOWXREF   = 8,
-  STYLE_SHADOWYREF   = 9,
-  STYLE_BGCOLOR      = 10,
-  STYLE_BORDERCOLOR  = 11,
-  STYLE_TEXTCOLOR    = 12,
-  STYLE_TEXTFONT     = 13,
-  STYLE_SHADOWCOLOR  = 14,
+  STYLE_OBJALIGN     = 3,
+  STYLE_BGOPA        = 4,
+  STYLE_BORDERWIDTH  = 5,
+  STYLE_BORDERRADIUS = 6,
+  STYLE_SHADOWWIDTH  = 7,
+  STYLE_SHADOWOPA    = 8,
+  STYLE_SHADOWXREF   = 9,
+  STYLE_SHADOWYREF   = 10,
+  STYLE_BGCOLOR      = 11,
+  STYLE_BORDERCOLOR  = 12,
+  STYLE_TEXTCOLOR    = 13,
+  STYLE_TEXTFONT     = 14,
+  STYLE_SHADOWCOLOR  = 15,
 } Style_Used_T;
 
 #define STYLE_HAS_PROP(style, id) ( (style)->used &  (  1 << (id) ) )
@@ -78,7 +80,8 @@ typedef struct {
   lv_color_t      textcolor;		        /* Text color */
   const lv_font_t *textfont;                /* Textfont */
   uint16_t        def_width, def_height;	/* default width and height in px */
-  uint8_t         textalign;				/* Text Alignment */
+  uint8_t         textalign;				/* Text Alignment within obj*/
+  uint8_t         objalign;                 /* Alignment of obj wihin parent obj*/
   lv_color_t      bordercolor;			
   uint8_t         borderwidth;
   uint8_t         borderradius;
@@ -126,6 +129,47 @@ extern const GUI_Label_T def_label;             /* default label settings */
 extern       GUI_Label_T cur_label;             /* actual label settings  */
 
 lv_obj_t* GUI_new_or_update_label ( GUI_Label_T *act, lv_obj_t *lbl);
+
+
+/* Bitfield for set properties of a GUI_Arc_T */
+/* Order has to be the same as in corresponding Edit receipe !!! */
+typedef enum {
+  ARC_BGSTYLE      = 0,
+  ARC_INDSTYLE     = 1,
+  ARC_X0           = 2,
+  ARC_Y0           = 3,
+  ARC_ROTATE       = 4,
+  ARC_BGSTART      = 5,
+  ARC_BGEND        = 6,
+  ARC_MINVAL       = 7,
+  ARC_MAXVAL       = 8,
+  ARC_CURVAL       = 9,
+  ARC_NAME         = 10,
+} Arc_Used_T;
+
+#define ARC_HAS_PROP(arc, id) ( (arc)->used &  (  1 << (id) ) )
+#define ARC_SET_PROP(arc, id) ( (arc)->used |=  ( 1 << (id) ) )
+#define ARC_CLR_PROP(arc, id) ( (arc)->used &= ~( 1 << (id) ) )
+
+
+/* Properties that define an arc, not all LVGL properties supported */
+typedef struct {
+  uint32_t      used;                       /* bitfield of used properties */
+  lv_style_t 	*bgstyle;                   /* style to be used for background arc */	
+  lv_style_t 	*indstyle;                  /* style to be used for indicator arc */	
+  uint16_t 		x0, y0;                     /* reference position */
+  int16_t       rotation;                   /* rotation           */
+  int16_t       bg_start, bg_end;           /* background start and end angle */
+  int16_t       minval, maxval;             /* minimum and maximum values for arc */ 
+  int16_t       curval;                     /* current value */
+  char          name[GUI_MAX_NAMELEN];      /* User friendly name */      
+} GUI_Arc_T;
+
+extern const GUI_Arc_T def_arc;             /* default arc settings */
+extern       GUI_Arc_T cur_arc;             /* actual arc settings  */
+
+lv_obj_t* GUI_new_or_update_arc ( GUI_Arc_T *act, lv_obj_t *arc);
+
 void      GUI_dump_coords ( lv_obj_t * obj );
 void      GUI_Load_Fonts(void);
 #endif /* USE_LVGL */

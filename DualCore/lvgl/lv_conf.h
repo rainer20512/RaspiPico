@@ -644,7 +644,11 @@
  *  #define LV_FONT_CUSTOM_DECLARE   LV_FONT_DECLARE(my_font_1) LV_FONT_DECLARE(my_font_2)
  *  @endcode
  */
-#define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(rb_font_round_24) LV_FONT_DECLARE(w_font_stencil_40)
+#define LV_FONT_CUSTOM_DECLARE \
+  LV_FONT_DECLARE(w_font_bahn_sbc_24) LV_FONT_DECLARE(w_font_bahn_sbc_40) LV_FONT_DECLARE(w_font_bahn_sbc_60) LV_FONT_DECLARE(w_font_bahn_sbc_80)  LV_FONT_DECLARE(w_font_bahn_sbc_100) LV_FONT_DECLARE(w_font_bahn_sbc_120) \
+  LV_FONT_DECLARE(rb_font_adlam_24) LV_FONT_DECLARE(rb_font_adlam_40) LV_FONT_DECLARE(rb_font_adlam_60) LV_FONT_DECLARE(rb_font_adlam_80) LV_FONT_DECLARE(rb_font_adlam_100) LV_FONT_DECLARE(rb_font_adlam_120) \
+  LV_FONT_DECLARE(w_font_stencil_24) LV_FONT_DECLARE(w_font_stencil_40) LV_FONT_DECLARE(w_font_stencil_60) LV_FONT_DECLARE(w_font_stencil_80) LV_FONT_DECLARE(w_font_stencil_100) LV_FONT_DECLARE(w_font_stencil_120) \
+
 
 /** Always set a default font */
 #define LV_FONT_DEFAULT &lv_font_montserrat_14

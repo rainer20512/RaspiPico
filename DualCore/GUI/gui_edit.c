@@ -12,7 +12,7 @@
 
 /* Edit receipe for Style structure */
 const  GUI_Edit_T edit_style = {
-  .count         = 16,
+  .count         = 17,
   .gui_elem_type = GUI_ELEM_STYLE,
   /* the foloowing two items are used to find used bits and name when */
   /* structure will be converted to raw data in "gui_edit"            */
@@ -25,21 +25,22 @@ const  GUI_Edit_T edit_style = {
     { "Width",        GUI_UINT16, offsetof(GUI_Style_T, def_width) },
     { "Height",       GUI_UINT16, offsetof(GUI_Style_T, def_height) }, 
     { "TextAlign",    GUI_UINT8,  offsetof(GUI_Style_T, textalign) }, 
+    { "ObjectAlign",  GUI_UINT8,  offsetof(GUI_Style_T, objalign) }, 
     { "Backgr.opaq",  GUI_UINT8,  offsetof(GUI_Style_T, bgopa) }, 
-    { "BorderWidth",  GUI_UINT8,  offsetof(GUI_Style_T, borderwidth) }, 
 /*06*/
+    { "BorderWidth",  GUI_UINT8,  offsetof(GUI_Style_T, borderwidth) }, 
     { "BorderRadius", GUI_UINT8,  offsetof(GUI_Style_T, borderradius) }, 
     { "Shadow Width", GUI_UINT8,  offsetof(GUI_Style_T, shadow_width) }, 
     { "Shadow opaq",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_opa) }, 
     { "Shadow xref",  GUI_UINT8,  offsetof(GUI_Style_T, sh_x) }, 
-    { "Shadow yref",  GUI_UINT8,  offsetof(GUI_Style_T, sh_y) }, 
 /*11*/
+    { "Shadow yref",  GUI_UINT8,  offsetof(GUI_Style_T, sh_y) }, 
     { "BGColor",      GUI_RGB888, offsetof(GUI_Style_T, bgcolor) }, 
     { "BorderColor",  GUI_RGB888, offsetof(GUI_Style_T, bordercolor) }, 
     { "TextColor",    GUI_RGB888, offsetof(GUI_Style_T, textcolor) }, 
     { "TextFont",     GUI_FONT,   offsetof(GUI_Style_T, textfont) }, 
-    { "ShadowColor",  GUI_RGB888, offsetof(GUI_Style_T, shadowcolor) }, 
 /*16*/
+    { "ShadowColor",  GUI_RGB888, offsetof(GUI_Style_T, shadowcolor) }, 
     { "StyleName",    GUI_STRING, offsetof(GUI_Style_T, name) }, 
   },
 };
@@ -61,6 +62,31 @@ const  GUI_Edit_T edit_label = {
   },
 };
 
+const  GUI_Edit_T edit_arc = {
+  .count         = 11,
+  .gui_elem_type = GUI_ELEM_ARC,
+  .used_ofs      = offsetof(GUI_Arc_T, used),
+  .name_ofs      = offsetof(GUI_Arc_T, name),
+  .total_size    = sizeof  (GUI_Arc_T),
+  /* Element Order has to be the same as in corresponding "used"-bit set !!! */
+  .gui_element   = { 
+/*01*/
+    { "BG Style",     GUI_STYLE,  offsetof(GUI_Arc_T, bgstyle) }, 
+    { "Ind. Style",   GUI_STYLE,  offsetof(GUI_Arc_T, indstyle) }, 
+    { "X0",           GUI_UINT16, offsetof(GUI_Arc_T, x0) }, 
+    { "Y0",           GUI_UINT16, offsetof(GUI_Arc_T, y0) }, 
+    { "Rotation",     GUI_INT16,  offsetof(GUI_Arc_T, rotation) }, 
+/*06*/
+    { "BG Start",     GUI_INT16,  offsetof(GUI_Arc_T, bg_start) }, 
+    { "BG End",       GUI_INT16,  offsetof(GUI_Arc_T, bg_end) }, 
+    { "Min.Val",      GUI_INT16,  offsetof(GUI_Arc_T, minval) }, 
+    { "Mac.Val",      GUI_INT16,  offsetof(GUI_Arc_T, maxval) }, 
+    { "Cur.Val",      GUI_INT16,  offsetof(GUI_Arc_T, curval) }, 
+/*11*/
+    { "LabelName",    GUI_STRING, offsetof(GUI_Arc_T, name) }, 
+  },
+};
+
 
 /* helper struct to define a string by char vector and length*/
 struct str { 
@@ -72,6 +98,9 @@ static union {
       uint32_t   u32;
       uint32_t   u16[2];
       uint8_t    u8[4];
+      int8_t     i8[4];
+      int16_t    i16[2];
+      int32_t    i32;
       lv_color_t rgb;
       struct str str;
     } GUI_Edit_tempval;
@@ -139,6 +168,9 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const GUI_editelem_T *editelem, 
       case GUI_UINT16:
       case GUI_RGB888:
       case GUI_UINT32:
+      case GUI_INT8:
+      case GUI_INT16:
+      case GUI_INT32:
           /* handle all tpye of numbers by just copying the raw bytes to tempval */
           memmove(GUI_Edit_tempval.u8, bytes+editelem->elem_offset, GUI_ByteLen[editelem->elem_type] );
           /* And print with different formats/ lengths */
@@ -154,6 +186,15 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const GUI_editelem_T *editelem, 
               break;
             case GUI_UINT32:
               printf("%u", GUI_Edit_tempval.u32 );
+              break;
+            case GUI_INT8:
+              printf("%d", GUI_Edit_tempval.i8[0] );
+              break;
+            case GUI_INT16:
+              printf("%d", GUI_Edit_tempval.i16[0] );
+              break;
+            case GUI_INT32:
+              printf("%d", GUI_Edit_tempval.i32 );
               break;
           } //inner switch
           break;
@@ -332,6 +373,9 @@ static void GUI_Edit_update( uint32_t idx, bool bIsUnset )
       case GUI_UINT16:
       case GUI_RGB888:
       case GUI_UINT32:
+      case GUI_INT8:
+      case GUI_INT16:
+      case GUI_INT32:
         /* All Number formats: copy required number of bytes to data element */
         memmove(datapos, GUI_Edit_tempval.u8, GUI_ByteLen[editelem->elem_type] );
         /* Reverse byte order in RGB value */
@@ -380,6 +424,9 @@ void *GUI_Create_or_update_LVGL(uint8_t *data, const GUI_Edit_T *editdata, void 
         break;
       case GUI_ELEM_LABEL:
         return  GUI_new_or_update_label ( (GUI_Label_T *)data, (lv_obj_t *)lvgl_obj );
+        break;
+      case GUI_ELEM_ARC:
+        return  GUI_new_or_update_arc ( (GUI_Arc_T *)data, (lv_obj_t *)lvgl_obj );
         break;
 
       default:

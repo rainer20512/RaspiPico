@@ -502,7 +502,7 @@
             exclude=""
             filter="*.*"
             path="../lvgl/src/libs/freetype"
-            recurse="No" />
+            recurse="Yes" />
           <folder
             Name="fsdrv"
             exclude=""
@@ -836,6 +836,12 @@
           filter="*.*"
           path="../lvgl/src/widgets"
           recurse="Yes" />
+        <folder
+          Name="xtra_font"
+          exclude=""
+          filter=""
+          path="../lvgl/src/xtra_font"
+          recurse="No" />
         <file file_name="../lvgl/src/lv_api_map_v8.h" />
         <file file_name="../lvgl/src/lv_api_map_v9_0.h" />
         <file file_name="../lvgl/src/lv_api_map_v9_1.h" />

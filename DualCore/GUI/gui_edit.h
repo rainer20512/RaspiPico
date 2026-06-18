@@ -13,14 +13,17 @@ typedef enum {
   GUI_UINT16 = 1,
   GUI_RGB888 = 2,
   GUI_UINT32 = 3,
-  GUI_STRING = 4,
-  GUI_STYLE  = 5,
-  GUI_FONT   = 6,
+  GUI_INT8   = 4,
+  GUI_INT16  = 5,
+  GUI_INT32  = 6,
+  GUI_STRING = 7,
+  GUI_STYLE  = 8,
+  GUI_FONT   = 9,
 } GUI_edittype_T;
 
 /* and corresponding length in bytes          */
 /* enum and const must match in element count */
-#define BYTELENGTHS  {1, 2, 3, 4, 4, 4}
+#define BYTELENGTHS  {1, 2, 3, 4, 1, 2, 3, 4, 4, 4}
 
 typedef struct {
   const char      *elem_name;   /* User freindly name of GUI-Element          */
@@ -41,6 +44,7 @@ typedef void (*OnExitFn) ( void );
 
 extern const GUI_Edit_T edit_style;             /* Edit receipe for style variables */
 extern const GUI_Edit_T edit_label;             /* Edit receipe for label variables */
+extern const GUI_Edit_T edit_arc;               /* Edit receipe for arc variables */
 
 void GUI_Edit( const GUI_Edit_T *edit, void *anyobj, OnExitFn OnExit );
 

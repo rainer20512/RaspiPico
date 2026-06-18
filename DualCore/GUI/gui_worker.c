@@ -9,13 +9,6 @@
 lv_style_t *mystyle;
 lv_obj_t   *mylbl, *mylbl2;
 
-void AssignStyle ( void )
-{
-}
-
-void AssignLabel ( void )
-{
-}
 
 /******************************************************************************
  * @brief Load all known fonts _once_ into GUI elem list
@@ -46,12 +39,15 @@ void gui_test_master(uint32_t num)
     GUI_Load_Fonts();
 	switch(num) {
     	case 1:
-        	GUI_Edit(&edit_style, &cur_style, AssignStyle);
+        	GUI_Edit(&edit_style, &cur_style, NULL);
             break;
     	case 2:
-        	GUI_Edit(&edit_label, &cur_label, AssignLabel);
+        	GUI_Edit(&edit_label, &cur_label, NULL);
             break;
     	case 3:
+        	GUI_Edit(&edit_arc, &cur_arc, NULL);
+            break;
+    	case 4:
             /*Change the active screen's background color*/
             lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0x003a57), LV_PART_MAIN);
 
@@ -62,7 +58,7 @@ void gui_test_master(uint32_t num)
             lv_obj_align(mylbl2, LV_ALIGN_CENTER, 0, -60);
             GUI_dump_coords(mylbl2);
             break;
-    	case 4:
+    	case 5:
             GUI_dump_coords(mylbl);
             GUI_dump_coords(mylbl2);
             break;
