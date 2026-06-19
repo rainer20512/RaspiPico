@@ -69,7 +69,7 @@ How to program/debug RP2040 target with Rpi Debug Probe          RHB 17.11.2025
    ein zugehöriges C-File im selben SDK-Teilbaum, die muss man jezt, am besten durch
    drag&drop als dynamischen folder im Projekt hinzufügen. Die dann ebenfalls hinzugeüfgten
    bazel und CMakeFile dateien kann man gleich wieder rausschmeißen, das ist Ballast.
-   Auch das ist aufändig.
+   Auch das ist aufwändig.
 
 12.Die Pin-Definitionsdatei ist evtl namensgleich mit SDK-Inlcude-Dateien, daher empfiehlt es
    sich, die Pin-Definitionsdatei aus 
@@ -93,9 +93,6 @@ How to program/debug RP2040 target with Rpi Debug Probe          RHB 17.11.2025
       LIB_PICO_PRINTF_PICO
       LIB_PICO_STDIO
 
--------------------------------------------------------------------------------
- LVGL zum rennen bringen
--------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
  LVGL zum rennen bringen

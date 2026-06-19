@@ -12,7 +12,7 @@
 
 /* Edit receipe for Style structure */
 const  GUI_Edit_T edit_style = {
-  .count         = 17,
+  .count         = 20,
   .gui_elem_type = GUI_ELEM_STYLE,
   /* the foloowing two items are used to find used bits and name when */
   /* structure will be converted to raw data in "gui_edit"            */
@@ -24,24 +24,28 @@ const  GUI_Edit_T edit_style = {
 /*01*/
     { "Width",        GUI_UINT16, offsetof(GUI_Style_T, def_width) },
     { "Height",       GUI_UINT16, offsetof(GUI_Style_T, def_height) }, 
-    { "TextAlign",    GUI_UINT8,  offsetof(GUI_Style_T, textalign) }, 
     { "ObjectAlign",  GUI_UINT8,  offsetof(GUI_Style_T, objalign) }, 
-    { "Backgr.opaq",  GUI_UINT8,  offsetof(GUI_Style_T, bgopa) }, 
+    { "BG Opaqe",     GUI_UINT8,  offsetof(GUI_Style_T, bgopa) }, 
+    { "BG Color",     GUI_RGB888, offsetof(GUI_Style_T, bgcolor) }, 
 /*06*/
     { "BorderWidth",  GUI_UINT8,  offsetof(GUI_Style_T, borderwidth) }, 
     { "BorderRadius", GUI_UINT8,  offsetof(GUI_Style_T, borderradius) }, 
+    { "BorderColor",  GUI_RGB888, offsetof(GUI_Style_T, bordercolor) }, 
     { "Shadow Width", GUI_UINT8,  offsetof(GUI_Style_T, shadow_width) }, 
     { "Shadow opaq",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_opa) }, 
-    { "Shadow xref",  GUI_UINT8,  offsetof(GUI_Style_T, sh_x) }, 
 /*11*/
+    { "Shadow xref",  GUI_UINT8,  offsetof(GUI_Style_T, sh_x) }, 
     { "Shadow yref",  GUI_UINT8,  offsetof(GUI_Style_T, sh_y) }, 
-    { "BGColor",      GUI_RGB888, offsetof(GUI_Style_T, bgcolor) }, 
-    { "BorderColor",  GUI_RGB888, offsetof(GUI_Style_T, bordercolor) }, 
-    { "TextColor",    GUI_RGB888, offsetof(GUI_Style_T, textcolor) }, 
-    { "TextFont",     GUI_FONT,   offsetof(GUI_Style_T, textfont) }, 
-/*16*/
     { "ShadowColor",  GUI_RGB888, offsetof(GUI_Style_T, shadowcolor) }, 
+    { "TextAlign",    GUI_UINT8,  offsetof(GUI_Style_T, textalign) }, 
+    { "TextColor",    GUI_RGB888, offsetof(GUI_Style_T, textcolor) }, 
+/*16*/
+    { "TextFont",     GUI_FONT,   offsetof(GUI_Style_T, textfont) }, 
+    { "Arc Width",    GUI_UINT8,  offsetof(GUI_Style_T, arcwidth) }, 
+    { "Arc Opaque",   GUI_UINT8,  offsetof(GUI_Style_T, arcopa) }, 
+    { "Arc Color",    GUI_RGB888, offsetof(GUI_Style_T, arccolor) }, 
     { "StyleName",    GUI_STRING, offsetof(GUI_Style_T, name) }, 
+/*21*/
   },
 };
 
@@ -83,7 +87,7 @@ const  GUI_Edit_T edit_arc = {
     { "Mac.Val",      GUI_INT16,  offsetof(GUI_Arc_T, maxval) }, 
     { "Cur.Val",      GUI_INT16,  offsetof(GUI_Arc_T, curval) }, 
 /*11*/
-    { "LabelName",    GUI_STRING, offsetof(GUI_Arc_T, name) }, 
+    { "ArcName",      GUI_STRING, offsetof(GUI_Arc_T, name) }, 
   },
 };
 

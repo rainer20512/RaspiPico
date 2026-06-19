@@ -50,20 +50,24 @@ extern GUI_Font_T AllFonts[];
 typedef enum {
   STYLE_DEFWIDTH     = 0,
   STYLE_DEFHEIGHT    = 1,
-  STYLE_TEXTALIGN    = 2,
-  STYLE_OBJALIGN     = 3,
-  STYLE_BGOPA        = 4,
+  STYLE_OBJALIGN     = 2,
+  STYLE_BGOPA        = 3,
+  STYLE_BGCOLOR      = 4,
   STYLE_BORDERWIDTH  = 5,
   STYLE_BORDERRADIUS = 6,
-  STYLE_SHADOWWIDTH  = 7,
-  STYLE_SHADOWOPA    = 8,
-  STYLE_SHADOWXREF   = 9,
-  STYLE_SHADOWYREF   = 10,
-  STYLE_BGCOLOR      = 11,
-  STYLE_BORDERCOLOR  = 12,
-  STYLE_TEXTCOLOR    = 13,
-  STYLE_TEXTFONT     = 14,
-  STYLE_SHADOWCOLOR  = 15,
+  STYLE_BORDERCOLOR  = 7,
+  STYLE_SHADOWWIDTH  = 8,
+  STYLE_SHADOWOPA    = 9,
+  STYLE_SHADOWXREF   = 10,
+  STYLE_SHADOWYREF   = 11,
+  STYLE_SHADOWCOLOR  = 12,
+  STYLE_TEXTALIGN    = 13,
+  STYLE_TEXTCOLOR    = 14,
+  STYLE_TEXTFONT     = 15,
+  STYLE_ARCWIDTH     = 16,
+  STYLE_ARCOPA       = 17,
+  STYLE_ARCCOLOR     = 18,
+  STYLE_NAME         = 19,
 } Style_Used_T;
 
 #define STYLE_HAS_PROP(style, id) ( (style)->used &  (  1 << (id) ) )
@@ -75,20 +79,23 @@ typedef enum {
 /* Properties of a style, not all LVGL style properties supported */
 typedef struct {
   uint32_t        used;                     /* bitfield of used properties */
-  lv_color_t      bgcolor;                  /* Background color */
-  uint8_t         bgopa;					/* BG opacity */	
-  lv_color_t      textcolor;		        /* Text color */
-  const lv_font_t *textfont;                /* Textfont */
   uint16_t        def_width, def_height;	/* default width and height in px */
-  uint8_t         textalign;				/* Text Alignment within obj*/
   uint8_t         objalign;                 /* Alignment of obj wihin parent obj*/
-  lv_color_t      bordercolor;			
+  uint8_t         bgopa;					/* BG opacity */	
+  lv_color_t      bgcolor;                  /* Background color */
   uint8_t         borderwidth;
   uint8_t         borderradius;
-  lv_color_t      shadowcolor;              /* Shadow color */
+  lv_color_t      bordercolor;			
   uint8_t         shadow_opa;				/* Shadows opacity */
   uint8_t         shadow_width;     		/* Width of shadow */
   uint8_t         sh_x, sh_y;				/* Shadows x and y offset */
+  lv_color_t      shadowcolor;              /* Shadow color */
+  uint8_t         textalign;				/* Text Alignment within obj*/
+  lv_color_t      textcolor;		        /* Text color */
+  const lv_font_t *textfont;                /* Textfont */
+  uint8_t         arcwidth;                 /* witdh of arc */
+  uint8_t         arcopa;                   /* opaqueness of arc */
+  lv_color_t      arccolor;		            /* Arc color */
   char            name[GUI_MAX_NAMELEN];    /* User friendly name */      
 } GUI_Style_T;
 

@@ -10,18 +10,19 @@ GUI_Font_T AllFonts[] =
 
   // {"Adlam24",      &rb_font_adlam_24 },
   // {"Adlam40",      &rb_font_adlam_40 },
+/*
   {"Adlam60",      &rb_font_adlam_60 },
   {"Adlam80",      &rb_font_adlam_80 },
   {"Adlam100",     &rb_font_adlam_100 },
   {"Adlam120",     &rb_font_adlam_120 },
-
+*/
   // {"Stencil24",      &w_font_stencil_24 },
   // {"Stencil40",      &w_font_stencil_40 },
-  {"Stencil60",      &w_font_stencil_60 },
+ /*  {"Stencil60",      &w_font_stencil_60 },
   {"Stencil80",      &w_font_stencil_80 },
   {"Stencil100",     &w_font_stencil_100 },
   {"Stencil120",     &w_font_stencil_120 },
-
+*/
   {"BahnSbC24",      &w_font_bahn_sbc_24 },
   {"BahnSbC40",      &w_font_bahn_sbc_40},
   {"BahnSbC60",      &w_font_bahn_sbc_60 },
@@ -33,24 +34,25 @@ GUI_Font_T AllFonts[] =
 };
 
 const GUI_Style_T def_style = 
-    { .used         = 0b11111111101011111,
+    { .used         = 0b10001111111101011111,
       .def_width    = 120, 
       .def_height   = 20, 
-      .textalign    = LV_TEXT_ALIGN_CENTER,  
       .objalign     = LV_ALIGN_CENTER,
       .bgopa        = 128, 
+      .bgcolor      = {0xC0, 0xC0, 0xC0},
       .borderwidth  = 0, 
       .borderradius = 5, 
+      .bordercolor  = {0x00, 0x00, 0x00},
       .shadow_width = 0, 
       .shadow_opa   = 128, 
       .sh_x         = 4, 
       .sh_y         = 4,   
-      .bgcolor      = {0xC0, 0xC0, 0xC0},
-      .bordercolor  = {0x00, 0x00, 0x00},
+      .shadowcolor  = {0x80, 0x80, 0x80},
+      .textalign    = LV_TEXT_ALIGN_CENTER,  
       .textcolor    = {0xff, 0x00, 0x00}, 
       .textfont     = &w_font_bahn_sbc_40,
-      .shadowcolor  = {0x80, 0x80, 0x80},
-      .name         = "Predef01",
+      /* .arcwidth, .arcopa, .arccolor not set! */
+      .name         = "Style01",
     };
 
 GUI_Style_T cur_style = def_style;
@@ -137,24 +139,29 @@ lv_style_t * GUI_new_or_update_style ( GUI_Style_T *act, lv_style_t *style )
     }
 
 	/* assign _All_ style properties */
-    if ( STYLE_HAS_PROP(act, STYLE_BGCOLOR))      lv_style_set_bg_color         (style, act->bgcolor);      else lv_style_remove_prop(style, LV_STYLE_BG_COLOR);
-    if ( STYLE_HAS_PROP(act, STYLE_BGOPA))        lv_style_set_bg_opa           (style, act->bgopa);        else lv_style_remove_prop(style, LV_STYLE_BG_OPA);
-    if ( STYLE_HAS_PROP(act, STYLE_TEXTCOLOR))    lv_style_set_text_color       (style, act->textcolor);    else lv_style_remove_prop(style, LV_STYLE_TEXT_COLOR);
-    if ( STYLE_HAS_PROP(act, STYLE_TEXTFONT))     lv_style_set_text_font        (style, act->textfont);     else lv_style_remove_prop(style, LV_STYLE_TEXT_FONT);
 	if ( STYLE_HAS_PROP(act, STYLE_DEFWIDTH))     lv_style_set_width            (style, act->def_width);    else lv_style_remove_prop(style, LV_STYLE_WIDTH);
 	if ( STYLE_HAS_PROP(act, STYLE_DEFHEIGHT))    lv_style_set_height           (style, act->def_height);   else lv_style_remove_prop(style, LV_STYLE_HEIGHT);
-    if ( STYLE_HAS_PROP(act, STYLE_BORDERCOLOR))  lv_style_set_border_color     (style, act->bordercolor);  else lv_style_remove_prop(style, LV_STYLE_BORDER_COLOR);
+    if ( STYLE_HAS_PROP(act, STYLE_OBJALIGN))     lv_style_set_align	        (style, act->objalign);     else lv_style_remove_prop(style, LV_STYLE_ALIGN);
+    if ( STYLE_HAS_PROP(act, STYLE_BGOPA))        lv_style_set_bg_opa           (style, act->bgopa);        else lv_style_remove_prop(style, LV_STYLE_BG_OPA);
+    if ( STYLE_HAS_PROP(act, STYLE_BGCOLOR))      lv_style_set_bg_color         (style, act->bgcolor);      else lv_style_remove_prop(style, LV_STYLE_BG_COLOR);
     if ( STYLE_HAS_PROP(act, STYLE_BORDERWIDTH))  lv_style_set_border_width     (style, act->borderwidth);  else lv_style_remove_prop(style, LV_STYLE_BG_COLOR);
     if ( STYLE_HAS_PROP(act, STYLE_BORDERRADIUS)) lv_style_set_radius           (style, act->borderradius); else lv_style_remove_prop(style, LV_STYLE_RADIUS);
-    if ( STYLE_HAS_PROP(act, STYLE_SHADOWCOLOR))  lv_style_set_shadow_color     (style, act->shadowcolor);  else lv_style_remove_prop(style, LV_STYLE_SHADOW_COLOR);
+    if ( STYLE_HAS_PROP(act, STYLE_BORDERCOLOR))  lv_style_set_border_color     (style, act->bordercolor);  else lv_style_remove_prop(style, LV_STYLE_BORDER_COLOR);
     if ( STYLE_HAS_PROP(act, STYLE_SHADOWXREF))   lv_style_set_shadow_offset_x  (style, act->sh_x);         else lv_style_remove_prop(style, LV_STYLE_SHADOW_OFS_X);
     if ( STYLE_HAS_PROP(act, STYLE_SHADOWYREF))   lv_style_set_shadow_offset_y  (style, act->sh_y);         else lv_style_remove_prop(style, LV_STYLE_SHADOW_OFS_Y);
     if ( STYLE_HAS_PROP(act, STYLE_SHADOWWIDTH))  lv_style_set_shadow_width     (style, act->shadow_width); else lv_style_remove_prop(style, LV_STYLE_SHADOW_WIDTH);
     if ( STYLE_HAS_PROP(act, STYLE_SHADOWOPA))    lv_style_set_shadow_opa       (style, act->shadow_opa);   else lv_style_remove_prop(style, LV_STYLE_SHADOW_OPA);
+    if ( STYLE_HAS_PROP(act, STYLE_SHADOWCOLOR))  lv_style_set_shadow_color     (style, act->shadowcolor);  else lv_style_remove_prop(style, LV_STYLE_SHADOW_COLOR);
     if ( STYLE_HAS_PROP(act, STYLE_TEXTALIGN))    lv_style_set_text_align	    (style, act->textalign);    else lv_style_remove_prop(style, LV_STYLE_TEXT_ALIGN);
-    if ( STYLE_HAS_PROP(act, STYLE_OBJALIGN))     lv_style_set_align	        (style, act->objalign);     else lv_style_remove_prop(style, LV_STYLE_ALIGN);
+    if ( STYLE_HAS_PROP(act, STYLE_TEXTCOLOR))    lv_style_set_text_color       (style, act->textcolor);    else lv_style_remove_prop(style, LV_STYLE_TEXT_COLOR);
+    if ( STYLE_HAS_PROP(act, STYLE_TEXTFONT))     lv_style_set_text_font        (style, act->textfont);     else lv_style_remove_prop(style, LV_STYLE_TEXT_FONT);
+    if ( STYLE_HAS_PROP(act, STYLE_ARCWIDTH))     lv_style_set_arc_width        (style, act->arcwidth);     else lv_style_remove_prop(style, LV_STYLE_ARC_WIDTH);
+    if ( STYLE_HAS_PROP(act, STYLE_ARCOPA))       lv_style_set_arc_opa          (style, act->arcopa);       else lv_style_remove_prop(style, LV_STYLE_ARC_OPA);
+    if ( STYLE_HAS_PROP(act, STYLE_ARCCOLOR))     lv_style_set_arc_color        (style, act->arccolor);     else lv_style_remove_prop(style, LV_STYLE_ARC_COLOR);
+
     /* update using widgets about style change */
     lv_obj_report_style_change( style);
+    lv_subject_init_int(lv_subject_t *subject, int32_t value)
 	return style;	
 }
 
