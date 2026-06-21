@@ -92,11 +92,14 @@ const  GUI_Edit_T edit_arc = {
 };
 
 
-/* helper struct to define a string by char vector and length*/
-struct str { 
+/* helper struct to define a string or font by char vector and length */ 
+/* and fontsize (only for fonts  )*/
+struct strfont { 
     char *text;
     size_t len;
+    uint8_t fontsize;
 };
+
 /* module global variable to hold data of edited item */
 static union {
       uint32_t   u32;
@@ -106,7 +109,7 @@ static union {
       int16_t    i16[2];
       int32_t    i32;
       lv_color_t rgb;
-      struct str str;
+      struct strfont strfont;
     } GUI_Edit_tempval;
 
 /* module global variable to copy string data out of inbuf */
@@ -156,17 +159,21 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const GUI_editelem_T *editelem, 
           switch ( editelem->elem_type ) {
             case GUI_STRING:
                /* In case of string store ptr to string */
-               GUI_Edit_tempval.str.text = (char *)bytes+editelem->elem_offset;
+               GUI_Edit_tempval.strfont.text = (char *)bytes+editelem->elem_offset;
                break;
             case GUI_STYLE:
             case GUI_FONT:
-               /* In case of Style/Font: find Style/Font in GUI item list and print the name */
+               /* In case of Style or Font find it in GUI item list and store the name*/
                search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
                ll_elem = LL_find_by_type_n_obj( GUI_item_list, search_elem, *(void **)(bytes+editelem->elem_offset) );
-               GUI_Edit_tempval.str.text = (char *)ll_elem->ll_name;
+               GUI_Edit_tempval.strfont.text = (char *)ll_elem->ll_name;
+               /* In case of Fonts,also get the fontsize */
+               if ( search_elem == GUI_ELEM_FONT )
+                  GUI_Edit_tempval.strfont.fontsize = ((GUI_Font_T*)ll_elem->ll_entry)->fontsize;
                break;
           }
-          printf("%s", GUI_Edit_tempval.str.text );
+          printf("%s", GUI_Edit_tempval.strfont.text );
+          if (search_elem == GUI_ELEM_FONT) printf(" %u", GUI_Edit_tempval.strfont.fontsize );
           break;
       case GUI_UINT8:
       case GUI_UINT16:
@@ -311,8 +318,8 @@ void GUI_Handler_Pop ( void )
 static char *GUI_tempval_to_str(char *dest)
 {
       /* copy string into data structure */
-      size_t len = min(GUI_MAX_NAMELEN-1, GUI_Edit_tempval.str.len);
-      strncpy(dest, GUI_Edit_tempval.str.text, len);
+      size_t len = min(GUI_MAX_NAMELEN-1, GUI_Edit_tempval.strfont.len);
+      strncpy(dest, GUI_Edit_tempval.strfont.text, len);
       /* incoming string is (vector, length) type so append \0 in any case */
       *(dest+len)='\0';
       return dest;
@@ -354,16 +361,26 @@ static void GUI_Edit_update( uint32_t idx, bool bIsUnset )
         break;
       case GUI_STYLE:
       case GUI_FONT:
-        /* Fonts and styles may be secified in two ways: by name or position in list ( starting with 1 ) */
+        /* Fonts and styles may be secified in two ways: by name and size  or position in list ( starting with 1 ) */
         search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
-        if ( CMD_is_numeric (GUI_Edit_tempval.str.text, GUI_Edit_tempval.str.len )) {
+        if ( CMD_is_numeric (GUI_Edit_tempval.strfont.text, GUI_Edit_tempval.strfont.len )) {
           /* Specified by number: convert to num and search for nth entry */
-          ll_elem = LL_find_nth ( GUI_item_list,  search_elem, CMD_to_number(GUI_Edit_tempval.str.text, GUI_Edit_tempval.str.len ) );
+          ll_elem = LL_find_nth ( GUI_item_list,  search_elem, CMD_to_number(GUI_Edit_tempval.strfont.text, GUI_Edit_tempval.strfont.len ) );
         } else {
-          /* Specified by name: Get String copy from inbuf */
+          /* Specified by name: Get String copy from inbuf in any case */
           GUI_tempval_to_str(tempstr);
-          /* copy string into tempbuf  and find style/font by name*/
-          ll_elem = LL_find_by_type_n_name(GUI_item_list, search_elem, tempstr);
+          if ( editelem->elem_type == GUI_STYLE ) {
+            /* find Style by name */
+            ll_elem = LL_find_by_type_n_name(GUI_item_list, search_elem, tempstr);
+          } else {
+            /* search font by name and fontsize. For that read the next input word */
+            /* which has to be the fontsize */
+            char *word; size_t len;
+            if ( !CMD_get_one_word(&word, &len) ) 
+              ll_elem = NULL; 
+            else
+              ll_elem = LL_find_by_type_name_additional(GUI_item_list, search_elem, tempstr, CMD_to_number(word, len));
+          }
         }
         /* if found, copy lvgl obj ptr to structure, otherwise reset "used" bit */
         if ( ll_elem ) {
@@ -405,7 +422,10 @@ void GUI_list_entries(const GUI_Elem_T elemtype )
 
   /* Iterate thr all elements of current edit type */
   while ( ptr = LL_iterate_by_type ( ptr, elemtype ) ) {
-    printf("%2d: %s\n", ++i, ptr->ll_name);
+    printf("%2d: %s", i, ptr->ll_name);
+    if ( elemtype == GUI_ELEM_FONT ) printf(" %u", i, ptr->ll_additional); 
+    putchar('\n');
+    i++;
     ptr = LL_next(ptr);
   }
 }
@@ -479,7 +499,10 @@ static void GUI_create_entry(uint8_t *data, const GUI_Edit_T *editdata )
   List_Elem_T *new;
   /* find position of "name" field in raw data */
   char *name = (char *)(copy + act_edit->name_ofs);
-  new = LL_New_Element( editdata->gui_elem_type, lvgl_obj, name, copy );
+  /* In case of fonts: also get the fontsize and store as additional item */
+  uint32_t additional = ( editdata->gui_elem_type == GUI_ELEM_FONT ? ((GUI_Font_T*)data)->fontsize: 0); 
+    
+  new = LL_New_Element( editdata->gui_elem_type, lvgl_obj, name, copy, additional );
   LL_append(&GUI_item_list, new );
   printf("%s %s created\n",EditNames[editdata->gui_elem_type],name);
 }
@@ -517,8 +540,8 @@ void GUI_save_or_update_entry(uint8_t *data, const GUI_Edit_T *editdata )
  ********************************************************************************/
 static void GUI_load_entry( char *word, size_t wordlen, const GUI_Edit_T *editdata )
 {
-  GUI_Edit_tempval.str.text = word;
-  GUI_Edit_tempval.str.len = wordlen;
+  GUI_Edit_tempval.strfont.text = word;
+  GUI_Edit_tempval.strfont.len = wordlen;
   GUI_tempval_to_str(tempstr);
 
   List_Elem_T *ll_elem = LL_find_by_type_n_name ( GUI_item_list, editdata->gui_elem_type, tempstr );
@@ -656,8 +679,8 @@ static bool GUI_Edit_execute_entry ( char *word, size_t wordlen, uint32_t idx )
         /* Strings, Fonts and Styles require a separate handling: pass reference to the string 
          * to Updater, updater will handle string accordingly
          */
-         GUI_Edit_tempval.str.text = word;
-         GUI_Edit_tempval.str.len = wordlen;
+         GUI_Edit_tempval.strfont.text = word;
+         GUI_Edit_tempval.strfont.len = wordlen;
          if ( editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_FONT ) {
             /* in Case of Styles/Fonts: if Parameter is '?', list all styles/fonts */
             if ( wordlen == 1 && *word =='?' ) {

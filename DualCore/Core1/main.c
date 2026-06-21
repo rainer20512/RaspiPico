@@ -1,8 +1,10 @@
-/**
- * Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
+/******************************************************************************
+ * Core1 Task
+ * 
+ * This Core does the LVGL stuff. Communication takes place via IPC messages
+ * between Core0 and Core1 and a shared RAM buffer located in SCRATCH_Y
  *
- * SPDX-License-Identifier: BSD-3-Clause
- */
+ *****************************************************************************/
 
 // Pin definitions for original RasPi Pico board
 #include "pico.h"
@@ -17,7 +19,8 @@
 #include "dev/uarts.h"
 #include "debug/debug_helper.h"
 
-#include <stdlib.h>
+#include "../../GUI/gui_ops.h"
+
 
 // Pico W devices use a GPIO on the WIFI chip for the LED,
 // so when building for Pico W, CYW43_WL_GPIO_LED_PIN will be defined
@@ -86,9 +89,7 @@ static uint32_t cnt;
 #include "dev/GC9A01.h"
 
 
-void lv_init(void);
-void lv_example_anim_2(void);
-extern void LL_Blink(uint32_t nrofblinks, uint32_t delayms );
+void LL_Blink(uint32_t nrofblinks, uint32_t delayms );
 
 #if (USE_SPI1 > 0 || USE_SPI0 > 0 ) && USE_LVGL > 0
   void spi_init_all ( void )
@@ -107,17 +108,19 @@ extern void LL_Blink(uint32_t nrofblinks, uint32_t delayms );
 #endif
 
 #if 0
-int main(void) 
-{
+    bool ret;
+
     IPC_Init_Core0();
     alarm_pool_init_default();
-    #if DEBUG_UART == 0
-      uart0_init();
-    #elif DEBUG_UART == 1
-      uart1_init();      
+    #if CORE0_UART == 0
+      ret = uart0_init();
+    #elif CORE0_UART == 1
+      ret =uart1_init();      
     #else
       #error "No debug uart assigned"
     #endif
+    if (!ret) LL_Blink(200,25);
+
     spi_init_all();
     GC9A01_hard_reset();
 
@@ -126,29 +129,41 @@ int main(void)
     Init_DefineTasks();
     TaskInitAll();
 
+    /* Autostart Core1 */
+    #if CORE1_AUTOSTART > 0 
+      #if defined(CORE1_SIM)
+         printf("Setup of Core1 SIM %s\n",Core0_Init_IPC_Comm(NULL,NULL) ? "ok" :"failed" );
+      #else
+         IPC_Start_Core1(1);
+         /* Give Core1 some time to boot, at least 0,5s 
+          * Be sure not to slow core1 boot down by additional debug blinks! */
+         sleep_ms(500);
+         printf("Start & Setup of Core1 %s\n",Core0_Init_IPC_Comm(NULL,NULL) ? "ok" :"failed" );
+      #endif
+    #endif
+
 #if UNIQUEID
     check_fastrun ();
     dump_unique_id();
 #endif
-#ifndef PICO_DEFAULT_LED_PIN
-  #error "No default LED pin!"
-#endif
-
     ProfilerSwitchTo(JOB_TASK_MAIN);  
 
-    cnt = 0;
-    pin_toggle_nowait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 15 );
-    while (true) {
-//        stdio_putchar('c');
-//        stdio_printf("%06d Hello, world!\n", cnt++);
-        TaskRunAll();
-        if (!TaskIsRunableTask() )  {
-          ProfilerPush(JOB_SLEEP);
-          __wfi();
-          ProfilerPop();
-        }
-    }
-}
+#if USE_LVGL > 11111
+    // Trigger the refresh-loop of LVGL
+    TaskNotify(TASK_LVGL1);
+#endif
+
+/* Initialize the GUI after LVGL is up and running  */
+#if defined(RP2040_M0_1) || defined(CORE1_SIM)
+    GUI_Init_Ops_Core1();
+#endif
+#if defined(RP2040_M0_0)
+    // Initialize fonts on Core0
+    TaskNotify(TASK_LVGL0);
+#endif
+
+
+
 #endif
 
 bool rx_chars_available(void);
@@ -191,10 +206,15 @@ int main(void)
     cnt = 0;
     LL_Blink(1,250);
 
-#if USE_LVGL > 0
-    // Trigger the refresh-loop of LVGL
-    TaskNotify(TASK_LVGL);
-#endif
+    #if USE_LVGL > 0
+        // Trigger the refresh-loop of LVGL
+        TaskNotify(TASK_LVGL1);
+    #endif
+
+    /* Initialize the GUI after LVGL is up and running  */
+    #if defined(RP2040_M0_1) || defined(CORE1_SIM)
+        GUI_Init_Ops_Core1();
+    #endif
 
     while (true) {
         TaskRunAll();

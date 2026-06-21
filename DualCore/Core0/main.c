@@ -15,6 +15,8 @@
 #include "dev/GC9A01.h"
 #include "dev/uarts.h"
 
+#include "../../GUI/gui_ops.h"
+
 // Pico W devices use a GPIO on the WIFI chip for the LED,
 // so when building for Pico W, CYW43_WL_GPIO_LED_PIN will be defined
 #ifdef CYW43_WL_GPIO_LED_PIN
@@ -36,6 +38,7 @@
 #endif
 
 void Init_DefineTasks(void);
+
 
 /*
 #include <stdlib.h>
@@ -127,12 +130,16 @@ int main()
     TaskInitAll();
 
     /* Autostart Core1 */
-    #if CORE1_AUTOSTART > 0 && !defined(CORE1_SIM)
-       IPC_Start_Core1(1);
-       /* Give Core1 some time to boot, at least 0,5s 
-        * Be sure not to slow core1 boot down by additional debug blinks! */
-       sleep_ms(500);
-       printf("Start & Setup of Core1 %s\n",Core0_Init_IPC_Comm(NULL,NULL) ? "ok" :"failed" );
+    #if CORE1_AUTOSTART > 0 
+      #if defined(CORE1_SIM)
+         printf("Setup of Core1 SIM %s\n",Core0_Init_IPC_Comm(NULL,NULL) ? "ok" :"failed" );
+      #else
+         IPC_Start_Core1(1);
+         /* Give Core1 some time to boot, at least 0,5s 
+          * Be sure not to slow core1 boot down by additional debug blinks! */
+         sleep_ms(500);
+         printf("Start & Setup of Core1 %s\n",Core0_Init_IPC_Comm(NULL,NULL) ? "ok" :"failed" );
+      #endif
     #endif
 
 #if UNIQUEID
@@ -141,9 +148,18 @@ int main()
 #endif
     ProfilerSwitchTo(JOB_TASK_MAIN);  
 
-#if USE_LVGL > 0
+#if USE_LVGL > 11111
     // Trigger the refresh-loop of LVGL
-    TaskNotify(TASK_LVGL);
+    TaskNotify(TASK_LVGL1);
+#endif
+
+/* Initialize the GUI after LVGL is up and running  */
+#if defined(RP2040_M0_1) || defined(CORE1_SIM)
+    GUI_Init_Ops_Core1();
+#endif
+#if defined(RP2040_M0_0)
+    // Initialize fonts on Core0
+    TaskNotify(TASK_LVGL0);
 #endif
 
     // pin_toggle_nowait( PICO_DEFAULT_LED_PIN, LED_DELAY_MS, 15 );

@@ -15,10 +15,21 @@
 #include "system/ipc_fsm.h"
 #include "debug/debug_helper.h"
 
+#include "../../GUI/gui_ops.h"
+
 
 static repeating_timer_t  wait_timer; /* timer for wait states in state machine */
 static IPC_FmsT ipcfsm;               /* IPC state machine */
 void FSM_Ipc ( IPC_FmsT *fsm );
+
+/******************************************************************************
+ * Used in IPC to transfer Info about loaded fonts from Core1 to Core0
+ *****************************************************************************/
+typedef struct {
+ GUI_Font_T *fontinfo;      /* Ptr to GUI_Font_T array          */
+ uint8_t    fontnum;        /* number of elements in this array */
+} IPC_Fontinfo_T;
+
 
 #if  RP2040_M0_0
   #include <string.h>
@@ -62,7 +73,7 @@ void FSM_Ipc ( IPC_FmsT *fsm );
    * NOTE: This routine may be executed in interrupt context!
    * Do not ACK message or release mutex in here
    *****************************************************************************/
-  bool Core0_Handle_Payload(uint8_t msgID)
+  bool Core0_Handle_Msg(uint8_t msgID)
   {
     bool ret = false;
     DEBUG_PRINTF("Core0 received payload for msg #%d\n", msgID);
@@ -72,6 +83,12 @@ void FSM_Ipc ( IPC_FmsT *fsm );
       case IPC_MSG_0TO1_ECHO:
         ret = Core0_Handle_Echo();
         break;
+      case IPC_MSG_0TO1_QRY_FONTINFO:
+        /* We got fontinfo From Core1 */
+        IPC_Fontinfo_T *buff = (IPC_Fontinfo_T *) buf1to0.buff;
+        AllFonts0   = buff->fontinfo;
+        AllFontNum0 = buff->fontnum;
+        break;        
       default:
         DEBUG_PRINTF("No handler for IPC msg #%d\n", msgID);
     } /* switch */
@@ -85,11 +102,11 @@ void FSM_Ipc ( IPC_FmsT *fsm );
   void task_handle_ipc0 ( uint32_t arg ) 
   {
     UNUSED(arg);
-    /* Check, whether there is a payload at all */
-    if ( RECV_msg1to0.cooked.flags & MSG_FLAG_PLD ) {
-        /* reset payload flag , if handler does not generate payload */
-        if ( !Core0_Handle_Payload(RECV_msg1to0.cooked.MsgID) ) RECV_msg1to0.cooked.flags &= ~MSG_FLAG_PLD;
-    }
+    /* Handle message and update payload flag to represent payload of ACK message*/
+    if ( !Core0_Handle_Msg(RECV_msg1to0.cooked.MsgID) ) 
+      RECV_msg1to0.cooked.flags |= MSG_FLAG_PLD;
+    else
+      RECV_msg1to0.cooked.flags &= ~MSG_FLAG_PLD;
     IPC_AckCore0to1(RECV_msg1to0);
   }
 
@@ -118,7 +135,7 @@ void FSM_Ipc ( IPC_FmsT *fsm );
    * core1 initialization is finished
    * NOTE: msg content is passed via fixed buffer
    *****************************************************************************/
-  bool Core0_Init_IPC_Comm_Internal ( void* userdata, IPC_ResultCB pfAck )
+  static bool Core0_Init_IPC_Comm_Internal ( void* userdata, IPC_ResultCB pfAck )
   { 
     extern mutex_t m1to0;
 
@@ -132,6 +149,20 @@ void FSM_Ipc ( IPC_FmsT *fsm );
     return true;
   }
 
+  bool Core0_Init_IPC_Comm ( void* arg, IPC_ResultCB onCompletion )
+  {
+    FSM_Init(&ipcfsm, arg, Core0_Init_IPC_Comm_Internal, FSM_Ipc );
+    FSM_SetWaitRetries(&ipcfsm, IPC_INIT_WAITRETRIES);
+    if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
+    FSM_Start(&ipcfsm);
+  }
+
+  /******************************************************************************
+   * IPC test to be initiated by Core0
+   * - Send a text to Core1, 
+   * - On Receive, Core 1 will inccrement every single character
+   * - And send back to Core 0
+   *****************************************************************************/
   bool Core0_SendEcho_Internal ( void* userdata, IPC_ResultCB pfAck )
   { 
     strcpy(buf0to1.buff, "The quick brown fox jumped over the crazy dog");
@@ -141,18 +172,28 @@ void FSM_Ipc ( IPC_FmsT *fsm );
     return true;
   }
 
-
-  bool Core0_Init_IPC_Comm ( void* arg, IPC_ResultCB onCompletion )
+  bool Core0_SendEcho ( void* arg, IPC_ResultCB onCompletion )
   {
-    FSM_Init(&ipcfsm, arg, Core0_Init_IPC_Comm_Internal, FSM_Ipc );
-    FSM_SetWaitRetries(&ipcfsm, IPC_INIT_WAITRETRIES);
+    FSM_Init(&ipcfsm, arg, Core0_SendEcho_Internal, FSM_Ipc );
     if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
     FSM_Start(&ipcfsm);
   }
 
-  bool Core0_SendEcho ( void* arg, IPC_ResultCB onCompletion )
+  /******************************************************************************
+   * IPC Query fontinfo from Core1 to Core 0
+   *****************************************************************************/
+  static bool Core0_Qry_FontinfoInternal ( void* userdata, IPC_ResultCB pfAck )
+  { 
+    /* No payload */
+    buf0to1.uSize = 0;
+    /* Send */
+    IPC_SignalCore0to1 (IPC_MSG_0TO1_QRY_FONTINFO, false, pfAck );
+    return true;
+  }
+
+  bool Core0_Qry_Fontinfo ( void* arg, IPC_ResultCB onCompletion )
   {
-    FSM_Init(&ipcfsm, arg, Core0_SendEcho_Internal, FSM_Ipc );
+    FSM_Init(&ipcfsm, arg, Core0_Qry_FontinfoInternal, FSM_Ipc );
     if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
     FSM_Start(&ipcfsm);
   }
@@ -239,7 +280,7 @@ void FSM_Ipc ( IPC_FmsT *fsm );
    * NOTE: This routine may be executed in interrupt context!
    * Do not ACK message or release mutex in here
    *****************************************************************************/
-  bool Core1_Handle_Payload(uint8_t msgID)
+  bool Core1_Handle_Msg(uint8_t msgID)
   {
     bool ret = false;
     DEBUG_PRINTF("Core1 received payload for msg #%d\n", msgID);
@@ -251,6 +292,15 @@ void FSM_Ipc ( IPC_FmsT *fsm );
       case IPC_MSG_0TO1_ECHO:
       case IPC_MSG_1TO0_ECHO:
         ret = Core1_Handle_Echo();
+        break;
+      case IPC_MSG_0TO1_QRY_FONTINFO:
+        /* Return fontinfo from Core1 to Core0 */
+        IPC_Fontinfo_T *buff = (IPC_Fontinfo_T *) pbuf1to0->buff;
+        buff->fontinfo = AllFonts1;
+        buff->fontnum =  AllFontNum1;
+        pbuf1to0->uSize = sizeof(IPC_Fontinfo_T);
+        /* We generated new payload, so return true */
+        ret = true;
         break;
       default:
         DEBUG_PRINTF("No handler for IPC msg #%d\n", msgID);
@@ -265,11 +315,13 @@ void FSM_Ipc ( IPC_FmsT *fsm );
   void task_handle_ipc1 ( uint32_t arg ) 
   {
     UNUSED(arg);
-    /* Check, whether there is a payload at all */
-    if ( RECV_msg0to1.cooked.flags & MSG_FLAG_PLD ) {
-        /* reset payload flag , if handler does not generate payload */
-        if ( !Core1_Handle_Payload(RECV_msg0to1.cooked.MsgID) ) RECV_msg0to1.cooked.flags &= ~MSG_FLAG_PLD;
-    }
+    /* Handle message and update payload flag to represent payload of ACK message*/
+    if ( Core1_Handle_Msg(RECV_msg0to1.cooked.MsgID) ) 
+      RECV_msg0to1.cooked.flags |= MSG_FLAG_PLD;
+    else
+      RECV_msg0to1.cooked.flags &= ~MSG_FLAG_PLD;
+
+    /* and send ACK */
     IPC_AckCore1to0(RECV_msg0to1);
   }
 

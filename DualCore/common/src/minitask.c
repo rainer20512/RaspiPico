@@ -118,9 +118,10 @@ void TaskInitAll ( void )
  *****************************************************************************/
 void TaskRunAll ( void )
 {
-    uint32_t shift = 1 << 0;
+    uint32_t shift;
     int32_t profID;
     for ( uint32_t i = 0; i < MAX_TASK; i++ ) {
+        shift = 1 << i;
         if ( taskPendbits & shift ) {
             taskPendbits &= ~shift;
             profID = tasks[i].PrID;
@@ -128,8 +129,10 @@ void TaskRunAll ( void )
             assert(tasks[i].Run != NULL );
             tasks[i].Run(i);
             if ( profID >= 0 ) { ProfilerPop(); }
+            /* whenever there was a runnable task, redo task list scanning  */
+            /* from beginning, bcs last task could have raised pending bits */
+            i = 0;
         }
-        shift <<= 1;
     }
 }
 

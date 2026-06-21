@@ -5,6 +5,9 @@
   * @author  Rainer
   * @brief   LVGL object definitions for use outside og LVGL and in 
   *          inter process communication
+  *
+  *          IMPORTANT: Used by both Core1 and Core0. When modifying, 
+  *          be sure to recompileboth cores
   ******************************************************************************
   *
   ******************************************************************************
@@ -18,7 +21,6 @@
 
 #if USE_LVGL > 0
 #include "../../lvgl/lvgl.h"
-// #include "../GUI/gui_edit.h"
 
 /* max length of user friendly name             */
 /* keep it the same in all GUI elements         */
@@ -39,10 +41,12 @@ extern const char *EditNames[];
 
 typedef struct {
   char             fontname[GUI_MAX_NAMELEN];
+  uint8_t          fontsize;
   const lv_font_t* font;
 } GUI_Font_T;
 
-extern GUI_Font_T AllFonts[];
+/* Filled by Init on Core1, by IPC on Core0 */
+extern GUI_Font_T *AllFonts;
 
 
 /* Bitfield for set properties of a GUI_Style_T */
@@ -101,9 +105,6 @@ typedef struct {
 
 
 
-extern const GUI_Style_T def_style;             /* default style settings */
-extern       GUI_Style_T cur_style;             /* actual style settings  */
-
 lv_style_t * GUI_new_or_update_style ( GUI_Style_T *act, lv_style_t *style );
 
 /* Bitfield for set properties of a GUI_Label_T */
@@ -131,9 +132,6 @@ typedef struct {
   char          caption[GUI_MAX_NAMELEN];   /* User friendly name */      
   char          name[GUI_MAX_NAMELEN];      /* User friendly name */      
 } GUI_Label_T;
-
-extern const GUI_Label_T def_label;             /* default label settings */
-extern       GUI_Label_T cur_label;             /* actual label settings  */
 
 lv_obj_t* GUI_new_or_update_label ( GUI_Label_T *act, lv_obj_t *lbl);
 
@@ -171,9 +169,6 @@ typedef struct {
   int16_t       curval;                     /* current value */
   char          name[GUI_MAX_NAMELEN];      /* User friendly name */      
 } GUI_Arc_T;
-
-extern const GUI_Arc_T def_arc;             /* default arc settings */
-extern       GUI_Arc_T cur_arc;             /* actual arc settings  */
 
 lv_obj_t* GUI_new_or_update_arc ( GUI_Arc_T *act, lv_obj_t *arc);
 

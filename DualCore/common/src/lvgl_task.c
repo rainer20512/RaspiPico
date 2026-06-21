@@ -1,6 +1,6 @@
 /*
  ******************************************************************************
- * All neccessary steps to initialize and integrate LVGL to yout project
+ * All neccessary steps to initialize and integrate LVGL to your project
  *
  * Author: Rainer Jan 2026
  * 
@@ -43,18 +43,14 @@ static uint32_t cnt;
 #include "pico/time.h"
 
 
-void lv_init(void);
-void lv_example_anim_2(void);
-
 
 #include "../../lvgl/lvgl.h"
 /* style with no border an 0 radius */
 lv_style_t my_style;
 repeating_timer_t lvgl_update_timer;
 
-void lv_example_scale_3(void);
 
-bool task_init_lvgl(void)
+bool task_init_lvgl1(void)
 {
     GC9A01_hard_reset();
     lv_init();
@@ -63,17 +59,12 @@ bool task_init_lvgl(void)
     lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_180);
 
     /* Init Style */
-    lv_style_init(&my_style);
+ /*    lv_style_init(&my_style);
     lv_style_set_border_width(&my_style, 0);
     lv_style_set_radius(&my_style, 0);
+*/
 
-
-//    lv_display_set_color_format(disp, LV_COLOR_FORMAT_RGB565);
-    //lv_example_get_started_1();
-//    lv_example_anim_2();
-    // lv_example_scale_3();
-    // lv_xml_register_component_from_data();
-    TaskNotify(TASK_LVGL);
+    TaskNotify(TASK_LVGL1);
     return true;
 }
 
@@ -81,12 +72,12 @@ bool task_init_lvgl(void)
 bool Lvgl_TimerCB ( repeating_timer_t *my_timer )
 {
    UNUSED(my_timer);
-   TaskNotify(TASK_LVGL);
+   TaskNotify(TASK_LVGL1);
    /* cancel repeating timer */
    return false;
 }
 
-void task_handle_lvgl( uint32_t arg )
+void task_handle_lvgl1( uint32_t arg )
 {
     UNUSED(arg);
     uint32_t time_till_next = lv_timer_handler();
@@ -97,8 +88,20 @@ void task_handle_lvgl( uint32_t arg )
         add_repeating_timer_ms (time_till_next, Lvgl_TimerCB, NULL, &lvgl_update_timer);
         // MsTimerSetAbs ( MILLISEC_TO_TIMERUNIT(time_till_next), Lvgl_TimerCB, 0 );
     #else
-       TaskNotify(TASK_LVGL);
+       TaskNotify(TASK_LVGL1);
     #endif
 }  
+
+
+#if defined(RP2040_M0_0)
+  #include "../../GUI/gui_ops.h"
+
+  void task_handle_lvgl0( uint32_t arg )
+  {
+    UNUSED(arg);
+    GUI_Init_Ops_Core0();
+  }   
+#endif
+ 
 
 

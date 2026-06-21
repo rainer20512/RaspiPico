@@ -18,18 +18,19 @@ List_Elem_T * GUI_item_list = NULL;
 
  * @note  no insertion into list
  *---------------------------------------------------------------------------*/
-List_Elem_T *LL_New_Element( GUI_Elem_T type, void *lvgl_obj, char *name, void *entry )
+List_Elem_T *LL_New_Element( GUI_Elem_T type, void *lvgl_obj, char *name, void *entry, uint32_t additional )
 {
     List_Elem_T *newentry = malloc(sizeof(List_Elem_T));
     if ( !newentry )  { 
       printf("malloc failed");
     } else {
-      newentry->ll_type      = type;
-      newentry->ll_lvgl_obj  = lvgl_obj;
-      newentry->ll_name      = name; 
-      newentry->ll_entry     = entry;
+      newentry->ll_type       = type;
+      newentry->ll_lvgl_obj   = lvgl_obj;
+      newentry->ll_name       = name; 
+      newentry->ll_entry      = entry;
+      newentry->ll_additional = additional;
       /* Not insertet in any list at this point */
-      newentry->ll_next      = NULL;
+      newentry->ll_next       = NULL;
     }
     return newentry;
 }
@@ -114,6 +115,34 @@ List_Elem_T *LL_find_by_type_n_name ( List_Elem_T *llist, GUI_Elem_T search_type
     }
     return NULL;
 }
+
+/*-----------------------------------------------------------------------------
+ * @brief  Find element of certain Type and additional info and optionally Name
+ * @param  llist       - ptr to linked list head
+ * @param  search_type - EntryType to search for, LL_NOTYPE = any type
+ * @param  name        - name to search for (optional, case sensitive )
+ * @param  additional  - additional property 
+ * @retval ptr to found entry, NULL if no match
+ *---------------------------------------------------------------------------*/
+List_Elem_T *LL_find_by_type_name_additional ( List_Elem_T *llist, GUI_Elem_T search_type, const char *name, uint32_t additional )
+{   
+    bool found;
+    while ( llist) {
+       /* An object is found, if no type specified or types match */     
+       found = (search_type == GUI_ELEM_NOTYPE || search_type == llist->ll_type );
+       /* additional must match exactly */
+       if ( found ) found = additional == llist->ll_additional;
+       /* if name is specified, they must match exactly */
+       if ( found && name ) found = strcmp(llist->ll_name, name) == 0;
+       /* additional must match exactly */
+       if ( found ) found = additional == llist->ll_additional;
+       if ( found ) return llist;
+
+       llist = llist->ll_next;
+    }
+    return NULL;
+}
+
 
 /*-----------------------------------------------------------------------------
  * @brief  Find element of certain Type and associated lvgl object

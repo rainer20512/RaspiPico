@@ -695,6 +695,7 @@ ADD_SUBMODULE(Test);
 
 #if USE_LVGL > 0
 #include "../../lvgl/lvgl.h"
+#include "../../GUI/gui_worker.h"
 
 void lv_example_scale_3(void);
 void gui_test_master(uint32_t num);
@@ -821,7 +822,7 @@ bool bSpiDMA=false;
             } 
             CMD_get_one_word( &word, &wordlen );
             temp = CMD_to_number ( word, wordlen );
-            gui_test_master(temp);
+            GUI_test_master(temp);
             break;
         default:
           DEBUG_PUTS("Lvgl-Menu: command not implemented");

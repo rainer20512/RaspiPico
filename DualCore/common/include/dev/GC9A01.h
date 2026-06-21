@@ -24,11 +24,12 @@ extern "C" {
 #endif
 #endif
 
+#include "../../lvgl/lvgl.h"
 
 /*********************
  *      DEFINES
  *********************/
-#define lv_color_t  uint32_t
+// #define lv_color_t  uint32_t
 /**********************
  *      TYPEDEFS
  **********************/

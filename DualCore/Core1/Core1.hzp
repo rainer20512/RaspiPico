@@ -86,6 +86,14 @@
     <folder Name="GUI">
       <file file_name="../GUI/gui_def.c" />
       <file file_name="../GUI/gui_def.h" />
+      <file file_name="../GUI/gui_edit.c" />
+      <file file_name="../GUI/gui_edit.h" />
+      <file file_name="../GUI/gui_lists.c" />
+      <file file_name="../GUI/gui_lists.h" />
+      <file file_name="../GUI/gui_ops.c" />
+      <file file_name="../GUI/gui_ops.h" />
+      <file file_name="../GUI/gui_worker.c" />
+      <file file_name="../GUI/gui_worker.h" />
     </folder>
     <folder Name="lvgl">
       <folder
@@ -862,6 +870,12 @@
           filter="*.*"
           path="../lvgl/src/widgets"
           recurse="Yes" />
+        <folder
+          Name="xtra_font"
+          exclude=""
+          filter=""
+          path="../lvgl/src/xtra_font"
+          recurse="No" />
         <file file_name="../lvgl/src/lv_api_map_v8.h" />
         <file file_name="../lvgl/src/lv_api_map_v9_0.h" />
         <file file_name="../lvgl/src/lv_api_map_v9_1.h" />

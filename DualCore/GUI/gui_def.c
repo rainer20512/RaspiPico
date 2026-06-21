@@ -4,34 +4,6 @@
 #include <stdio.h>
 #include <malloc.h>
 
-GUI_Font_T AllFonts[] =
-{
-  {"Montserrat14", &lv_font_montserrat_14 },
-
-  // {"Adlam24",      &rb_font_adlam_24 },
-  // {"Adlam40",      &rb_font_adlam_40 },
-/*
-  {"Adlam60",      &rb_font_adlam_60 },
-  {"Adlam80",      &rb_font_adlam_80 },
-  {"Adlam100",     &rb_font_adlam_100 },
-  {"Adlam120",     &rb_font_adlam_120 },
-*/
-  // {"Stencil24",      &w_font_stencil_24 },
-  // {"Stencil40",      &w_font_stencil_40 },
- /*  {"Stencil60",      &w_font_stencil_60 },
-  {"Stencil80",      &w_font_stencil_80 },
-  {"Stencil100",     &w_font_stencil_100 },
-  {"Stencil120",     &w_font_stencil_120 },
-*/
-  {"BahnSbC24",      &w_font_bahn_sbc_24 },
-  {"BahnSbC40",      &w_font_bahn_sbc_40},
-  {"BahnSbC60",      &w_font_bahn_sbc_60 },
-  {"BahnSbC80",      &w_font_bahn_sbc_80 },
-  {"BahnSbC100",     &w_font_bahn_sbc_100 },
-  {"BahnSbC120",     &w_font_bahn_sbc_120},
-
-  {NULL, NULL },  /* Mandatory list Terminator */
-};
 
 const GUI_Style_T def_style = 
     { .used         = 0b10001111111101011111,
@@ -161,7 +133,6 @@ lv_style_t * GUI_new_or_update_style ( GUI_Style_T *act, lv_style_t *style )
 
     /* update using widgets about style change */
     lv_obj_report_style_change( style);
-    lv_subject_init_int(lv_subject_t *subject, int32_t value)
 	return style;	
 }
 

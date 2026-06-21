@@ -136,8 +136,8 @@ IPC_ResultCB onAck;
           bAck = ack == SEND_msg0to1;
           if (bAck ) {
             SEND_msg0to1 += 1;
-            /* If there is additional Payload, then handle it */
-            if ( RECV_msg1to0.cooked.flags & MSG_FLAG_PLD ) Core0_Handle_Payload(RECV_msg1to0.cooked.MsgID);
+            /* If there is additional Payload in ACK message, then handle it */
+            if ( RECV_msg1to0.cooked.flags & MSG_FLAG_PLD ) Core0_Handle_Msg(RECV_msg1to0.cooked.MsgID);
           } else {
             DEBUG_PRINTF("Core0 FIFO Recv wrong Ack: %d vs %d\n", SEND_msg0to1, RECV_msg1to0.cooked.SendID);
           }
@@ -266,8 +266,8 @@ IPC_ResultCB onAck;
           bAck = ack == SEND_msg1to0 ;
           if ( bAck) {
             SEND_msg1to0 += 1;
-            /* If there is additional Payload, then handle it */
-            if ( RECV_msg0to1.cooked.flags & MSG_FLAG_PLD ) Core1_Handle_Payload(RECV_msg0to1.cooked.MsgID);
+            /* If there is additional Payload in the ACK message, then handle it */
+            if ( RECV_msg0to1.cooked.flags & MSG_FLAG_PLD ) Core1_Handle_Msg(RECV_msg0to1.cooked.MsgID);
           } else {
             DEBUG_PRINTF("Core1 FIFO Recv wrong Ack: %d vs %d\n", SEND_msg1to0, RECV_msg0to1.cooked.SendID);
           }

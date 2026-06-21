@@ -48,8 +48,10 @@ void Init_OtherDevices(void)
 #endif
 
 #if USE_LVGL > 0
-    bool task_init_lvgl(void);
-    void task_handle_lvgl(uint32_t arg);
+    bool task_init_lvgl0(void);
+    void task_handle_lvgl0(uint32_t arg);
+    bool task_init_lvgl1(void);
+    void task_handle_lvgl1(uint32_t arg);
 #endif
 
 void task_handle_out  (uint32_t);
@@ -63,21 +65,23 @@ bool task_init_io     (void);
  *****************************************************************************/
 void Init_DefineTasks(void)
 {
-  TaskRegisterTask(task_init_rtc, task_handle_rtc,  TASK_RTC,      JOB_TASK_RTC,      "RTC task");
-#ifdef RP2040_M0_0
-  TaskRegisterTask(NULL,          task_handle_ipc0, TASK_IPC0,     JOB_TASK_IPC0,     "IPC task core0");
-#endif
-#if defined(RP2040_M0_1) || defined ( CORE1_SIM )
-  TaskRegisterTask(NULL,          task_handle_ipc1, TASK_IPC1,     JOB_TASK_IPC1,     "IPC task core1");
-#endif
   TaskRegisterTask(CMD_Init,      task_handle_com,  TASK_COM,      JOB_TASK_DBGIO,    "Debug input");//
   TaskRegisterTask(task_init_io,  task_handle_out,  TASK_LOG,      JOB_TASK_DBGIO,    "Debug output");  
   TaskRegisterTask(NULL,          task_handle_fsm,  TASK_FSM,      JOB_TASK_FSM,      "State machine");  
-
-#if defined(RP2040_M0_0) || 1
   TaskRegisterTask(NULL,          task_periodic,    TASK_PERIODIC, JOB_TASK_PERIODIC, "periodic task");
+  TaskRegisterTask(task_init_rtc, task_handle_rtc,  TASK_RTC,      JOB_TASK_RTC,      "RTC task");
+
+#if defined(RP2040_M0_0)
+  TaskRegisterTask(NULL,          task_handle_ipc0, TASK_IPC0,     JOB_TASK_IPC0,     "IPC task core0");
+  #if USE_LVGL > 0
+    TaskRegisterTask(NULL,        task_handle_lvgl0, TASK_LVGL0,    JOB_TASK_LVGL,  "LVGL task Core0");
+  #endif
 #endif
-#if USE_LVGL > 0
-  TaskRegisterTask(task_init_lvgl, task_handle_lvgl, TASK_LVGL,    JOB_TASK_LVGL,     "LVGL task");
+
+#if defined(RP2040_M0_1) || defined ( CORE1_SIM )
+  TaskRegisterTask(NULL,          task_handle_ipc1, TASK_IPC1,     JOB_TASK_IPC1,     "IPC task core1");
+  #if USE_LVGL > 0
+    TaskRegisterTask(task_init_lvgl1, task_handle_lvgl1, TASK_LVGL1,    JOB_TASK_LVGL,  "LVGL task Core1");
+  #endif
 #endif
 }
