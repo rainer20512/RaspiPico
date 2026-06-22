@@ -32,8 +32,11 @@
 /* Reading from display not possible - no SDO line */
 #define LV_DRV_DISP_SPI_RD_VECTOR(vector, len)  spi_error()
 
-void spi_error(void);
-bool spi_setup_dma(void);
+void spi_error          (void);
+bool spi_setup_dma      (void);
+void spi_enable_dma     (bool bEna);
+bool spi_is_dma_enabled (void);
+
 typedef void (pfn_spi_done_cb) (void);
 void LV_DRV_DELAY_MS(uint32_t wait_ms);
 void LV_DRV_DISP_SPI_WR_BYTE_ARRAY(const uint8_t *arr, uint32_t len, pfn_spi_done_cb done_cb);

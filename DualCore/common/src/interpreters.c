@@ -696,12 +696,12 @@ ADD_SUBMODULE(Test);
 #if USE_LVGL > 0
 #include "../../lvgl/lvgl.h"
 #include "../../GUI/gui_worker.h"
+#include "dev/lv_4wire_spi.h"
 
 void lv_example_scale_3(void);
 void gui_test_master(uint32_t num);
 extern lv_style_t my_style;
 static lv_obj_t * obj=NULL;
-bool bSpiDMA=false;
 
     /*********************************************************************************
       * @brief  Submenu for LVGL test functions
@@ -808,8 +808,8 @@ bool bSpiDMA=false;
             } 
             CMD_get_one_word( &word, &wordlen );
             temp = CMD_to_number ( word, wordlen );
-            bSpiDMA = temp != 0;
-            printf("SPI DMA is %s\n", bSpiDMA ? "On" : "Off"); 
+            spi_enable_dma( temp != 0);
+            printf("SPI DMA is %s\n", temp != 0 ? "On" : "Off"); 
             break;
         case 9:
             lv_example_scale_3();

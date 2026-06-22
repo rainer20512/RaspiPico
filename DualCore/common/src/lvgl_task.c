@@ -38,7 +38,7 @@ static uint32_t cnt;
 #include "../../lvgl/src/drivers/lv_drivers.h" 
 #include "../../lvgl/src/drivers/display/gc9a01/lv_gc9a01.h"
 #include "system/util.h"
-
+#include "debug/debug_helper.h"
 #include "dev/GC9A01.h"
 #include "pico/time.h"
 
@@ -52,6 +52,7 @@ repeating_timer_t lvgl_update_timer;
 
 bool task_init_lvgl1(void)
 {
+    uint16_t temp = (uint16_t)get_ms_since_start();
     GC9A01_hard_reset();
     lv_init();
     lv_tick_set_cb(get_ms_since_start);
@@ -64,7 +65,9 @@ bool task_init_lvgl1(void)
     lv_style_set_radius(&my_style, 0);
 */
 
-    TaskNotify(TASK_LVGL1);
+    temp = (uint16_t)get_ms_since_start() - temp;
+    DEBUG_PRINTF("Init LVGL took %dms to start...\n", temp);
+    // TaskNotify(TASK_LVGL1);
     return true;
 }
 
@@ -95,11 +98,25 @@ void task_handle_lvgl1( uint32_t arg )
 
 #if defined(RP2040_M0_0)
   #include "../../GUI/gui_ops.h"
+  static repeating_timer_t  wait_timer; /* timer for initial wait */
+
+  /*-----------------------------------------------------------------------------
+   * Query Fontinfo from Core1 
+   * The query has do be delayed bsc imm after scheduler start,there are other
+   * tasks that are willing to run. Immediate query would congest these tasks
+   * recommended time: at least 1 sec
+   *---------------------------------------------------------------------------*/
+  static bool lvgl_wait_cb(repeating_timer_t *rt) 
+  {
+    DEBUG_PRINTF("Querying Fontinfo...\n");
+    GUI_Init_Ops_Core0();
+    return false; // cancel timer in any case
+  }
 
   void task_handle_lvgl0( uint32_t arg )
   {
     UNUSED(arg);
-    GUI_Init_Ops_Core0();
+    add_repeating_timer_ms(1000,lvgl_wait_cb,NULL, &wait_timer );
   }   
 #endif
  

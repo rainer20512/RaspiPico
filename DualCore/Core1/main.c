@@ -82,7 +82,6 @@ static void dump_unique_id(void) {
 }
 #endif
 
-static uint32_t cnt;
 
 #include "system/util.h"
 #include "system/ipc_msg.h"
@@ -203,14 +202,14 @@ int main(void)
 
     ProfilerSwitchTo(JOB_TASK_MAIN);  
 
-    cnt = 0;
-    LL_Blink(1,250);
+    LL_Blink(2,250);
 
     #if USE_LVGL > 0
         // Trigger the refresh-loop of LVGL
         TaskNotify(TASK_LVGL1);
     #endif
 
+    LL_Blink(1,500);
     /* Initialize the GUI after LVGL is up and running  */
     #if defined(RP2040_M0_1) || defined(CORE1_SIM)
         GUI_Init_Ops_Core1();

@@ -1,14 +1,15 @@
 #include "config/config.h"
 #if USE_LVGL > 0
+#include "debug/debug_helper.h"
 	
 #include <string.h>
 #include <stdio.h>
-#include <malloc.h>
 #include "cmdline.h"
 
 #include "../GUI/gui_def.h"
 #include "../GUI/gui_edit.h"
 #include "../GUI/gui_lists.h"
+
 
 /* Edit receipe for Style structure */
 const  GUI_Edit_T edit_style = {
@@ -122,9 +123,41 @@ OnExitFn         OnExitEdit;  /* Callback on Exit of Editing */
 
 const uint8_t GUI_ByteLen[] = BYTELENGTHS;
 
+/* one pair of GUI_Elem_T -> GUI_Edit_T  */
+struct receipes_S {
+  GUI_Elem_T        gui_type;
+  const GUI_Edit_T* gui_edit;
+};
+/* complete list of Gui_elem_t -> Gui_Edit_T */
+static const struct receipes_S gui_to_receipe[GUI_ELEM_MAX] = {
+    { GUI_ELEM_NOTYPE, NULL },
+    { GUI_ELEM_FONT, NULL },
+    { GUI_ELEM_STYLE, &edit_style },
+    { GUI_ELEM_LABEL, &edit_label },
+    { GUI_ELEM_ARC,   &edit_arc   },
+};
+
+
 // ---- Forward declaration of user input handler in GI edit mode -------------
 void handle_gui_edit_input ( char *cmdline, size_t len );
 
+
+/******************************************************************************
+ * @brief  Get the edit receipe for a GUI element
+ * @param  gui_type  - GUI element type for what the receipe is requested
+ * @param  editdata - edit receipe for raw data
+ * @retval ptr to the receipe or NULL, if not found
+ ******************************************************************************/
+const GUI_Edit_T *GUI_edit_get_receipe_for_elemtype( GUI_Elem_T gui_type )
+{
+  uint32_t limit = sizeof(gui_to_receipe)/sizeof(struct receipes_S);
+  for ( uint32_t i=0; i <limit; i++ ) {
+    if ( gui_to_receipe[i].gui_type == gui_type ) return gui_to_receipe[i].gui_edit;
+  }
+
+  DEBUG_PRINTF("ErrNo Receipe for GUI Element ""%s""\n",EditNames[gui_type]);
+  return NULL;
+}
 /******************************************************************************
  * Edit one GUI-Element
  * data     = ptr to complete gui structure
@@ -430,110 +463,6 @@ void GUI_list_entries(const GUI_Elem_T elemtype )
   }
 }
 
-/******************************************************************************
- * @brief  Create a new or update a LVGL element from GUI-Element
- * @param  data     - raw GUI element data
- * @param  editdata - edit receipe for raw data
- * @retval untyped ptr to updated or new created LVGL obj or NULL, if creation failed
- ******************************************************************************/
-void *GUI_Create_or_update_LVGL(uint8_t *data, const GUI_Edit_T *editdata, void *lvgl_obj )
-{
-    /* We have different handlers, depending from GUI element data type */
-    switch(editdata->gui_elem_type) {
-      case GUI_ELEM_NOTYPE:
-        printf("Err: Cannot create untyped LVGL object\n");
-        break;
-      case GUI_ELEM_STYLE:
-        return  GUI_new_or_update_style ( (GUI_Style_T *)data, (lv_style_t *)lvgl_obj );
-        break;
-      case GUI_ELEM_LABEL:
-        return  GUI_new_or_update_label ( (GUI_Label_T *)data, (lv_obj_t *)lvgl_obj );
-        break;
-      case GUI_ELEM_ARC:
-        return  GUI_new_or_update_arc ( (GUI_Arc_T *)data, (lv_obj_t *)lvgl_obj );
-        break;
-
-      default:
-        printf("Err: No LVGL Update handler for LVGL %s\n", EditNames[editdata->gui_elem_type]);
-    }
-}
-
-/******************************************************************************
- * @brief  update an existing GUI-Element in global GUI element list
- *         and update the corresponging LVGL object
- * @param  ll_elem  - ptr to exisiting GUI element list entry
- * @param  data     - raw changed element data to be updated
- * @param  editdata - edit receipe for raw data
- ******************************************************************************/
-static void GUI_update_entry(List_Elem_T *ll_elem, uint8_t *data, const GUI_Edit_T *editdata )
-{
-    /* overwrite the complete GUI element data structure */
-    uint8_t *dest = ll_elem->ll_entry;
-    memcpy_fast(dest, data, editdata->total_size);
-
-    /* Update associated LVGL obj */
-    ll_elem->ll_lvgl_obj = GUI_Create_or_update_LVGL( data, editdata, ll_elem->ll_lvgl_obj );
-
-    printf("%s %s updated\n",EditNames[editdata->gui_elem_type],ll_elem->ll_name);
-}
-
-/******************************************************************************
- * @brief  Store a completely new GUI-Element into global GUI element list
- *         and create the corresponding LVGL object
- * @param  data     - raw element data
- * @param  editdata - edit receipe for raw data
- ******************************************************************************/
-static void GUI_create_entry(uint8_t *data, const GUI_Edit_T *editdata )
-{
-    /* create a full copy of actual data structure */
-    uint8_t *copy = malloc(editdata->total_size);
-    if ( !copy ) {
-      printf("malloc failed!\n");
-      return;
-    }
-    memcpy_fast(copy, data, editdata->total_size);
-
-  /* Create associated LVGL obj */
-  void *lvgl_obj = GUI_Create_or_update_LVGL( data, editdata, NULL );
-
-  List_Elem_T *new;
-  /* find position of "name" field in raw data */
-  char *name = (char *)(copy + act_edit->name_ofs);
-  /* In case of fonts: also get the fontsize and store as additional item */
-  uint32_t additional = ( editdata->gui_elem_type == GUI_ELEM_FONT ? ((GUI_Font_T*)data)->fontsize: 0); 
-    
-  new = LL_New_Element( editdata->gui_elem_type, lvgl_obj, name, copy, additional );
-  LL_append(&GUI_item_list, new );
-  printf("%s %s created\n",EditNames[editdata->gui_elem_type],name);
-}
-
-/******************************************************************************
- * @brief  Store a completely new GUI-Element into global GUI element list
- *          or update an existing GUI-Element which is defined by type and name
- * @param  data     - raw element data
- * @param  editdata - edit receipe for raw data
- ******************************************************************************/
-void GUI_save_or_update_entry(uint8_t *data, const GUI_Edit_T *editdata )
-{
-  List_Elem_T *ll_elem;
-
-  /* find position of "name" field in raw data */
-  char *name = (char *)(data + act_edit->name_ofs);
-
-  /* first try to find the element in list */
-  ll_elem = LL_find_by_type_n_name (GUI_item_list, editdata->gui_elem_type, name );  
-  
-  if ( ll_elem ) {
-    /* Element already in list: Update it */
-    GUI_update_entry(ll_elem, data, editdata);
-  } else {
-    /* Element not in list: Create LVGL obj and GUI list entry */
-    GUI_create_entry(data, editdata);
-  }
-
-  GUI_list_entries(editdata->gui_elem_type);
-}
-
 
 /********************************************************************************
  * @brief load an GUI Element 
@@ -735,7 +664,8 @@ static void GUI_handle_word( char *word, size_t wordlen )
    /* handle save command */
    if ( GUI_is_saveword( word, wordlen ) ) {
       putchar('\n');
-      GUI_save_or_update_entry(act_obj, act_edit );
+      GUI_new_or_update_entry(act_obj, act_edit->gui_elem_type );
+      GUI_list_entries(act_edit->gui_elem_type);
       return;
    }
 

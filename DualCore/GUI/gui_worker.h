@@ -6,7 +6,6 @@
 #if USE_LVGL > 0
 #include "../../lvgl/lvgl.h"
 
-void GUI_Load_Fonts   (void);
 void GUI_test_master  (uint32_t num);
 
 #if GUI_TEST > 0

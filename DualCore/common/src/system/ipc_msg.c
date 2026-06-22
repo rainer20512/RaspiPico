@@ -88,6 +88,7 @@ typedef struct {
         IPC_Fontinfo_T *buff = (IPC_Fontinfo_T *) buf1to0.buff;
         AllFonts0   = buff->fontinfo;
         AllFontNum0 = buff->fontnum;
+        DEBUG_PRINTF("Core0 fontinfo: %d fonts\n",AllFontNum0);
         break;        
       default:
         DEBUG_PRINTF("No handler for IPC msg #%d\n", msgID);

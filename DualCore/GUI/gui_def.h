@@ -19,8 +19,10 @@
 #include "config/config.h"
 
 
-#if USE_LVGL > 0
+#if USE_GUI_INTERFACE > 0
+
 #include "../../lvgl/lvgl.h"
+
 
 /* max length of user friendly name             */
 /* keep it the same in all GUI elements         */
@@ -33,10 +35,11 @@ typedef enum {
   GUI_ELEM_STYLE        = 2,              
   GUI_ELEM_LABEL        = 3,
   GUI_ELEM_ARC          = 4,
+  GUI_ELEM_MAX          = 5,              /* Last element whose value is the number of prev entries */
 } GUI_Elem_T;
 
 /* Corresponding user friendly names of these of GUI elements */
-#define GUI_EDITNAMES   {"NoType", "Font", "Style", "Label", "Arc", }
+#define GUI_EDITNAMES   {"NoType", "Font", "Style", "Label", "Arc", "<Undef>" }
 extern const char *EditNames[];
 
 typedef struct {
@@ -104,9 +107,6 @@ typedef struct {
 } GUI_Style_T;
 
 
-
-lv_style_t * GUI_new_or_update_style ( GUI_Style_T *act, lv_style_t *style );
-
 /* Bitfield for set properties of a GUI_Label_T */
 /* Order has to be the same as in corresponding Edit receipe !!! */
 typedef enum {
@@ -132,8 +132,6 @@ typedef struct {
   char          caption[GUI_MAX_NAMELEN];   /* User friendly name */      
   char          name[GUI_MAX_NAMELEN];      /* User friendly name */      
 } GUI_Label_T;
-
-lv_obj_t* GUI_new_or_update_label ( GUI_Label_T *act, lv_obj_t *lbl);
 
 
 /* Bitfield for set properties of a GUI_Arc_T */
@@ -170,9 +168,12 @@ typedef struct {
   char          name[GUI_MAX_NAMELEN];      /* User friendly name */      
 } GUI_Arc_T;
 
-lv_obj_t* GUI_new_or_update_arc ( GUI_Arc_T *act, lv_obj_t *arc);
 
-void      GUI_dump_coords ( lv_obj_t * obj );
-void      GUI_Load_Fonts(void);
+void GUI_dump_coords ( lv_obj_t * obj );
+void GUI_Init_Fonts_Core1(void);
+
+struct List_Elem;
+struct List_Elem *GUI_new_or_update_entry(uint8_t *data, GUI_Elem_T gui_elem );
+
 #endif /* USE_LVGL */
 #endif /* _GUIDEF_H_ */

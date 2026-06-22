@@ -41,7 +41,7 @@ static pfn_spi_done_cb *tx_done_cb;
 #endif
 
 static int spi_dma_chan;
-extern bool bSpiDMA;
+static bool bSpiDMA = false;         /* initially, SIP DMA is off */
 
 void SPI_TX_handler(void)
 {
@@ -95,6 +95,16 @@ bool spi_setup_dma(void)
     dma_channel_irq_enable(spi_dma_chan, true);
 
     return true;
+}
+
+void spi_enable_dma( bool bEna )
+{
+  bSpiDMA = bEna;
+}
+
+bool spi_is_dma_enabled (void)
+{
+  return bSpiDMA;
 }
 
 static void StartTxDma(const uint8_t *data, uint32_t txSize)

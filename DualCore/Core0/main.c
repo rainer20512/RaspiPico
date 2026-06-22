@@ -135,9 +135,9 @@ int main()
          printf("Setup of Core1 SIM %s\n",Core0_Init_IPC_Comm(NULL,NULL) ? "ok" :"failed" );
       #else
          IPC_Start_Core1(1);
-         /* Give Core1 some time to boot, at least 0,5s 
+         /* Give Core1 some time to boot and init LVGL, at least 2s 
           * Be sure not to slow core1 boot down by additional debug blinks! */
-         sleep_ms(500);
+         sleep_ms(3000);
          printf("Start & Setup of Core1 %s\n",Core0_Init_IPC_Comm(NULL,NULL) ? "ok" :"failed" );
       #endif
     #endif

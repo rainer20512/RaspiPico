@@ -64,6 +64,6 @@ extern const GUI_Edit_T edit_arc;               /* Edit receipe for arc variable
 
 
 void GUI_Edit( const GUI_Edit_T *edit, void *anyobj, OnExitFn OnExit );
-
+const GUI_Edit_T *GUI_edit_get_receipe_for_elemtype( GUI_Elem_T gui_type );
 #endif /* USE_LVGL */
 #endif /* _GUIDEF_H_ */

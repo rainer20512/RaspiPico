@@ -15,7 +15,7 @@
 #define _GUIOPS_H_
 #include "config/config.h"
 
-#if USE_LVGL > 0
+#if USE_GUI_INTERFACE > 0
 #include "../GUI/gui_def.h"
 
 
@@ -30,5 +30,5 @@
     void      GUI_Init_Ops_Core0(void);
 #endif
 
-#endif /* USE_LVGL */
+#endif /* USE_GUI_INTERFACE */
 #endif /* _GUIOPS_H_ */

@@ -44,24 +44,6 @@
 #endif
 
 #if defined(RP2040_M0_1) || defined(CORE1_SIM)
-  /******************************************************************************
-   * @brief Load all known fonts _once_ into GUI elem list, 
-   * @note  Core1 implementation
-   *****************************************************************************/     
-  void GUI_Init_Fonts_Core1(void)
-  {
-    List_Elem_T *font;
-
-    /* Otherwise iterate thru all defined fonts and insert them into global item list */
-    /* List of defined fonts _MUST BE_ terminated by NULL,NULL */
-    uint32_t i = 0; 
-    while ( AllFonts1[i].font ) {
-       font = LL_New_Element(GUI_ELEM_FONT,  (void *)AllFonts1[i].font, AllFonts1[i].fontname, &AllFonts1[i], AllFonts1[i].fontsize);
-       LL_append(&GUI_item_list, font);
-       i++;
-    }
-    printf("%d fonts loaded\n", i);
-  }
 
 /******************************************************************************
  * @brief Initialize GUI, to be called after all other initialization steps 

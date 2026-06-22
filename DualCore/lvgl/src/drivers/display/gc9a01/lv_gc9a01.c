@@ -30,7 +30,7 @@
 #define MY_DISP_VER_RES         240
 #define BYTE_PER_PIXEL          2
 
-#define GC9A01_CMD_MODE		0
+#define GC9A01_CMD_MODE         0
 #define GC9A01_DATA_MODE     	1
 
 #define GC9A01_DEBUG            0
@@ -73,9 +73,12 @@ lv_display_t * lv_gc9a01_create(uint32_t hor_res, uint32_t ver_res, lv_lcd_flag_
 {
     uint8_t retbuf[6];
     spi_setup_dma();
+    spi_enable_dma(true);
     GC9A01_hard_reset();
     GC9A01_run_cfg_script();
-    GC9A01_fillScreen(GC9A01_Color565(0x00,0x00,0xFF)); // ?
+    /* Commented out, takes too much time in boot phase */
+    // GC9A01_fillScreen(GC9A01_Color565(0x00,0x00,0xFF)); 
+     
 
 
     lv_display_t * disp = lv_lcd_generic_mipi_create(hor_res, ver_res, flags, gc9a01_send_cmd, gc9a01_send_mass_data);
@@ -87,9 +90,12 @@ lv_display_t * lv_gc9a01_create(uint32_t hor_res, uint32_t ver_res, lv_lcd_flag_
     // lv_display_set_buffers(disp, buf_1_1, NULL, sizeof(buf_1_1), LV_DISPLAY_RENDER_MODE_DIRECT);
 
     /* Test code to see, whether TFT driver Communication is working at all */
-    uint16_t temp = (uint16_t)get_ms_since_start();
     GC9A01_fillRect( 60, 60, 80, 80, GC9A01_Color565(0xFF,0x00,0x00));
     /* End test code */
+    
+    #if GC9A01_DEBUG > 0
+        DEBUG_PRINTF("SPI DMA is %senabled...\n", spi_is_dma_enabled() ? "" : "not ");
+    #endif 
 
     return disp;
 }
