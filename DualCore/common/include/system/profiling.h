@@ -31,7 +31,7 @@ typedef enum ActiveJobEnum {
     JOB_TASK_RTC,
     JOB_TASK_INIT,
     JOB_TASK_MAIN,
-#if USE_LVGL > 0
+#if USE_LVGL > 0 || USE_GUI_INTERFACE
     JOB_TASK_LVGL,
 #endif
 #if USE_USB > 0

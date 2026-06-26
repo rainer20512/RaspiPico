@@ -199,6 +199,37 @@ typedef struct {
     FSM_Start(&ipcfsm);
   }
 
+
+  /******************************************************************************
+   * IPC Core0 send GUI Element Data to Core 1
+   *****************************************************************************/
+  static bool Core0_Send_Gui_Elem_Internal ( void* userdata, IPC_ResultCB pfAck )
+  { 
+    /* 
+     * Payload of type "IPC_GUI_Xfer_Buff_T "is in userdata: 
+     *  
+     * all following bytes:  GUI_xxxX_T 
+     */
+    
+    /* First check size */
+    uint16_t size  = *((uint16_t *)userdata);
+
+    /* Copy to sendbuf and msg Core1 */
+    buf0to1.uSize = size;
+    memcpy_fast(buf0to1.buff, userdata, size);
+    /* Send */
+    IPC_SignalCore0to1 (IPC_MSG_0TO1_GUIELEM, true, pfAck );
+    return true;
+  }
+
+  bool Core0_Send_Gui_Elem ( void* arg, IPC_ResultCB onCompletion )
+  {
+    FSM_Init(&ipcfsm, arg, Core0_Send_Gui_Elem_Internal, FSM_Ipc );
+    if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
+    FSM_Start(&ipcfsm);
+    return true;
+  }
+
 #endif
 
   
@@ -224,6 +255,7 @@ typedef struct {
 
   extern IPC_PacketT RECV_msg0to1;
   extern mutex_t *pm1to0;
+  void Core1_Receive_LVGL_obj(uint8_t *data, uint16_t buflen);
 
   /******************************************************************************
    * Get boot info for Core1 :
@@ -302,6 +334,11 @@ typedef struct {
         pbuf1to0->uSize = sizeof(IPC_Fontinfo_T);
         /* We generated new payload, so return true */
         ret = true;
+        break;
+      case IPC_MSG_0TO1_GUIELEM:
+        Core1_Receive_LVGL_obj(pbuf0to1->buff, pbuf0to1->uSize);
+        /* No new payload in ACK */
+        ret = false;
         break;
       default:
         DEBUG_PRINTF("No handler for IPC msg #%d\n", msgID);
@@ -450,7 +487,7 @@ bool ack_wait_cb(repeating_timer_t *rt)
           break;
         case IPC_STATE_SEND:
           /* Assemble and send message */
-          if ( fsm->sendfunc(NULL, FSM_AckCB) ) {
+          if ( fsm->sendfunc(fsm->sendarg, FSM_AckCB) ) {
             /* if successful: wait for ACK*/
             FSM_Goto( fsm, IPC_STATE_WAITACK );
           } else {

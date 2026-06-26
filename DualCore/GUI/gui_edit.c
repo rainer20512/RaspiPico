@@ -1,5 +1,5 @@
 #include "config/config.h"
-#if USE_LVGL > 0
+#if USE_GUI_INTERFACE > 0
 #include "debug/debug_helper.h"
 	
 #include <string.h>
@@ -9,6 +9,7 @@
 #include "../GUI/gui_def.h"
 #include "../GUI/gui_edit.h"
 #include "../GUI/gui_lists.h"
+
 
 
 /* Edit receipe for Style structure */
@@ -121,7 +122,7 @@ uint8_t          *act_obj;    /* actual edited object   */
 const GUI_Edit_T *act_edit;   /* object's edit receipe  */
 OnExitFn         OnExitEdit;  /* Callback on Exit of Editing */
 
-const uint8_t GUI_ByteLen[] = BYTELENGTHS;
+const GUI_Edit_TypeSpec_T GUI_TypeSpec[GUI_MAXELEM] = GUI_TYPE_SPECS;
 
 /* one pair of GUI_Elem_T -> GUI_Edit_T  */
 struct receipes_S {
@@ -216,7 +217,7 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const GUI_editelem_T *editelem, 
       case GUI_INT16:
       case GUI_INT32:
           /* handle all tpye of numbers by just copying the raw bytes to tempval */
-          memmove(GUI_Edit_tempval.u8, bytes+editelem->elem_offset, GUI_ByteLen[editelem->elem_type] );
+          memmove(GUI_Edit_tempval.u8, bytes+editelem->elem_offset, GET_GUI_ELEM_LEN(editelem->elem_type) );
           /* And print with different formats/ lengths */
           switch(editelem->elem_type) {
             case GUI_UINT8:
@@ -431,7 +432,7 @@ static void GUI_Edit_update( uint32_t idx, bool bIsUnset )
       case GUI_INT16:
       case GUI_INT32:
         /* All Number formats: copy required number of bytes to data element */
-        memmove(datapos, GUI_Edit_tempval.u8, GUI_ByteLen[editelem->elem_type] );
+        memmove(datapos, GUI_Edit_tempval.u8, GET_GUI_ELEM_LEN(editelem->elem_type) );
         /* Reverse byte order in RGB value */
         if ( editelem->elem_type == GUI_RGB888 ) {
           uint8_t c = *datapos; *datapos = *(datapos+2); *(datapos+2)=c;

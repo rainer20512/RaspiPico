@@ -48,10 +48,12 @@ void Init_OtherDevices(void)
 #endif
 
 #if USE_LVGL > 0
-    bool task_init_lvgl0(void);
-    void task_handle_lvgl0(uint32_t arg);
     bool task_init_lvgl1(void);
     void task_handle_lvgl1(uint32_t arg);
+#endif
+#if USE_GUI_INTERFACE &&  defined(RP2040_M0_0)
+    bool task_init_lvgl0(void);
+    void task_handle_lvgl0(uint32_t arg);
 #endif
 
 void task_handle_out  (uint32_t);
@@ -73,7 +75,7 @@ void Init_DefineTasks(void)
 
 #if defined(RP2040_M0_0)
   TaskRegisterTask(NULL,          task_handle_ipc0, TASK_IPC0,     JOB_TASK_IPC0,     "IPC task core0");
-  #if USE_LVGL > 0
+  #if USE_GUI_INTERFACE 
     TaskRegisterTask(NULL,        task_handle_lvgl0, TASK_LVGL0,    JOB_TASK_LVGL,  "LVGL task Core0");
   #endif
 #endif

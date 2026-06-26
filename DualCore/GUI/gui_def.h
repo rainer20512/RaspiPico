@@ -18,11 +18,9 @@
 #define _GUIDEF_H_
 #include "config/config.h"
 
-
 #if USE_GUI_INTERFACE > 0
 
 #include "../../lvgl/lvgl.h"
-
 
 /* max length of user friendly name             */
 /* keep it the same in all GUI elements         */
@@ -175,5 +173,5 @@ void GUI_Init_Fonts_Core1(void);
 struct List_Elem;
 struct List_Elem *GUI_new_or_update_entry(uint8_t *data, GUI_Elem_T gui_elem );
 
-#endif /* USE_LVGL */
+#endif /*  USE_GUI_INTERFACE */
 #endif /* _GUIDEF_H_ */

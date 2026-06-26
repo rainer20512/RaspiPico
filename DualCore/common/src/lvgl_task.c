@@ -96,7 +96,7 @@ void task_handle_lvgl1( uint32_t arg )
 }  
 
 
-#if defined(RP2040_M0_0)
+#if defined(RP2040_M0_0) && USE_GUI_INTERFACE
   #include "../../GUI/gui_ops.h"
   static repeating_timer_t  wait_timer; /* timer for initial wait */
 

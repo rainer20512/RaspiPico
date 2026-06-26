@@ -93,6 +93,17 @@ How to program/debug RP2040 target with Rpi Debug Probe          RHB 17.11.2025
       LIB_PICO_PRINTF_PICO
       LIB_PICO_STDIO
 
+15. Fehlerhaftes SDK in hardware_flash / pico_unique_id
+    _Jedes_ Programm stürzt ab, wenn man pico_unique_id einbindet, was wiederum
+    hardware_flash benötigt. Die Ursache liegt in einer fehlerhaften SDK, welches
+    Codeteile immer noch aus dem Flash lesen will, während das Flash/XIP bereits
+    deaktiviert ist. Lösung:
+    
+    https://github.com/raspberrypi/pico-sdk/issues/371
+
+    in address_mapped.h alle funktionen zusätzlich mit 
+      __attribute__((always_inline)) anstelle nur "inline" bzw "force_inline"
+    attributieren.
 
 -------------------------------------------------------------------------------
  LVGL zum rennen bringen

@@ -23,7 +23,7 @@
  ********************************************************************************
  */ 
 
-#define USE_LVGL          0           /* Set to 1 if LVGL is running in this part       */
+#define USE_LVGL          1           /* Set to 1 if LVGL is running in this part       */
 #define USE_GUI_INTERFACE 1           /* Set to 1 is declarative GUI interface is used  */
 #define USE_UART0         1
 #define DEBUG_UART        0
@@ -31,6 +31,8 @@
 #define USE_SPI0          0  
 #define USE_SPI1          1  
 #define CORE1_AUTOSTART   1
+
+#define USE_UNIQUEID      1
 
 
 /*

@@ -695,11 +695,9 @@ ADD_SUBMODULE(Test);
 
 #if USE_LVGL > 0
 #include "../../lvgl/lvgl.h"
-#include "../../GUI/gui_worker.h"
 #include "dev/lv_4wire_spi.h"
 
 void lv_example_scale_3(void);
-void gui_test_master(uint32_t num);
 extern lv_style_t my_style;
 static lv_obj_t * obj=NULL;
 
@@ -815,15 +813,6 @@ static lv_obj_t * obj=NULL;
             lv_example_scale_3();
             printf("Scale Example\n"); 
             break;
-        case 10:
-            if ( CMD_argc() < 1 ) {
-              printf("Usage: 'GUI test [n]\n");
-              return false;
-            } 
-            CMD_get_one_word( &word, &wordlen );
-            temp = CMD_to_number ( word, wordlen );
-            GUI_test_master(temp);
-            break;
         default:
           DEBUG_PUTS("Lvgl-Menu: command not implemented");
       } /* end switch */
@@ -848,10 +837,93 @@ static lv_obj_t * obj=NULL;
         { "Set Border Radius <r>",  ctype_fn, .exec.fn = LVGL_Menu,VOID(7), "Border radius <r> Pixels" },
         { "SPI-DMA [0|1]",          ctype_fn, .exec.fn = LVGL_Menu,VOID(8), "Enable/Disable SPI-DMA" },
         { "Scale-Example",          ctype_fn, .exec.fn = LVGL_Menu,VOID(9), "Display scale example" },
-        { "GUI-Test x",	         	ctype_fn, .exec.fn = LVGL_Menu,VOID(10),"GUI Test #x" },
     };
     ADD_SUBMODULE(LVGL);
 #endif
+
+
+#if USE_GUI_INTERFACE > 0
+
+    #include "../../GUI/gui_def.h"
+    #include "../../GUI/gui_edit.h"
+
+    #if USE_LVGL > 0
+      #include "../../lvgl/lvgl.h"
+      lv_style_t *mystyle;
+      lv_obj_t   *mylbl, *mylbl2;
+    #endif
+
+    void DBG_heap_useage(void);
+
+
+     /*********************************************************************************
+      * @brief  Submenu for GUI Interfaxe test functions
+      *         
+      * @retval true on success, false otherwise
+      *
+      * @note   will try to read as many parameters as needed
+      ********************************************************************************/
+
+
+    static bool GUI_Test_Menu ( char *cmdline, size_t len, const void * arg )
+    {
+      char *word;
+      size_t wordlen;
+      uint8_t r,g,b;
+      uint32_t temp;
+      UNUSED(cmdline);UNUSED(len);
+
+      switch((uint32_t)arg) {
+    	case 1:
+        	GUI_Edit(&edit_style, &cur_style, NULL);
+            break;
+    	case 2:
+        	GUI_Edit(&edit_label, &cur_label, NULL);
+            break;
+    	case 3:
+        	GUI_Edit(&edit_arc, &cur_arc, NULL);
+            break;
+#if USE_LVGL > 0
+    	case 4:
+            /*Change the active screen's background color*/
+            lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0x003a57), LV_PART_MAIN);
+
+            /*Create a white label, set its text and align it to the center*/
+            mylbl2 = lv_label_create(lv_screen_active());
+            lv_label_set_text(mylbl2, "Hello world");
+            lv_obj_set_style_text_color(lv_screen_active(), lv_color_hex(0xffffff), LV_PART_MAIN);
+            lv_obj_align(mylbl2, LV_ALIGN_CENTER, 0, -60);
+            GUI_dump_coords(mylbl2);
+            break;
+#endif
+    	case 99:
+            DBG_heap_useage();
+            break;
+    	default: 
+        	puts("Unknown Test");
+            return false;
+    }
+    return true;
+}
+
+    static const char *pmtGUII (void)
+    {
+      return "GUI-Test";
+    }
+
+
+    static const CommandSetT cmdGUII[] = {
+        { "Style Editor" ,          ctype_fn, .exec.fn = GUI_Test_Menu,VOID(1), "Edit Style(s)" },
+        { "Label Editor",           ctype_fn, .exec.fn = GUI_Test_Menu,VOID(2), "Edit Label(s)" },
+        { "Arc Editor",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(3), "Edit Arc(s)" },
+#if USE_LVGL > 0
+        { "Draw Label",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(4), "Draw a fixed Label" },
+#endif
+        { "Heap Useage",	        ctype_fn, .exec.fn = GUI_Test_Menu,VOID(99),"Show Max Heap Useage" },
+    };
+    ADD_SUBMODULE(GUII);
+#endif
+
 
 #if USE_SPI1 > 0
 #include "dev/GC9A01.h"
@@ -965,6 +1037,9 @@ bool Settings(char *cmdline, size_t len, const void * arg )
 }
 #ifdef RP2040_M0_0
   #include "system/ipc.h"
+  #if USE_UNIQUEID
+    void dump_unique_id(void);
+  #endif
 #endif
 #include "system/ipc_msg.h"
 
@@ -1022,8 +1097,12 @@ static bool MainMenu(char *cmdline, size_t len, const void * arg )
             break;
         case 4:
             printf("Core1_echo %s\n",Core0_SendEcho(NULL, NULL) ? "ok" :"failed" );
-              
             break;
+  #if USE_UNIQUEID
+        case 5:
+            dump_unique_id();
+            break;
+  #endif
 #endif
 #ifdef RP2040_M0_1
         case 4:
@@ -1065,9 +1144,6 @@ static const CommandSetT cmdBasic[] = {
 #if USE_SPI1 > 0
   { "SPi1 Test",       ctype_sub, .exec.sub = &mdlSpi1,        0,       "SPI1 test submenu" },
 #endif
-#if USE_LVGL > 0
-  { "LVGL TEst",       ctype_sub, .exec.sub = &mdlLVGL,        0,       "LVGL test submenu" },
-#endif
   { "Devices",         ctype_sub, .exec.sub = &mdlDevices,     0,       "Peripheral devices submenu" },
 #if DEBUG_MODE > 0
   { "Level",           ctype_fn,  .exec.fn = MainMenu,        VOID(0),  "Set Debuglevel"  },
@@ -1077,6 +1153,9 @@ static const CommandSetT cmdBasic[] = {
   { "StartCore1 {0|1}",ctype_fn,  .exec.fn = MainMenu,        VOID(2),  "Start core 1"  },
   { "Send Core1 <x>"  ,ctype_fn,  .exec.fn = MainMenu,        VOID(3),  "Send <x> to core 1"  },
   { "Send Core1 Echo", ctype_fn,  .exec.fn = MainMenu,        VOID(4),  "Core 1 Echo"  },
+#if USE_UNIQUEID
+  { "Pico UID",        ctype_fn,  .exec.fn = MainMenu,        VOID(5),  "Print Pico Unique UID"  },
+#endif    
   { "ActiveWait <x>"  ,ctype_fn,  .exec.fn = MainMenu,        VOID(9),  "ActiveWait <x> cycles"  },
 #endif
 #ifdef RP2040_M0_1
@@ -1089,6 +1168,12 @@ static const CommandSetT cmdBasic[] = {
   { "Profile",         ctype_fn,  .exec.fn = ProfilerDump,     VOID(0), "Dump profiling info" },
 #endif
   { "Test&System",     ctype_sub, .exec.sub = &mdlTest,        0,       "Test & System submenu" },
+#if USE_LVGL > 0
+  { "LVGL Test",       ctype_sub, .exec.sub = &mdlLVGL,        0,       "LVGL test submenu" },
+#endif
+#if USE_GUI_INTERFACE > 0
+  { "GUI Test",       ctype_sub, .exec.sub = &mdlGUII,         0,       "GUI Interface submenu" },
+#endif
 };
 ADD_SUBMODULE(Basic);
 

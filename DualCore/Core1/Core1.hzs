@@ -2,10 +2,10 @@
 <session>
  <Bookmarks/>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
-  <BreakpointListItem trigger="" line="824" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" stopAll="false" group="Breakpoints" type="Breakpoint" state="2" filename="../common/src/interpreters.c" useHWbreakpoint="false"/>
+  <BreakpointListItem trigger="" line="823" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" stopAll="false" group="Breakpoints" type="Breakpoint" state="4" filename="../common/src/interpreters.c" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="219" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" stopAll="false" group="Breakpoints" type="Breakpoint" state="2" filename="main.c" useHWbreakpoint="false"/>
   <Exceptions>
-   <Group group="V6M Exceptions" set="HardFault"/>
+   <Group group="V6M Exceptions" set="HardFault;Reset"/>
   </Exceptions>
  </Breakpoints>
  <ExecutionProfileWindow/>
@@ -30,17 +30,9 @@
   <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;CMSIS Files"/>
   <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;Documentation"/>
   <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;GUI"/>
-  <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;lvgl"/>
-  <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;lvgl;examples"/>
-  <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;lvgl;examples;get_started"/>
-  <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;lvgl;src"/>
-  <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;lvgl;src;core"/>
-  <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;lvgl;src;drivers"/>
-  <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;lvgl;src;drivers;display"/>
-  <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;lvgl;src;drivers;display;gc9a01"/>
-  <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;lvgl;src;misc"/>
   <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;SDK Files"/>
   <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;SDK Files;Basic"/>
+  <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;SDK Files;RP2_Common"/>
   <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;Source Files"/>
   <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;Source Files;inc"/>
   <ProjectSessionItem path="DualCore-Core1;DualCore-Core1;Source Files;inc;config"/>
@@ -87,31 +79,32 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="42" y="81" useTextEdit="1" path="../common/src/system/init.c" left="0" top="13" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="48" y="739" useTextEdit="1" path="../common/src/interpreters.c" left="0" top="679" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="81" useTextEdit="1" path="../common/src/system/init.c" left="0" top="14" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="697" useTextEdit="1" path="../common/src/interpreters.c" left="0" selected="1" top="659" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="32" y="7" useTextEdit="1" path="flash_placement2040.xml" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="5" y="256" useTextEdit="1" path="../common/src/system/ipc.c" left="0" top="241" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="18" y="192" useTextEdit="1" path="main.c" left="0" top="132" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="323" useTextEdit="1" path="../common/src/system/ipc_msg.c" left="0" top="279" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="28" useTextEdit="1" path="../common/include/system/ipc_msg.h" left="0" top="6" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="62" y="263" useTextEdit="1" path="../common/src/system/ipc_msg.c" left="0" top="239" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="2" y="46" useTextEdit="1" path="../common/include/system/ipc_msg.h" left="0" top="18" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="27" y="25" useTextEdit="1" path="include/config/config.h" left="0" top="17" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../common/include/system/ipc.h" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="48" y="119" useTextEdit="1" path="../HowtoCompileAndDebug.txt" left="0" top="83" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="14" y="119" useTextEdit="1" path="../HowtoCompileAndDebug.txt" left="0" top="83" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="49" y="67" useTextEdit="1" path="../common/src/lvgl_task.c" left="0" top="26" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="68" y="175" useTextEdit="1" path="../GUI/gui_def.h" left="0" top="118" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="13" y="345" useTextEdit="1" path="../GUI/gui_def.c" left="0" top="297" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="92" useTextEdit="1" path="../common/src/system/ipc_fsm.c" left="0" top="18" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="28" useTextEdit="1" path="../GUI/gui_def.h" left="0" top="116" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="391" useTextEdit="1" path="../GUI/gui_def.c" left="0" top="358" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="92" useTextEdit="1" path="../common/src/system/ipc_fsm.c" left="0" top="26" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../lvgl/lv_conf.h" left="0" top="594" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="12" useTextEdit="1" path="../GUI/gui_worker.c" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="50" useTextEdit="1" path="../GUI/gui_worker.c" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="24" y="26" useTextEdit="1" folds0="26" path="../GUI/gui_ops.h" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="5" y="32" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_multicore/multicore.c" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../common/include/system/ipc_fsm.h" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="7" useTextEdit="1" path="../GUI/gui_edit.h" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="8" useTextEdit="1" path="../GUI/gui_worker.h" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="10" y="7" useTextEdit="1" path="../GUI/gui_edit.h" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="20" y="14" useTextEdit="1" path="../GUI/gui_worker.h" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="13" y="109" useTextEdit="1" path="../GUI/gui_lists.c" left="0" top="72" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="24" y="15" useTextEdit="1" path="../GUI/gui_lists.h" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="75" y="157" useTextEdit="1" path="../GUI/gui_edit.c" left="0" selected="1" top="120" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="52" y="33" useTextEdit="1" path="../common/include/debug/debug_helper.h" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="14" y="666" useTextEdit="1" path="../GUI/gui_edit.c" left="0" top="619" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../common/include/debug/debug_helper.h" left="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="2" y="112" useTextEdit="1" path="../lvgl/src/misc/lv_color.h" left="0" top="75" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="DualCore-Core1" fileDialogDefaultFilter="*" autoConnectTarget="CMSIS-DAP" buildConfiguration="THUMB Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="E:/GIT-Repos/RaspiPico/DualCore/GUI" debugSearchPath="" autoConnectCapabilities="44415"/>
+ <ARMCrossStudioWindow activeProject="DualCore-Core1" fileDialogDefaultFilter="*" autoConnectTarget="CMSIS-DAP" buildConfiguration="THUMB Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="E:/GIT-Repos/RaspiPico/DualCore/GUI" debugSearchPath="" autoConnectCapabilities="388479"/>
 </session>

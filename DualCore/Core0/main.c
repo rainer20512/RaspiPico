@@ -48,30 +48,30 @@ int __putchar(int c, __printf_tag_ptr u) {
 }
 */
 
-
-#if UNIQUEID
-extern uint32_t * __fast_load_start__;
-extern uint32_t * __fast_start__;
-extern uint32_t * __fast_end__;
+#if USE_UNIQUEID > 0
+extern uint32_t  __fast_load_start__;
+extern uint32_t  __fast_start__;
+extern uint32_t  __fast_end__;
 
 bool check_fastrun ( void ) {
 
-uint32_t *src = __fast_load_start__;
-uint32_t *dest = __fast_start__;
+uint32_t *src   = &__fast_load_start__;
+uint32_t *dest  = &__fast_start__;
 
-  while ( dest < __fast_end__ ) {
+  while ( dest < &__fast_end__ ) {
     if ( *dest != *src ) {
-      stdio_printf("diff at 0x%08x: src=%08x, dest=%08x\n", dest, *src, *dest);
+      printf("diff at 0x%08x: src=%08x, dest=%08x\n", dest, *src, *dest);
       return false;
     } 
     dest++; src++;
   }
-  stdio_puts("Fastrun segment ok");  
+  puts("Fastrun segment ok");  
   return true;
 }
 
 #include "pico/unique_id.h"
-static void dump_unique_id(void) {
+void dump_unique_id(void) 
+{
     pico_unique_board_id_t board_id;
     pico_get_unique_board_id(&board_id);
 
@@ -80,7 +80,6 @@ static void dump_unique_id(void) {
         printf(" %02x", board_id.id[i]);
     }
     printf("\n");
-
 }
 #endif
 
@@ -157,7 +156,7 @@ int main()
 #if defined(RP2040_M0_1) || defined(CORE1_SIM)
     GUI_Init_Ops_Core1();
 #endif
-#if defined(RP2040_M0_0)
+#if USE_GUI_INTERFACE
     // Initialize fonts on Core0
     TaskNotify(TASK_LVGL0);
 #endif

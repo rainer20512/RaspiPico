@@ -92,8 +92,6 @@
       <file file_name="../GUI/gui_lists.h" />
       <file file_name="../GUI/gui_ops.c" />
       <file file_name="../GUI/gui_ops.h" />
-      <file file_name="../GUI/gui_worker.c" />
-      <file file_name="../GUI/gui_worker.h" />
     </folder>
     <folder Name="lvgl">
       <folder

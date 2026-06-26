@@ -1,5 +1,5 @@
 #include "../GUI/gui_lists.h"
-#if USE_LVGL > 0
+#if USE_GUI_INTERFACE > 0
 
 #include <stdio.h>
 #include <string.h>
@@ -18,7 +18,7 @@ List_Elem_T * GUI_item_list = NULL;
 
  * @note  no insertion into list
  *---------------------------------------------------------------------------*/
-List_Elem_T *LL_New_Element( GUI_Elem_T type, void *lvgl_obj, char *name, void *entry, uint32_t additional )
+List_Elem_T *LL_New_Element( GUI_Elem_T type, void *lvgl_obj, char *name, void *entry, uint16_t additional )
 {
     List_Elem_T *newentry = malloc(sizeof(List_Elem_T));
     if ( !newentry )  { 

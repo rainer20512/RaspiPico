@@ -1,5 +1,5 @@
 #include "config/config.h"
-#if USE_LVGL > 0
+#if USE_GUI_INTERFACE > 0
 
 #include <stdio.h>
 #include "../GUI/gui_ops.h"
