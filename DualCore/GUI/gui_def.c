@@ -461,6 +461,11 @@ bool IPC_Unpack_Transferbuf( IPC_GUI_Xfer_Buff_T *rxbuf, uint8_t *data, uint16_t
 
 /* Buffer to send one GUI element */
 static IPC_GUI_Xfer_Buff_T sendbuf;
+/*
+ * In Core0, we don not have LVGL Objects. In order to identify objects by obj pointers
+ * we use Fake pointers instead, which are only unit32_t values in ascending order
+ */
+static uint32_t *obj_FakeID = (uint32_t*)4; /* Don't start with 0 to avoid confusion with NULL */
 
     /******************************************************************************
      * @brief  Core0 Implementation of "GUI_Create_or_update_LVGL":
@@ -470,10 +475,17 @@ static IPC_GUI_Xfer_Buff_T sendbuf;
      * @param  editdata - edit receipe for raw data
      * @retval untyped ptr to updated or new created LVGL obj or NULL, if creation failed
      ******************************************************************************/
-    void GUI_Create_or_update_LVGL_Core0(uint8_t *data, const GUI_Edit_T *editdata, void *lvgl_obj )
+    void *GUI_Create_or_update_LVGL_Core0(uint8_t *data, const GUI_Edit_T *editdata, void *lvgl_obj )
     {
-       /* pack GUI Element and initiate transfer, which is done asynchronally */
-      if ( IPC_Pack_Transferbuf(&sendbuf, data, editdata ) ) Core0_Send_Gui_Elem ( &sendbuf, NULL );
+        /* if no object is assigned so far, get a new unique FakeID */
+        if (!lvgl_obj ) {
+            lvgl_obj = (void *)obj_FakeID;
+            obj_FakeID ++;
+        }
+        /* pack GUI Element and initiate transfer, which is done asynchronally */
+        if ( IPC_Pack_Transferbuf(&sendbuf, data, editdata ) ) Core0_Send_Gui_Elem ( &sendbuf, NULL );
+
+        return lvgl_obj;
     }
 
 #endif /* defined(RP2040_M0_0) */
@@ -529,8 +541,7 @@ static void GUI_update_entry(List_Elem_T *ll_elem, uint8_t *data, const GUI_Edit
         ll_elem->ll_lvgl_obj = GUI_Create_or_update_LVGL_Core1( data, editdata, ll_elem->ll_lvgl_obj );
     #endif
     #if defined(RP2040_M0_0)
-        ll_elem->ll_lvgl_obj = NULL;
-        GUI_Create_or_update_LVGL_Core0( data, editdata, ll_elem->ll_lvgl_obj );
+        ll_elem->ll_lvgl_obj = GUI_Create_or_update_LVGL_Core0( data, editdata, ll_elem->ll_lvgl_obj );
     #endif
     printf("%s %s updated\n",EditNames[editdata->gui_elem_type],ll_elem->ll_name);
 }
@@ -552,13 +563,12 @@ static void GUI_create_entry(uint8_t *data, const GUI_Edit_T *editdata )
     memcpy_fast(copy, data, editdata->total_size);
 
     /* Create associated LVGL obj */
-    void *lvgl_obj;
+    void *lvgl_obj=NULL;
     #if defined(RP2040_M0_1) || defined(CORE1_SIM) 
-        lvgl_obj = GUI_Create_or_update_LVGL_Core1( data, editdata, NULL );
+        lvgl_obj = GUI_Create_or_update_LVGL_Core1( data, editdata, lvgl_obj );
     #endif
     #if defined(RP2040_M0_0)
-        lvgl_obj = NULL;
-        GUI_Create_or_update_LVGL_Core0( data, editdata, NULL );
+        lvgl_obj = GUI_Create_or_update_LVGL_Core0( data, editdata, lvgl_obj );
     #endif
 
     List_Elem_T *new;

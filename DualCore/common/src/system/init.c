@@ -41,6 +41,7 @@ void Init_OtherDevices(void)
 #include "task/minitask.h"
 #include "interpreters.h"
 #include "system/periodic.h"
+#include "xml_parser_main.h"
 
 #if USE_USB > 0
     void U2U_InitTask(void);
@@ -74,6 +75,7 @@ void Init_DefineTasks(void)
   TaskRegisterTask(task_init_rtc, task_handle_rtc,  TASK_RTC,      JOB_TASK_RTC,      "RTC task");
 
 #if defined(RP2040_M0_0)
+  TaskRegisterTask(task_init_xml, task_handle_xml,  TASK_XML,      JOB_TASK_XML,      "XML parser task");
   TaskRegisterTask(NULL,          task_handle_ipc0, TASK_IPC0,     JOB_TASK_IPC0,     "IPC task core0");
   #if USE_GUI_INTERFACE 
     TaskRegisterTask(NULL,        task_handle_lvgl0, TASK_LVGL0,    JOB_TASK_LVGL,  "LVGL task Core0");

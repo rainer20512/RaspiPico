@@ -24,29 +24,29 @@ const  GUI_Edit_T edit_style = {
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .gui_element   = {  
 /*01*/
-    { "Width",        GUI_UINT16, offsetof(GUI_Style_T, def_width) },
-    { "Height",       GUI_UINT16, offsetof(GUI_Style_T, def_height) }, 
-    { "ObjectAlign",  GUI_UINT8,  offsetof(GUI_Style_T, objalign) }, 
-    { "BG Opaqe",     GUI_UINT8,  offsetof(GUI_Style_T, bgopa) }, 
-    { "BG Color",     GUI_RGB888, offsetof(GUI_Style_T, bgcolor) }, 
+    { "width",        GUI_UINT16, offsetof(GUI_Style_T, def_width) },
+    { "height",       GUI_UINT16, offsetof(GUI_Style_T, def_height) }, 
+    { "objectalign",  GUI_UINT8,  offsetof(GUI_Style_T, objalign) }, 
+    { "bgopaqe",      GUI_UINT8,  offsetof(GUI_Style_T, bgopa) }, 
+    { "bgcolor",      GUI_RGB888, offsetof(GUI_Style_T, bgcolor) }, 
 /*06*/
-    { "BorderWidth",  GUI_UINT8,  offsetof(GUI_Style_T, borderwidth) }, 
-    { "BorderRadius", GUI_UINT8,  offsetof(GUI_Style_T, borderradius) }, 
-    { "BorderColor",  GUI_RGB888, offsetof(GUI_Style_T, bordercolor) }, 
-    { "Shadow Width", GUI_UINT8,  offsetof(GUI_Style_T, shadow_width) }, 
-    { "Shadow opaq",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_opa) }, 
+    { "borderwidth",  GUI_UINT8,  offsetof(GUI_Style_T, borderwidth) }, 
+    { "borderradius", GUI_UINT8,  offsetof(GUI_Style_T, borderradius) }, 
+    { "bordercolor",  GUI_RGB888, offsetof(GUI_Style_T, bordercolor) }, 
+    { "shadowwidth",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_width) }, 
+    { "shadowopaqe",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_opa) }, 
 /*11*/
-    { "Shadow xref",  GUI_UINT8,  offsetof(GUI_Style_T, sh_x) }, 
-    { "Shadow yref",  GUI_UINT8,  offsetof(GUI_Style_T, sh_y) }, 
-    { "ShadowColor",  GUI_RGB888, offsetof(GUI_Style_T, shadowcolor) }, 
-    { "TextAlign",    GUI_UINT8,  offsetof(GUI_Style_T, textalign) }, 
-    { "TextColor",    GUI_RGB888, offsetof(GUI_Style_T, textcolor) }, 
+    { "shadowxref",   GUI_UINT8,  offsetof(GUI_Style_T, sh_x) }, 
+    { "shadowyref",   GUI_UINT8,  offsetof(GUI_Style_T, sh_y) }, 
+    { "shadowColor",  GUI_RGB888, offsetof(GUI_Style_T, shadowcolor) }, 
+    { "textalign",    GUI_UINT8,  offsetof(GUI_Style_T, textalign) }, 
+    { "textcolor",    GUI_RGB888, offsetof(GUI_Style_T, textcolor) }, 
 /*16*/
-    { "TextFont",     GUI_FONT,   offsetof(GUI_Style_T, textfont) }, 
-    { "Arc Width",    GUI_UINT8,  offsetof(GUI_Style_T, arcwidth) }, 
-    { "Arc Opaque",   GUI_UINT8,  offsetof(GUI_Style_T, arcopa) }, 
-    { "Arc Color",    GUI_RGB888, offsetof(GUI_Style_T, arccolor) }, 
-    { "StyleName",    GUI_STRING, offsetof(GUI_Style_T, name) }, 
+    { "textfont",     GUI_FONT,   offsetof(GUI_Style_T, textfont) }, 
+    { "arcwidth",    GUI_UINT8,  offsetof(GUI_Style_T, arcwidth) }, 
+    { "arcopaque",   GUI_UINT8,  offsetof(GUI_Style_T, arcopa) }, 
+    { "arccolor",    GUI_RGB888, offsetof(GUI_Style_T, arccolor) }, 
+    { "name",        GUI_STRING, offsetof(GUI_Style_T, name) }, 
 /*21*/
   },
 };
@@ -77,17 +77,17 @@ const  GUI_Edit_T edit_arc = {
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .gui_element   = { 
 /*01*/
-    { "BG Style",     GUI_STYLE,  offsetof(GUI_Arc_T, bgstyle) }, 
-    { "Ind. Style",   GUI_STYLE,  offsetof(GUI_Arc_T, indstyle) }, 
-    { "X0",           GUI_UINT16, offsetof(GUI_Arc_T, x0) }, 
-    { "Y0",           GUI_UINT16, offsetof(GUI_Arc_T, y0) }, 
-    { "Rotation",     GUI_INT16,  offsetof(GUI_Arc_T, rotation) }, 
+    { "BGStyle",          GUI_STYLE,  offsetof(GUI_Arc_T, bgstyle) }, 
+    { "IndicatorStyle",   GUI_STYLE,  offsetof(GUI_Arc_T, indstyle) }, 
+    { "X0",               GUI_UINT16, offsetof(GUI_Arc_T, x0) }, 
+    { "Y0",               GUI_UINT16, offsetof(GUI_Arc_T, y0) }, 
+    { "Rotation",         GUI_INT16,  offsetof(GUI_Arc_T, rotation) }, 
 /*06*/
-    { "BG Start",     GUI_INT16,  offsetof(GUI_Arc_T, bg_start) }, 
-    { "BG End",       GUI_INT16,  offsetof(GUI_Arc_T, bg_end) }, 
-    { "Min.Val",      GUI_INT16,  offsetof(GUI_Arc_T, minval) }, 
-    { "Mac.Val",      GUI_INT16,  offsetof(GUI_Arc_T, maxval) }, 
-    { "Cur.Val",      GUI_INT16,  offsetof(GUI_Arc_T, curval) }, 
+    { "BGStart",          GUI_INT16,  offsetof(GUI_Arc_T, bg_start) }, 
+    { "BGEnd",            GUI_INT16,  offsetof(GUI_Arc_T, bg_end) }, 
+    { "MinVal",           GUI_INT16,  offsetof(GUI_Arc_T, minval) }, 
+    { "MaxVal",           GUI_INT16,  offsetof(GUI_Arc_T, maxval) }, 
+    { "CurVal",           GUI_INT16,  offsetof(GUI_Arc_T, curval) }, 
 /*11*/
     { "ArcName",      GUI_STRING, offsetof(GUI_Arc_T, name) }, 
   },
@@ -398,8 +398,8 @@ static void GUI_Edit_update( uint32_t idx, bool bIsUnset )
         /* Fonts and styles may be secified in two ways: by name and size  or position in list ( starting with 1 ) */
         search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
         if ( CMD_is_numeric (GUI_Edit_tempval.strfont.text, GUI_Edit_tempval.strfont.len )) {
-          /* Specified by number: convert to num and search for nth entry */
-          ll_elem = LL_find_nth ( GUI_item_list,  search_elem, CMD_to_number(GUI_Edit_tempval.strfont.text, GUI_Edit_tempval.strfont.len ) );
+          /* Specified by number: convert to num and search for nth entry, LL_find_nth counts from 1 ... ! */
+          ll_elem = LL_find_nth ( GUI_item_list,  search_elem, CMD_to_number(GUI_Edit_tempval.strfont.text, GUI_Edit_tempval.strfont.len ) + 1 );
         } else {
           /* Specified by name: Get String copy from inbuf in any case */
           GUI_tempval_to_str(tempstr);

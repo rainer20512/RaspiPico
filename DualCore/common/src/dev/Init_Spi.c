@@ -20,7 +20,7 @@
 
 
 #if USE_SPI0 > 0
-  static uint8_t bSpi0_Initialized = false;
+
   bool Init_Spi0 ( void ) {
 
   #if !defined(spi0) || !defined(PICO_DEFAULT_SPI0_SCK_PIN) || !defined(PICO_DEFAULT_SPI0_TX_PIN) || !defined(PICO_DEFAULT_SPI0_DNC_PIN) || !defined(PICO_DEFAULT_SPI0_CSN_PIN) || !defined(PICO_DEFAULT_SPI0_RESET_PIN)
@@ -66,7 +66,7 @@
 #endif /* USE_SPI0 */
 
 #if USE_SPI1 > 0
-  static uint8_t bSpi1_Initialized = false;
+
   bool Init_Spi1 ( void ) {
 
   #if !defined(spi1) || !defined(PICO_DEFAULT_SPI1_SCK_PIN) || !defined(PICO_DEFAULT_SPI1_TX_PIN) || !defined(PICO_DEFAULT_SPI1_DNC_PIN) || !defined(PICO_DEFAULT_SPI1_CSN_PIN) || !defined(PICO_DEFAULT_SPI1_RESET_PIN)

@@ -16,6 +16,9 @@
 #include <assert.h>
 #include <string.h>
 
+
+#define MIN(a, b)           (((a) < (b)) ? (a) : (b))
+
 /*********************************************************************************
   * Implementation of a circular buffer 
   ********************************************************************************/
@@ -95,6 +98,124 @@ bool CircBuff_Peek2(CircBuffT *b, uint16_t *w )
   assert ( ( b->rdptr & 0b1 )  == 0 );  
   *w = *(uint16_t*)(b->buf+b->rdptr);
   return true;  
+}
+
+/******************************************************************************
+ * Peek one byte at offset "ofs" from begin of circbuf. 
+ * No check, whether this pos is occupied
+ *****************************************************************************/
+uint8_t CircBuff_Peek(CircBuffT *b, uint32_t ofs )
+{
+  uint32_t linpos = CBUFPTR_INCR(*b, rdptr, ofs); 
+  return *(b->buf+linpos);  
+}
+
+static bool is_whitespace(uint8_t c )
+{
+  return ( c <= 0x20 || c >= 0x7f );
+}
+
+/******************************************************************************
+ * Skip leading whitespace in circular buffer
+ *
+ * on return, the buffer is either empty or first char is non whitepsace
+ * the number of skipped bytes is returned
+ *****************************************************************************/
+uint32_t CircBuff_SkipWhitespace(CircBuffT *b)
+{
+  if ( CBUF_EMPTY(*b) ) return 0;
+
+  uint32_t chars_in = CBUF_GET_USED(*b);
+  uint32_t readpos=0;     /* actual read/peek position, non wrapping */
+  
+  /* search first non whitespace char */
+  while ( readpos < chars_in && is_whitespace( CircBuff_Peek(b, readpos )) ) {
+      readpos++;
+  }
+  /* increment read ptr accordingly to first non whitespace char*/
+  b->rdptr = CBUFPTR_INCR(*b, rdptr, readpos); 
+
+  return readpos;  
+}
+
+/******************************************************************************
+ * Peek for next whitespace from actual read pos in circular buffer 
+ *
+ * returns the offset from the current read position wher whitespace is found
+ * - or - 0, if not whitespace in buffer is found 
+ * actual read position is not changed!
+ *****************************************************************************/
+uint32_t CircBuff_PeekWhitespace(CircBuffT *b)
+{
+  if ( CBUF_EMPTY(*b) ) return 0;
+
+  uint32_t chars_in = CBUF_GET_USED(*b);
+  uint32_t readpos=0;     /* actual read/peek position, non wrapping */
+  
+  /* search next whitespace char */
+  while ( readpos < chars_in && !is_whitespace( CircBuff_Peek(b, readpos )) ) {
+      readpos++;
+  }
+  return ( readpos < chars_in ? readpos : 0 );
+}
+
+/******************************************************************************
+ * Copy next <len> chars from circular buffer to <retbuf>
+ *
+ *
+ * returns the number of chars copied, may be less than <len>, if circbuf
+ * contains less characters
+ *
+ * NOTE: a \0 will never be appended, must be done by caller if neccessary
+ *****************************************************************************/
+ uint32_t  CircBuff_GetStr( CircBuffT *b, char *retbuf, uint32_t len)
+{
+  uint32_t copylen = MIN(len, CBUF_GET_USED(*b));
+  if (copylen == 0) return 0;
+
+  /* Check for Wraparound within desired length */
+  uint32_t linsize = CBUF_GET_LINEARREADSIZE(*b);
+  if ( linsize < copylen ) {
+      /* copy in 2 portions */
+      memmove(retbuf, b->buf+b->rdptr, linsize);
+      memmove(retbuf+linsize, b->buf, copylen-linsize);
+  } else {
+      /* copy in one piece */
+      memmove(retbuf, b->buf+b->rdptr, copylen);
+  }
+
+  /* increment read ptr accordingly */
+  b->rdptr = CBUFPTR_INCR(*b, rdptr, copylen); 
+
+  return copylen;
+}
+
+/******************************************************************************
+ * Get next token, ie next char sequence delimited by whitespace 
+ *
+ * returns the length of copied token or 0, if no token found
+ * NOTE: in either case trailing whitespace is removed
+ * NOTE: the specified maximim length is used, no \0 will be appended
+ *****************************************************************************/
+uint32_t CircBuff_GetToken(CircBuffT *b, char *retbuf, uint32_t maxretlen )
+{
+  if ( CBUF_EMPTY(*b) ) return 0;
+
+  /* Skip trailing whitespace */
+  CircBuff_SkipWhitespace(b);
+
+  /* peek next whitespace char */
+  uint32_t readpos  = CircBuff_PeekWhitespace(b);
+
+  if ( !readpos ) return 0;
+  
+  /* Adjust to maximum allowed length */
+  if ( readpos > maxretlen ) readpos = maxretlen;
+
+  /* copy token to return buffer, no \0 will be appended */
+  CircBuff_GetStr( b, retbuf, readpos);
+
+  return readpos; 
 }
 
 

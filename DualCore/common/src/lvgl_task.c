@@ -59,11 +59,11 @@ bool task_init_lvgl1(void)
     lv_display_t * disp = lv_gc9a01_create(240, 240,LV_LCD_FLAG_BGR | LV_LCD_FLAG_MIRROR_Y );
     lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_180);
 
-    /* Init Style */
- /*    lv_style_init(&my_style);
-    lv_style_set_border_width(&my_style, 0);
-    lv_style_set_radius(&my_style, 0);
-*/
+    /* Set BG color to black */
+    // lv_disp_set_bg_color( disp, lv_color_hex(0x000000) );
+    
+    lv_obj_t * scr = lv_scr_act();
+    lv_obj_set_style_bg_color(scr, lv_color_hex(0x000000), LV_PART_MAIN);  
 
     temp = (uint16_t)get_ms_since_start() - temp;
     DEBUG_PRINTF("Init LVGL took %dms to start...\n", temp);

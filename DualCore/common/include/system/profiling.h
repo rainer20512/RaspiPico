@@ -31,6 +31,7 @@ typedef enum ActiveJobEnum {
     JOB_TASK_RTC,
     JOB_TASK_INIT,
     JOB_TASK_MAIN,
+    JOB_TASK_XML,
 #if USE_LVGL > 0 || USE_GUI_INTERFACE
     JOB_TASK_LVGL,
 #endif
@@ -64,7 +65,8 @@ typedef enum ActiveJobEnum {
     "IPC1",         \
     "RTC",          \
     "INIT",         \
-    "MAIN",       
+    "MAIN",         \
+    "XML",     
 #if USE_LVGL > 0
     #define JOBNAMES1 JOBNAMES0 \
     "LVGL",

@@ -39,8 +39,10 @@
 #define TASK_PERIODIC         7
 #define TASK_ADC              9
 #define TASK_STDIN            10
-#define TASK_LVGL0            13
-#define TASK_LVGL1            14
+#define TASK_XML              11
+#define TASK_LVGL0            12
+#define TASK_LVGL1            13
+
 #define TASK_THP              30
 
 /* functtion prototypes of Init and Run functions of task */

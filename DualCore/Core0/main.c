@@ -16,6 +16,8 @@
 #include "dev/uarts.h"
 
 #include "../../GUI/gui_ops.h"
+#include "xml_feeder.h"
+#include "xml_parser_main.h"
 
 // Pico W devices use a GPIO on the WIFI chip for the LED,
 // so when building for Pico W, CYW43_WL_GPIO_LED_PIN will be defined
@@ -105,7 +107,10 @@ extern void LL_Blink(uint32_t nrofblinks, uint32_t delayms );
 
 bool rx_chars_available(void);
 
-int main() 
+#include "hardware/i2c.h"
+
+
+  int main() 
 {
     bool ret;
 
@@ -121,6 +126,7 @@ int main()
     if (!ret) LL_Blink(200,25);
 
     spi_init_all();
+
     GC9A01_hard_reset();
 
     ProfilerInitTo(JOB_TASK_INIT);
@@ -147,7 +153,7 @@ int main()
 #endif
     ProfilerSwitchTo(JOB_TASK_MAIN);  
 
-#if USE_LVGL > 11111
+#if USE_LVGL > 0
     // Trigger the refresh-loop of LVGL
     TaskNotify(TASK_LVGL1);
 #endif
