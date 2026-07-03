@@ -8,8 +8,10 @@
  */
 
 #include "config/config.h"
-#include "debug/debug_helper.h"
 
+#include <malloc.h>
+
+#include "debug/debug_helper.h"
 #include "hardware/timer.h"
 
 /******************************************************************************
@@ -73,6 +75,28 @@ uint32_t pico_get_coreID(void)
 {
   return sio_hw->cpuid;
 }
+
+/******************************************************************************
+ * my own malloc enhanced with message when malloc fails
+ *****************************************************************************/
+void *my_malloc(size_t bytes)
+{
+    void *ret = malloc(bytes);
+    if ( !ret ) { 
+        DEBUG_PRINTF("Err: malloc of %d bytes failed!", bytes);
+    }
+    return ret;
+}
+
+/******************************************************************************
+ * my own free, with consistency check 
+ *****************************************************************************/
+void *my_free(void *ptr)
+{
+    assert(ptr);
+    free(ptr);
+}
+
 
 #ifdef  USE_FULL_ASSERT
 

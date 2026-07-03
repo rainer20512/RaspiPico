@@ -20,11 +20,6 @@
 #include "debug.h"
 
 
-#if DEBUG_SLEEP_STOP > 0
-  void DebugOutbufGetPtrs(void);
-#endif
-
-
 void task_handle_out(uint32_t arg);
 bool task_init_io(void);
 void task_handle_com( uint32_t param);

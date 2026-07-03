@@ -86,20 +86,6 @@ void print_hexXXXX(uint16_t i);
     #define print_dec0XXXXX(i) (print_dec_number(i,5, true))
 #endif
 
-#if ( DEBUG_DUMP_RFM > 0 || DEBUG_DUMP_KEYS > 0 )
-    void COM_dump_packet(uint8_t *d, uint8_t len, uint8_t mac_ok);
-    // void COM_mac_ok(void);
-#else 
-    #define COM_dump_packet(d, len, mac_ok)
-    // #define COM_mac_ok() ()
-#endif
-
-
-#if ( DEBUG_DUMP_RFM > 0 && DEBUG_RFM_HARDCORE > 0 )
-	void dump_rfm_ringbuf(void);
-#else
-	#define dump_rfm_ringbuf()
-#endif
 
 #if DEBUG_PRINT_ADDITIONAL_TIMESTAMPS
     void COM_print_time(uint8_t c, uint32_t bWithCRLF);
@@ -107,30 +93,6 @@ void print_hexXXXX(uint16_t i);
 #else
     #define COM_print_time(c,b)
     #define COM_store_time(a,b)  (a)
-#endif
-
-#if DEBUG_MODE > 0 && DEBUG_PULSES > 0
-    void COM_print_time_short(uint8_t c);
-#else 
-    #define COM_print_time_short(c)
-#endif
-
-#if DEBUG_SLEEP_STOP > 0
-    void store_time(char *str );
-    void store_decXX (uint8_t i);
-    void store_hexXX (uint8_t i); 
-    void store_hexXXXX(uint16_t i); 
-    void store_str(char *); 
-    void store_chr(char); 
-    void store_dump(void); 
-#else
-    #define store_time(a)
-    #define store_decXX(a)
-    #define store_hexXX(a)
-    #define store_hexXXX(a)
-    #define store_str(a) 
-    #define store_chr(a) 
-    #define store_dump()
 #endif
 
 

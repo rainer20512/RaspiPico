@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "system/util.h"
+
 /* linked list of all GUI elements, initially empty */
 List_Elem_T * GUI_item_list = NULL;
 
@@ -18,12 +20,10 @@ List_Elem_T * GUI_item_list = NULL;
 
  * @note  no insertion into list
  *---------------------------------------------------------------------------*/
-List_Elem_T *LL_New_Element( GUI_Elem_T type, void *lvgl_obj, char *name, void *entry, uint16_t additional )
+List_Elem_T *LL_New_Element( GUI_Edit_Enum type, void *lvgl_obj, char *name, void *entry, uint16_t additional )
 {
-    List_Elem_T *newentry = malloc(sizeof(List_Elem_T));
-    if ( !newentry )  { 
-      printf("malloc failed");
-    } else {
+    List_Elem_T *newentry = my_malloc(sizeof(List_Elem_T));
+    if ( newentry )  { 
       newentry->ll_type       = type;
       newentry->ll_lvgl_obj   = lvgl_obj;
       newentry->ll_name       = name; 
@@ -57,7 +57,7 @@ List_Elem_T *LL_append( List_Elem_T **llist, List_Elem_T *newentry )
  *         first position is 1!
  * retval  ptr to found entry, NULL if not found
  *---------------------------------------------------------------------------*/
-List_Elem_T *LL_find_nth ( List_Elem_T *llist, GUI_Elem_T search_type, uint32_t position  )
+List_Elem_T *LL_find_nth ( List_Elem_T *llist, GUI_Edit_Enum search_type, uint32_t position  )
 {
      
      if ( position < 1 ) return NULL;
@@ -91,7 +91,7 @@ List_Elem_T *LL_next ( List_Elem_T *llist)
  * @retval ptr to found entry
  * @note   to progress, caller must use LL_next
  *---------------------------------------------------------------------------*/
-List_Elem_T *LL_iterate_by_type ( List_Elem_T *llist, GUI_Elem_T search_type )
+List_Elem_T *LL_iterate_by_type ( List_Elem_T *llist, GUI_Edit_Enum search_type )
 {
      while ( llist) {
       if ( search_type == GUI_ELEM_NOTYPE || search_type == llist->ll_type ) return llist;
@@ -107,7 +107,7 @@ List_Elem_T *LL_iterate_by_type ( List_Elem_T *llist, GUI_Elem_T search_type )
  * @param  name        - name to search for (case sensitive )
  * @retval ptr to found entry, NULL if no match
  *---------------------------------------------------------------------------*/
-List_Elem_T *LL_find_by_type_n_name ( List_Elem_T *llist, GUI_Elem_T search_type, const char *name )
+List_Elem_T *LL_find_by_type_n_name ( List_Elem_T *llist, GUI_Edit_Enum search_type, const char *name )
 {   
      while ( llist) {
       if ( (search_type == GUI_ELEM_NOTYPE || search_type == llist->ll_type ) && strcmp(llist->ll_name, name) == 0 ) return llist;
@@ -124,7 +124,7 @@ List_Elem_T *LL_find_by_type_n_name ( List_Elem_T *llist, GUI_Elem_T search_type
  * @param  additional  - additional property 
  * @retval ptr to found entry, NULL if no match
  *---------------------------------------------------------------------------*/
-List_Elem_T *LL_find_by_type_name_additional ( List_Elem_T *llist, GUI_Elem_T search_type, const char *name, uint32_t additional )
+List_Elem_T *LL_find_by_type_name_additional ( List_Elem_T *llist, GUI_Edit_Enum search_type, const char *name, uint32_t additional )
 {   
     bool found;
     while ( llist) {
@@ -151,7 +151,7 @@ List_Elem_T *LL_find_by_type_name_additional ( List_Elem_T *llist, GUI_Elem_T se
  * @param  lvgl_obj    - ptr to lvgl obj
  * @retval ptr to found entry, NULL if no match
  *---------------------------------------------------------------------------*/
-List_Elem_T *LL_find_by_type_n_obj  ( List_Elem_T *llist, GUI_Elem_T search_type, void *lvgl_obj )
+List_Elem_T *LL_find_by_type_n_obj  ( List_Elem_T *llist, GUI_Edit_Enum search_type, void *lvgl_obj )
 {
      while ( llist) {
       if ( (search_type == GUI_ELEM_NOTYPE || search_type == llist->ll_type ) && llist->ll_lvgl_obj == lvgl_obj ) return llist;
@@ -175,7 +175,7 @@ void LL_delete ( List_Elem_T **llist, List_Elem_T *delptr )
       if ( *llist == delptr ) {
           /* unlink and delete List element */
           *llist = delptr->ll_next;
-          free(delptr);
+          my_free(delptr);
           return;
       }
       llist = &(*llist)->ll_next;

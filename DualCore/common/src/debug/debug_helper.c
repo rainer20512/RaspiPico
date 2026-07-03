@@ -333,7 +333,7 @@ const char* DBG_get_hal_errtxt(HAL_StatusTypeDef code )
 
 #endif
 
-#if ( DEBUG_FEATURES > 0 || DEBUG_RFM_STATUS > 0 || DEBUG_DUMP_RFM > 0 || DEBUG_DUMP_KEYS > 0 || DEBUG_CHECK_SEC > 0 || DEBUG_PRINT_RTC_TICKS > 0 || DEBUG_MEM_CHECK > 0 || DEBUG_SLEEP_MODE > 0 || DEBUG_PRINT_ADDITIONAL_TIMESTAMPS > 0 ) 
+#if ( DEBUG_FEATURES > 0 || DEBUG_RFM_STATUS > 0 || DEBUG_CHECK_SEC > 0 || DEBUG_PRINT_RTC_TICKS > 0 || DEBUG_MEM_CHECK > 0 || DEBUG_SLEEP_MODE > 0 || DEBUG_PRINT_ADDITIONAL_TIMESTAMPS > 0 ) 
         #define MAX_NUMBUF 33
         static char numbuf[MAX_NUMBUF];
         static char *numptr;
@@ -419,88 +419,6 @@ const char* DBG_get_hal_errtxt(HAL_StatusTypeDef code )
    }
 #endif
 
-
-#if DEBUG_SLEEP_STOP > 0
-
-  #define SLEEPBUFSIZE  512
-  static char buf[SLEEPBUFSIZE];
-  static uint32_t bufidx=0;
-
-  /* Increment so, that buffer index will not point to location behind buffer */
-  #define INC_BUFIDX(delta)   ( bufidx = ( bufidx+delta < SLEEPBUFSIZE ?  bufidx+delta : bufidx ) )
-  /* Store element and increment idx, if possible */
-  #define BUF_STORE(c)        do { buf[bufidx]=c; if ( bufidx < SLEEPBUFSIZE-1 ) bufidx++; } while(0)
-
-
-void store_init(void)
-{ 
-   bufidx=0;
-}
-
-  void store_decXX(uint8_t i) 
-  {
-    uint8_t x = i/10;
-    BUF_STORE(x+'0');
-
-    x = i % 10;
-   BUF_STORE(x+'0');
-  }
-
-  void store_hexXX(uint8_t i) 
-  {
-    uint8_t x = i>>4;
-    if (x>=10) {
-      BUF_STORE(x+'a'-10);	
-    } else {
-      BUF_STORE(x+'0');
-    }	
-    x = i & 0xf;
-    if (x>=10) {
-      BUF_STORE(x+'a'-10);	
-    } else {
-      BUF_STORE(x+'0');
-    }	
-  }
-
-  void store_hexXXXX(uint16_t i) 
-  {
-    store_hexXX((uint8_t)(i>>8));
-    store_hexXX((uint8_t)(i&0xff));
-  }
-   
-  void store_str(char *str)
-  {
-    while ( *str ) {
-      BUF_STORE(*(str++));
-    }
-  }
-    
-  void store_chr(char c)
-  {
-     BUF_STORE(c);
-  }
-
-  void store_time(char *str ) 
-  {
-    // store_decXX((uint8_t)RTC_GetSecond());
-    #if DEBUG_PROFILING > 0 && DEBUG_MODE > 0
-        store_str(ProfilerGetTS());
-    #else
-        BUF_STORE('.');
-        store_hexXX((uint8_t)RTC_GetS256());
-    #endif
-    BUF_STORE('-');
-    store_str(str);
-   }
-
-   void store_dump(void)
-   {
-      BUF_STORE('\0');
-      DEBUG_PUTS(buf);
-      bufidx=0;
-   }
-
-#endif /* DEBUG_SLEEP_STOP > 0 */
 
 
 /**

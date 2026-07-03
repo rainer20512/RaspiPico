@@ -88,6 +88,8 @@
       <file file_name="../GUI/gui_def.h" />
       <file file_name="../GUI/gui_edit.c" />
       <file file_name="../GUI/gui_edit.h" />
+      <file file_name="../GUI/gui_editdef.c" />
+      <file file_name="../GUI/gui_editdef.h" />
       <file file_name="../GUI/gui_lists.c" />
       <file file_name="../GUI/gui_lists.h" />
       <file file_name="../GUI/gui_ops.c" />

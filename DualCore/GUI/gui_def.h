@@ -34,7 +34,7 @@ typedef enum {
   GUI_ELEM_LABEL        = 3,
   GUI_ELEM_ARC          = 4,
   GUI_ELEM_MAX          = 5,              /* Last element whose value is the number of prev entries */
-} GUI_Elem_T;
+} GUI_Edit_Enum;
 
 /* Corresponding user friendly names of these of GUI elements */
 #define GUI_EDITNAMES   {"NoType", "Font", "Style", "Label", "Arc", "<Undef>" }
@@ -50,7 +50,7 @@ typedef struct {
 extern GUI_Font_T *AllFonts;
 
 
-/* Bitfield for set properties of a GUI_Style_T */
+/* Enumeration of all properties of a GUI_Style_T */
 /* Order has to be the same as in corresponding Edit receipe !!! */
 typedef enum {
   STYLE_DEFWIDTH     = 0,
@@ -73,6 +73,7 @@ typedef enum {
   STYLE_ARCOPA       = 17,
   STYLE_ARCCOLOR     = 18,
   STYLE_NAME         = 19,
+  STYLE_EDIT_MAX     = 20,                  /* mandatory last entry  */
 } Style_Used_T;
 
 #define STYLE_HAS_PROP(style, id) ( (style)->used &  (  1 << (id) ) )
@@ -105,7 +106,7 @@ typedef struct {
 } GUI_Style_T;
 
 
-/* Bitfield for set properties of a GUI_Label_T */
+/* Enumeration of all properties of a GUI_Label_T */
 /* Order has to be the same as in corresponding Edit receipe !!! */
 typedef enum {
   LABEL_STYLE        = 0,
@@ -114,6 +115,7 @@ typedef enum {
   LABEL_Y0           = 3,
   LABEL_CAPTION      = 4,
   LABEL_NAME         = 5,
+  LABEL_EDIT_MAX     = 6,                  /* mandatory last entry  */
 } Label_Used_T;
 
 #define LABEL_HAS_PROP(lbl, id) ( (lbl)->used &  (  1 << (id) ) )
@@ -132,7 +134,7 @@ typedef struct {
 } GUI_Label_T;
 
 
-/* Bitfield for set properties of a GUI_Arc_T */
+/* Enumeration of all properties of a GUI_Arc_T */
 /* Order has to be the same as in corresponding Edit receipe !!! */
 typedef enum {
   ARC_BGSTYLE      = 0,
@@ -146,6 +148,7 @@ typedef enum {
   ARC_MAXVAL       = 8,
   ARC_CURVAL       = 9,
   ARC_NAME         = 10,
+  ARC_EDIT_MAX     = 11,                    /* mandatory last entry  */
 } Arc_Used_T;
 
 #define ARC_HAS_PROP(arc, id) ( (arc)->used &  (  1 << (id) ) )
@@ -171,7 +174,7 @@ void GUI_dump_coords ( lv_obj_t * obj );
 void GUI_Init_Fonts_Core1(void);
 
 struct List_Elem;
-struct List_Elem *GUI_new_or_update_entry(uint8_t *data, GUI_Elem_T gui_elem );
+struct List_Elem *GUI_new_or_update_entry(uint8_t *data, GUI_Edit_Enum gui_elem );
 
 #endif /*  USE_GUI_INTERFACE */
 #endif /* _GUIDEF_H_ */

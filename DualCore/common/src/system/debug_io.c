@@ -148,23 +148,6 @@ static void Debug_OutputTransfer(uint32_t from, uint32_t to )
 /* Public functions  ---------------------------------------------------------*/
 
 
-#if DEBUG_SLEEP_STOP > 0
-  /*********************************************************************************
-    * @brief  Dumps current values of outbuf read an write pointers to 
-    * @param  None
-    * @retval None
-    * @note   NO NORMAL DEBUG OUTPUT in this function or childs, 
-    *         use special functions only!*
-    ********************************************************************************/
-  void DebugOutbufGetPtrs(void)
-  {
-    store_hexXXXX(o0.rdptr);
-    store_chr('/');
-    store_hexXXXX(o0.wrptr);
-    store_chr(' ');
-  }
-#endif
-
 
 /*
  * Callback when transfer complete *

@@ -7,8 +7,8 @@
 #include "../GUI/gui_lists.h"
 #include "../GUI/gui_ops.h"
 #include "system/ipc_msg.h"
+#include "system/util.h"
 #include <stdio.h>
-#include <malloc.h>
 #include <string.h>
 #include <assert.h>
 
@@ -86,7 +86,7 @@ const char *EditNames[]  = GUI_EDITNAMES;
  *****************************************************************************/
 typedef struct {
   uint16_t      size;      /* we also store the size bcs IPC routines dont know that */ 
-  GUI_Elem_T    elem_type; /* GUI element type in gui_elem      */
+  GUI_Edit_Enum    elem_type; /* GUI element type in gui_elem      */
   union {
       GUI_Style_T gui_style;
       GUI_Label_T gui_label;
@@ -110,10 +110,7 @@ static_assert(sizeof(IPC_GUI_Xfer_Buff_T) <= IPC_BUFSIZE, "ICP transfer buffer s
 static void *GUI_Allocate ( void *obj_in, size_t size ) {
 	/* Check, whether obj has been allocated already */
 	if ( !obj_in ) { 
-      obj_in = malloc (size);
-      if ( !obj_in ) {
-        puts("malloc of GUI obj failed");
-      }
+      obj_in = my_malloc (size);
     }
     return obj_in;
 }
@@ -323,7 +320,7 @@ struct TxInfoT {
 
 static bool IPC_Pack_Translate_Objs(IPC_GUI_Xfer_Buff_T *txbuf,  const GUI_Edit_T *editdata )
 {
-    GUI_E_Type_Enum e;
+    GUI_E_Datatype_Enum e;
     List_Elem_T *found;
 
     /* ptr to binary object */
@@ -341,32 +338,32 @@ static bool IPC_Pack_Translate_Objs(IPC_GUI_Xfer_Buff_T *txbuf,  const GUI_Edit_
     for ( uint32_t i = 0; i < editdata->count; i++ ) {
         if ( used & ( 1 << i ) ) {
             /* store the type for later use */
-            e = editdata->gui_element[i].elem_type;
+            e = editdata->receipe[i].elem_type;
             if ( IS_GUI_ELEM_BIN(e)) {
                 /* first check, whether there is space for another translation */
                 if ( tr_counter >= MAX_X_NAMES ) {
-                    DEBUG_PRINTF("No more space to translate element %s!\n", editdata->gui_element[i].elem_name);
+                    DEBUG_PRINTF("No more space to translate element %s!\n", editdata->receipe[i].elem_name);
                     return false;
                 }
                 /* find object in global GUI item list */
-                void *elembin = *(void **)(data+editdata->gui_element[i].elem_offset);
+                void *elembin = *(void **)(data+editdata->receipe[i].elem_offset);
                 found = LL_find_by_type_n_obj  ( GUI_item_list, GET_GUI_ELEM_TYPE(e), elembin );
                 if (!found ) {
                     /* normally, we _must_ find it */
-                    DEBUG_PRINTF("Err: Binary Element %s not found!\n", editdata->gui_element[i].elem_name);
+                    DEBUG_PRINTF("Err: Binary Element %s not found!\n", editdata->receipe[i].elem_name);
                     return false;
                 }
                 /* copy name to translation table */
                 strcpy(txbuf->x_names[tr_counter], found->ll_name);
                 /* store index and additional data in place of binary object and increment total numer of translations */
-                struct TxInfoT *ptr = (struct TxInfoT *)(data+editdata->gui_element[i].elem_offset);
+                struct TxInfoT *ptr = (struct TxInfoT *)(data+editdata->receipe[i].elem_offset);
                 ptr->additional  = found->ll_additional;
                 ptr->tr_idx      = (uint8_t)tr_counter;
                 /*
                 *(((uint16_t*)elembin)++)   = found->ll_additional;
                 *(elembin)                  = (uint8_t)tr_counter;
                 */
-                DEBUG_PRINTF("Translated %s %s: (%d, %d)\n",editdata->gui_element[i].elem_name, found->ll_name, ptr->tr_idx, ptr->additional );
+                DEBUG_PRINTF("Translated %s %s: (%d, %d)\n",editdata->receipe[i].elem_name, found->ll_name, ptr->tr_idx, ptr->additional );
                 tr_counter++;
             }
         }
@@ -402,7 +399,7 @@ bool IPC_Pack_Transferbuf( IPC_GUI_Xfer_Buff_T *txbuf, uint8_t *data, const GUI_
 
 static bool IPC_Unpack_Translate_Objs(IPC_GUI_Xfer_Buff_T *rxbuf,  const GUI_Edit_T *editdata )
 {
-    GUI_E_Type_Enum e;
+    GUI_E_Datatype_Enum e;
     List_Elem_T *found;
 
     /* ptr to binary object */
@@ -417,10 +414,10 @@ static bool IPC_Unpack_Translate_Objs(IPC_GUI_Xfer_Buff_T *rxbuf,  const GUI_Edi
     for ( uint32_t i = 0; i < editdata->count; i++ ) {
         if ( used & ( 1 << i ) ) {
             /* store the type for later use */
-            e = editdata->gui_element[i].elem_type;
+            e = editdata->receipe[i].elem_type;
             if ( IS_GUI_ELEM_BIN(e)) {
                 /* locate translation data, the object ptr was replaced by additional data/translate index by sender */
-                struct TxInfoT *ptr = (struct TxInfoT *)(data+editdata->gui_element[i].elem_offset);
+                struct TxInfoT *ptr = (struct TxInfoT *)(data+editdata->receipe[i].elem_offset);
 
                 uint16_t additional = ptr->additional;
                 uint8_t tr_idx      = ptr->tr_idx;
@@ -429,12 +426,12 @@ static bool IPC_Unpack_Translate_Objs(IPC_GUI_Xfer_Buff_T *rxbuf,  const GUI_Edi
                 found = LL_find_by_type_name_additional ( GUI_item_list, GET_GUI_ELEM_TYPE(e), rxbuf->x_names[tr_idx], additional );
                 if (!found ) {
                     /* normally, we _must_ find it */
-                    DEBUG_PRINTF("Err: Binary Element %s not found!\n", editdata->gui_element[i].elem_name);
+                    DEBUG_PRINTF("Err: Binary Element %s not found!\n", editdata->receipe[i].elem_name);
                     return false;
                 }
                 /* copy name to translation table */
-                *(void **)(data+editdata->gui_element[i].elem_offset) = found->ll_lvgl_obj;
-                DEBUG_PRINTF("Translated %d, %d -> %s %s\n",tr_idx, additional, editdata->gui_element[i].elem_name, found->ll_name );
+                *(void **)(data+editdata->receipe[i].elem_offset) = found->ll_lvgl_obj;
+                DEBUG_PRINTF("Translated %d, %d -> %s %s\n",tr_idx, additional, editdata->receipe[i].elem_name, found->ll_name );
             }
         }
     }
@@ -492,7 +489,7 @@ static uint32_t *obj_FakeID = (uint32_t*)4; /* Don't start with 0 to avoid confu
 
 #if  RP2040_M0_1 || defined(CORE1_SIM)
 /* forward declarations -----------------------------------------------------*/
-List_Elem_T *GUI_new_or_update_entry(uint8_t *data, GUI_Elem_T gui_elem );
+List_Elem_T *GUI_new_or_update_entry(uint8_t *data, GUI_Edit_Enum gui_elem );
 
 /* Buffer to receive one GUI element */
 static IPC_GUI_Xfer_Buff_T recvbuf;
@@ -555,11 +552,9 @@ static void GUI_update_entry(List_Elem_T *ll_elem, uint8_t *data, const GUI_Edit
 static void GUI_create_entry(uint8_t *data, const GUI_Edit_T *editdata )
 {
     /* create a full copy of actual data structure */
-    uint8_t *copy = malloc(editdata->total_size);
-    if ( !copy ) {
-      printf("malloc failed!\n");
-      return;
-    }
+    uint8_t *copy = my_malloc(editdata->total_size);
+    if ( !copy ) return;
+    
     memcpy_fast(copy, data, editdata->total_size);
 
     /* Create associated LVGL obj */
@@ -596,7 +591,7 @@ static void GUI_create_entry(uint8_t *data, const GUI_Edit_T *editdata )
  * @param  gui_elem - GUI element Type
  * @retval List_Elem_T ptr to the new or updated element or NULL in case of Error
  ******************************************************************************/
-List_Elem_T *GUI_new_or_update_entry(uint8_t *data, GUI_Elem_T gui_elem )
+List_Elem_T *GUI_new_or_update_entry(uint8_t *data, GUI_Edit_Enum gui_elem )
 {
   /* Find the edit receipe */
   const GUI_Edit_T *edit = GUI_edit_get_receipe_for_elemtype( gui_elem );

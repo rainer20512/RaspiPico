@@ -9,16 +9,19 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
+#include <stddef.h>
+
 #include "config/config.h"
 
-int16_t average_n ( int16_t avg, int16_t value, uint8_t n  );
-
+int16_t  average_n ( int16_t avg, int16_t value, uint8_t n  );
+void *   my_malloc(size_t bytes);
+void *   my_free(void *ptr);
 uint32_t My_Delay(uint32_t waittime );
 uint32_t get_ms_since_start(void);
+uint32_t pico_get_coreID(void);
 
 void Error_Handler(char *file, int line);
 void Error_Handler_XX(int32_t code, char *file, int line);
-uint32_t pico_get_coreID(void);
 
 #ifdef  USE_FULL_ASSERT
   void assert_failed(char* file, uint32_t line);

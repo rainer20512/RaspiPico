@@ -90,7 +90,7 @@ bool     CircBuff_Get2(CircBuffT *b, uint16_t *w );
 uint8_t  CircBuff_Peek(CircBuffT *b, uint32_t ofs );
 bool     CircBuff_Peek2(CircBuffT *b, uint16_t *w );
 uint32_t CircBuff_SkipWhitespace(CircBuffT *b);
-uint32_t CircBuff_PeekWhitespace(CircBuffT *b);
+int32_t  CircBuff_PeekWhitespace(CircBuffT *b);
 uint32_t CircBuff_GetStr( CircBuffT *b, char *retbuf, uint32_t len);
 uint32_t CircBuff_GetToken(CircBuffT *b, char *retbuf, uint32_t maxretlen);
 bool     CircBuff_Get_Indexed(CircBuffT *b, uint32_t idx, uint8_t *ch );

@@ -1,22 +1,21 @@
 
 /**
   ******************************************************************************
-  * @file    xml_feeder.h
+  * @file    xml_parser_funcs.h
   * @author  Rainer
-  * @brief   functions to feed input into XML parser
+  * @brief   functions to parse specific XML elements
   ******************************************************************************
   *
   ******************************************************************************
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _XML_FEEDER_H_
-#define _XML_FEEDER_H_
+#ifndef _XML_PARSER_FUNCS_H_
+#define _XML_PARSER_FUNCS_H_
 #include "config/config.h"
 
-#include "pico/i2c_slave.h"
+#include "xml_parser_main.h"
 
-void i2c_slave_handler(i2c_inst_t *i2c, i2c_slave_event_t event);
-void i2c_feeder_init  (void);
+void xml_parser_init(void);
 
-#endif /* _XML_FEEDER_H_  */
+#endif /* _XML_PARSER_FUNCS_H */

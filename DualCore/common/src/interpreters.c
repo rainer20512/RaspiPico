@@ -854,7 +854,7 @@ static lv_obj_t * obj=NULL;
     #endif
 
     void DBG_heap_useage(void);
-
+    void xml_parser_init(void);
 
      /*********************************************************************************
       * @brief  Submenu for GUI Interfaxe test functions
@@ -896,6 +896,9 @@ static lv_obj_t * obj=NULL;
             GUI_dump_coords(mylbl2);
             break;
 #endif
+    	case 98:
+            xml_parser_init();
+            break;
     	case 99:
             DBG_heap_useage();
             break;
@@ -919,6 +922,7 @@ static lv_obj_t * obj=NULL;
 #if USE_LVGL > 0
         { "Draw Label",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(4), "Draw a fixed Label" },
 #endif
+        { "Reset XML Parser",	    ctype_fn, .exec.fn = GUI_Test_Menu,VOID(98),"Reset XML parser to known state" },
         { "Heap Useage",	        ctype_fn, .exec.fn = GUI_Test_Menu,VOID(99),"Show Max Heap Useage" },
     };
     ADD_SUBMODULE(GUII);

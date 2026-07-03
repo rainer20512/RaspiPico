@@ -141,22 +141,34 @@ uint32_t CircBuff_SkipWhitespace(CircBuffT *b)
 /******************************************************************************
  * Peek for next whitespace from actual read pos in circular buffer 
  *
- * returns the offset from the current read position wher whitespace is found
- * - or - 0, if not whitespace in buffer is found 
- * actual read position is not changed!
+ * returns the offset from the current read position where whitespace is found
+ * - or - -1, if no non-whitespace in buffer is found 
+ * @note actual read position of circualr buffer is not changed!
+ * @note quoted text is skipped
  *****************************************************************************/
-uint32_t CircBuff_PeekWhitespace(CircBuffT *b)
-{
-  if ( CBUF_EMPTY(*b) ) return 0;
+int32_t CircBuff_PeekWhitespace(CircBuffT *b)
+{ 
+    /* counter for quotation marks */
+    uint32_t qm_counter = 0;
+    #undef  OUTSIDE_QM
+    #define OUTSIDE_QM()    (( qm_counter & 1 ) == 0 )
 
-  uint32_t chars_in = CBUF_GET_USED(*b);
-  uint32_t readpos=0;     /* actual read/peek position, non wrapping */
+    uint8_t cpeek;
+    if ( CBUF_EMPTY(*b) ) return 0;
+
+    uint32_t chars_in = CBUF_GET_USED(*b);
+    uint32_t readpos=0;     /* actual read/peek position, non wrapping */
   
-  /* search next whitespace char */
-  while ( readpos < chars_in && !is_whitespace( CircBuff_Peek(b, readpos )) ) {
-      readpos++;
-  }
-  return ( readpos < chars_in ? readpos : 0 );
+    /* search next whitespace char */
+    while ( readpos < chars_in  ) {
+        cpeek = CircBuff_Peek(b, readpos );
+        if ( cpeek == '"' ) qm_counter++;
+        if (OUTSIDE_QM()) {
+          if ( is_whitespace(cpeek) ) return readpos;
+        }
+        readpos++;
+    }
+    return -1;
 }
 
 /******************************************************************************
@@ -195,27 +207,48 @@ uint32_t CircBuff_PeekWhitespace(CircBuffT *b)
  *
  * returns the length of copied token or 0, if no token found
  * NOTE: in either case trailing whitespace is removed
- * NOTE: the specified maximim length is used, no \0 will be appended
+ * NOTE: text within quotation marks will not be touched
+ * NOTE: _\0 will _never_ be appended
+ * NOTE also the final token _must_ be followed by at least one ws character
+ *      this is due to a token coulb be truncated by buffer size limit
+ *      in that case there will be no ws behind partial loken
  *****************************************************************************/
 uint32_t CircBuff_GetToken(CircBuffT *b, char *retbuf, uint32_t maxretlen )
 {
+  /* counter for quotation marks */
+  uint32_t qm_counter = 0;
+  /* output write position */
+  uint32_t wrptr      = 0; 
+  int32_t  tokensize;
+  uint8_t c;
+  #define OUTSIDE_QM()    (( qm_counter & 1 ) == 0 )
+
+
   if ( CBUF_EMPTY(*b) ) return 0;
 
-  /* Skip trailing whitespace */
+  /* Skip trailing whitespace in any case*/
   CircBuff_SkipWhitespace(b);
+  /* find next whitespace character out of quotes, */
+  tokensize = CircBuff_PeekWhitespace(b);
+  if ( tokensize <= 0) {
+      /* no complete token found */
+      return 0;
+  } 
 
-  /* peek next whitespace char */
-  uint32_t readpos  = CircBuff_PeekWhitespace(b);
-
-  if ( !readpos ) return 0;
-  
-  /* Adjust to maximum allowed length */
-  if ( readpos > maxretlen ) readpos = maxretlen;
-
-  /* copy token to return buffer, no \0 will be appended */
-  CircBuff_GetStr( b, retbuf, readpos);
-
-  return readpos; 
+  CircBuff_GetStr( b, retbuf, tokensize);
+  #if 0
+  /* scan for next whitespace character outside quotes */
+  while ( wrptr < maxretlen &&  CircBuff_Get(b, &c ) ) {
+      if ( c == '"' ) qm_counter++;
+      /* Check for being in qouted text: if so, don't touch */
+      if (OUTSIDE_QM()) {
+          if ( is_whitespace(c) ) break;
+      }
+      *(retbuf+wrptr) = c;
+      wrptr++;
+  }
+#endif
+  return tokensize; 
 }
 
 

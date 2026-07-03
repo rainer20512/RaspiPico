@@ -12,87 +12,6 @@
 
 
 
-/* Edit receipe for Style structure */
-const  GUI_Edit_T edit_style = {
-  .count         = 20,
-  .gui_elem_type = GUI_ELEM_STYLE,
-  /* the foloowing two items are used to find used bits and name when */
-  /* structure will be converted to raw data in "gui_edit"            */
-  .used_ofs      = offsetof(GUI_Style_T, used),
-  .name_ofs      = offsetof(GUI_Style_T, name),
-  .total_size    = sizeof  (GUI_Style_T),
-  /* Element Order has to be the same as in corresponding "used"-bit set !!! */
-  .gui_element   = {  
-/*01*/
-    { "width",        GUI_UINT16, offsetof(GUI_Style_T, def_width) },
-    { "height",       GUI_UINT16, offsetof(GUI_Style_T, def_height) }, 
-    { "objectalign",  GUI_UINT8,  offsetof(GUI_Style_T, objalign) }, 
-    { "bgopaqe",      GUI_UINT8,  offsetof(GUI_Style_T, bgopa) }, 
-    { "bgcolor",      GUI_RGB888, offsetof(GUI_Style_T, bgcolor) }, 
-/*06*/
-    { "borderwidth",  GUI_UINT8,  offsetof(GUI_Style_T, borderwidth) }, 
-    { "borderradius", GUI_UINT8,  offsetof(GUI_Style_T, borderradius) }, 
-    { "bordercolor",  GUI_RGB888, offsetof(GUI_Style_T, bordercolor) }, 
-    { "shadowwidth",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_width) }, 
-    { "shadowopaqe",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_opa) }, 
-/*11*/
-    { "shadowxref",   GUI_UINT8,  offsetof(GUI_Style_T, sh_x) }, 
-    { "shadowyref",   GUI_UINT8,  offsetof(GUI_Style_T, sh_y) }, 
-    { "shadowColor",  GUI_RGB888, offsetof(GUI_Style_T, shadowcolor) }, 
-    { "textalign",    GUI_UINT8,  offsetof(GUI_Style_T, textalign) }, 
-    { "textcolor",    GUI_RGB888, offsetof(GUI_Style_T, textcolor) }, 
-/*16*/
-    { "textfont",     GUI_FONT,   offsetof(GUI_Style_T, textfont) }, 
-    { "arcwidth",    GUI_UINT8,  offsetof(GUI_Style_T, arcwidth) }, 
-    { "arcopaque",   GUI_UINT8,  offsetof(GUI_Style_T, arcopa) }, 
-    { "arccolor",    GUI_RGB888, offsetof(GUI_Style_T, arccolor) }, 
-    { "name",        GUI_STRING, offsetof(GUI_Style_T, name) }, 
-/*21*/
-  },
-};
-
-const  GUI_Edit_T edit_label = {
-  .count         = 6,
-  .gui_elem_type = GUI_ELEM_LABEL,
-  .used_ofs      = offsetof(GUI_Label_T, used),
-  .name_ofs      = offsetof(GUI_Label_T, name),
-  .total_size    = sizeof  (GUI_Label_T),
-  /* Element Order has to be the same as in corresponding "used"-bit set !!! */
-  .gui_element   = { 
-    { "Style",        GUI_STYLE,  offsetof(GUI_Label_T, style) }, 
-    { "Align",        GUI_UINT8,  offsetof(GUI_Label_T, align) }, 
-    { "X0",           GUI_UINT16, offsetof(GUI_Label_T, x0) }, 
-    { "Y0",           GUI_UINT16, offsetof(GUI_Label_T, y0) }, 
-    { "Caption",      GUI_STRING, offsetof(GUI_Label_T, caption) }, 
-    { "LabelName",    GUI_STRING, offsetof(GUI_Label_T, name) }, 
-  },
-};
-
-const  GUI_Edit_T edit_arc = {
-  .count         = 11,
-  .gui_elem_type = GUI_ELEM_ARC,
-  .used_ofs      = offsetof(GUI_Arc_T, used),
-  .name_ofs      = offsetof(GUI_Arc_T, name),
-  .total_size    = sizeof  (GUI_Arc_T),
-  /* Element Order has to be the same as in corresponding "used"-bit set !!! */
-  .gui_element   = { 
-/*01*/
-    { "BGStyle",          GUI_STYLE,  offsetof(GUI_Arc_T, bgstyle) }, 
-    { "IndicatorStyle",   GUI_STYLE,  offsetof(GUI_Arc_T, indstyle) }, 
-    { "X0",               GUI_UINT16, offsetof(GUI_Arc_T, x0) }, 
-    { "Y0",               GUI_UINT16, offsetof(GUI_Arc_T, y0) }, 
-    { "Rotation",         GUI_INT16,  offsetof(GUI_Arc_T, rotation) }, 
-/*06*/
-    { "BGStart",          GUI_INT16,  offsetof(GUI_Arc_T, bg_start) }, 
-    { "BGEnd",            GUI_INT16,  offsetof(GUI_Arc_T, bg_end) }, 
-    { "MinVal",           GUI_INT16,  offsetof(GUI_Arc_T, minval) }, 
-    { "MaxVal",           GUI_INT16,  offsetof(GUI_Arc_T, maxval) }, 
-    { "CurVal",           GUI_INT16,  offsetof(GUI_Arc_T, curval) }, 
-/*11*/
-    { "ArcName",      GUI_STRING, offsetof(GUI_Arc_T, name) }, 
-  },
-};
-
 
 /* helper struct to define a string or font by char vector and length */ 
 /* and fontsize (only for fonts  )*/
@@ -112,7 +31,7 @@ static union {
       int32_t    i32;
       lv_color_t rgb;
       struct strfont strfont;
-    } GUI_Edit_tempval;
+} GUI_Edit_tempval;
 
 /* module global variable to copy string data out of inbuf */
 char tempstr[GUI_MAX_NAMELEN];
@@ -124,19 +43,6 @@ OnExitFn         OnExitEdit;  /* Callback on Exit of Editing */
 
 const GUI_Edit_TypeSpec_T GUI_TypeSpec[GUI_MAXELEM] = GUI_TYPE_SPECS;
 
-/* one pair of GUI_Elem_T -> GUI_Edit_T  */
-struct receipes_S {
-  GUI_Elem_T        gui_type;
-  const GUI_Edit_T* gui_edit;
-};
-/* complete list of Gui_elem_t -> Gui_Edit_T */
-static const struct receipes_S gui_to_receipe[GUI_ELEM_MAX] = {
-    { GUI_ELEM_NOTYPE, NULL },
-    { GUI_ELEM_FONT, NULL },
-    { GUI_ELEM_STYLE, &edit_style },
-    { GUI_ELEM_LABEL, &edit_label },
-    { GUI_ELEM_ARC,   &edit_arc   },
-};
 
 
 // ---- Forward declaration of user input handler in GI edit mode -------------
@@ -144,31 +50,15 @@ void handle_gui_edit_input ( char *cmdline, size_t len );
 
 
 /******************************************************************************
- * @brief  Get the edit receipe for a GUI element
- * @param  gui_type  - GUI element type for what the receipe is requested
- * @param  editdata - edit receipe for raw data
- * @retval ptr to the receipe or NULL, if not found
- ******************************************************************************/
-const GUI_Edit_T *GUI_edit_get_receipe_for_elemtype( GUI_Elem_T gui_type )
-{
-  uint32_t limit = sizeof(gui_to_receipe)/sizeof(struct receipes_S);
-  for ( uint32_t i=0; i <limit; i++ ) {
-    if ( gui_to_receipe[i].gui_type == gui_type ) return gui_to_receipe[i].gui_edit;
-  }
-
-  DEBUG_PRINTF("ErrNo Receipe for GUI Element ""%s""\n",EditNames[gui_type]);
-  return NULL;
-}
-/******************************************************************************
  * Edit one GUI-Element
  * data     = ptr to complete gui structure
  * editelem = description of element to dump
  * textlen  = length to right pad the edittext with blanks, 0=no padding
  ******************************************************************************/
-static void GUI_edit_dump_one ( uint8_t *bytes, const GUI_editelem_T *editelem, bool used, uint32_t textlen ) 
+static void GUI_edit_dump_one ( uint8_t *bytes, const Edit_Receipe_T *editelem, bool used, uint32_t textlen ) 
 {
     List_Elem_T *ll_elem;
-    GUI_Elem_T  search_elem;
+    GUI_Edit_Enum  search_elem;
 
     printf(editelem->elem_name);
     if ( textlen > 0 ) {
@@ -257,7 +147,7 @@ static uint32_t GUI_edit_get_maxtextlen ( const GUI_Edit_T *editdata )
   uint32_t ret=0;
   uint32_t l;
   for ( uint32_t i=0; i < editdata->count; i++ ) {
-    l = strlen(editdata->gui_element[i].elem_name);
+    l = strlen(editdata->receipe[i].elem_name);
     if ( l > ret ) ret=l;
   }
   return ret;
@@ -281,7 +171,7 @@ void GUI_edit_dump_all(uint8_t *data, const GUI_Edit_T *editdata, bool padded )
     /* get the used bit */
     used = *(uint32_t *)(data + editdata->used_ofs ) & ( 1 << i );
     printf("%2d: ",i);
-    GUI_edit_dump_one(data, &editdata->gui_element[i], used, padlen); 
+    GUI_edit_dump_one(data, &editdata->receipe[i], used, padlen); 
     putchar('\n');
   }
 }
@@ -379,12 +269,12 @@ static void GUI_Edit_update( uint32_t idx, bool bIsUnset )
     }
 
     /* get the referenced edit element */
-    const GUI_editelem_T *editelem = &act_edit->gui_element[idx];
+    const Edit_Receipe_T *editelem = &act_edit->receipe[idx];
 
     /* Get the correct storage position of data */
     uint8_t *datapos = act_obj + editelem->elem_offset;
     lv_style_t **keks = (lv_style_t **)datapos;
-    GUI_Elem_T search_elem;
+    GUI_Edit_Enum search_elem;
     uint32_t search_idx;
     List_Elem_T *ll_elem;
     bool bNumeric;
@@ -447,7 +337,7 @@ static void GUI_Edit_update( uint32_t idx, bool bIsUnset )
  * @brief  List all globel GUI elements of actual edit type,
  * @param  editdata - edit receipe for raw data
  ******************************************************************************/
-void GUI_list_entries(const GUI_Elem_T elemtype )
+void GUI_list_entries(const GUI_Edit_Enum elemtype )
 {
   List_Elem_T* ptr = GUI_item_list;
   uint32_t i=0;
@@ -593,7 +483,7 @@ static bool GUI_Edit_execute_entry ( char *word, size_t wordlen, uint32_t idx )
     }
 
     /* get the referenced edit element */
-    const GUI_editelem_T *editelem = &act_edit->gui_element[idx];
+    const Edit_Receipe_T *editelem = &act_edit->receipe[idx];
 
     CMD_get_one_word( &word, &wordlen );
 
@@ -614,7 +504,7 @@ static bool GUI_Edit_execute_entry ( char *word, size_t wordlen, uint32_t idx )
          if ( editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_FONT ) {
             /* in Case of Styles/Fonts: if Parameter is '?', list all styles/fonts */
             if ( wordlen == 1 && *word =='?' ) {
-              GUI_Elem_T search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
+              GUI_Edit_Enum search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
               GUI_list_entries(search_elem);
               return true;
             }
