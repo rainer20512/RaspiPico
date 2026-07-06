@@ -875,13 +875,13 @@ static lv_obj_t * obj=NULL;
 
       switch((uint32_t)arg) {
     	case 1:
-        	GUI_Edit(&edit_style, &cur_style, NULL);
+        	GUI_Edit(&edit_style, NULL);
             break;
     	case 2:
-        	GUI_Edit(&edit_label, &cur_label, NULL);
+        	GUI_Edit(&edit_label, NULL);
             break;
     	case 3:
-        	GUI_Edit(&edit_arc, &cur_arc, NULL);
+        	GUI_Edit(&edit_arc, NULL);
             break;
 #if USE_LVGL > 0
     	case 4:
@@ -896,9 +896,17 @@ static lv_obj_t * obj=NULL;
             GUI_dump_coords(mylbl2);
             break;
 #endif
+#if DEBUG_GUIEDIT > 0
+        #include "../../GUI/gui_lists.h"
+        case 97: 
+            LL_Dump(GUI_item_list);
+            break;
+#endif
+#ifdef RP2040_M0_0
     	case 98:
             xml_parser_init();
             break;
+#endif
     	case 99:
             DBG_heap_useage();
             break;
@@ -919,10 +927,16 @@ static lv_obj_t * obj=NULL;
         { "Style Editor" ,          ctype_fn, .exec.fn = GUI_Test_Menu,VOID(1), "Edit Style(s)" },
         { "Label Editor",           ctype_fn, .exec.fn = GUI_Test_Menu,VOID(2), "Edit Label(s)" },
         { "Arc Editor",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(3), "Edit Arc(s)" },
+
 #if USE_LVGL > 0
         { "Draw Label",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(4), "Draw a fixed Label" },
 #endif
+#if DEBUG_GUIEDIT > 0
+        { "Dump GUI Elements",      ctype_fn, .exec.fn = GUI_Test_Menu,VOID(97), "Dump all GUI Elements" },
+#endif
+#ifdef RP2040_M0_0
         { "Reset XML Parser",	    ctype_fn, .exec.fn = GUI_Test_Menu,VOID(98),"Reset XML parser to known state" },
+#endif
         { "Heap Useage",	        ctype_fn, .exec.fn = GUI_Test_Menu,VOID(99),"Show Max Heap Useage" },
     };
     ADD_SUBMODULE(GUII);

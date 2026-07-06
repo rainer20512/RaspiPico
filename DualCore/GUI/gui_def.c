@@ -18,8 +18,15 @@
   #include "debug/debug_helper.h"
 #endif
 
+/******************************************************************************
+/* When setting default properties at compile time, keep in mind not to set 
+ * fonts bcs they are loaded at runtime. 
+ * Fonts may be set at runtime in "GUI_Init_Curr_Elems" by Accessing 
+ * "AllFonts"-Array
+ ******************************************************************************/
+
 const GUI_Style_T def_style = 
-    { .used         = 0b10001111111101011111,
+    { .used         = 0b10000111111101011111,
       .def_width    = 120, 
       .def_height   = 20, 
       .objalign     = LV_ALIGN_CENTER,
@@ -35,12 +42,11 @@ const GUI_Style_T def_style =
       .shadowcolor  = {0x80, 0x80, 0x80},
       .textalign    = LV_TEXT_ALIGN_CENTER,  
       .textcolor    = {0xff, 0x00, 0x00}, 
-      .textfont     = &w_font_bahn_sbc_40,
-      /* .arcwidth, .arcopa, .arccolor not set! */
+      /* textfont, .arcwidth, .arcopa, .arccolor not set! */
       .name         = "Style01",
     };
 
-GUI_Style_T cur_style = def_style;
+GUI_Style_T cur_style;    /* Init'ed by GUI_Init_Curr_Elems */
 
 const GUI_Label_T def_label =
   { .used    = 0b11110,
@@ -52,7 +58,7 @@ const GUI_Label_T def_label =
     .name    = "Label01",
 };
 
-GUI_Label_T cur_label = def_label;
+GUI_Label_T cur_label;    /* Init'ed by GUI_Init_Curr_Elems */
 
 const GUI_Arc_T def_arc = {
     .used     = 0b11111111100,
@@ -69,7 +75,7 @@ const GUI_Arc_T def_arc = {
     .name     = "Arc01",
 };
 
-GUI_Arc_T cur_arc = def_arc;
+GUI_Arc_T cur_arc;         /* Init'ed by GUI_Init_Curr_Elems */
 
 /* user friendly names of these of GUI elements */
 const char *EditNames[]  = GUI_EDITNAMES;
@@ -279,7 +285,7 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
          LL_append(&GUI_item_list, font);
          i++;
       }
-      printf("%d fonts loaded\n", AllFontNum1);
+      printf("%d fonts loaded from 0x%p\n", AllFontNum1,AllFonts1);
     }
 
     /******************************************************************************
@@ -448,7 +454,7 @@ bool IPC_Unpack_Transferbuf( IPC_GUI_Xfer_Buff_T *rxbuf, uint8_t *data, uint16_t
     /* copy to rxbuf */
     memcpy_fast(rxbuf, data, datalen); 
 
-    const GUI_Edit_T *editdata = GUI_edit_get_receipe_for_elemtype( rxbuf->elem_type );  
+    const GUI_Edit_T *editdata = Find_EditInfoByType( rxbuf->elem_type );  
     if ( !IPC_Unpack_Translate_Objs( rxbuf, editdata ) ) return false;
       
     return true;
@@ -456,6 +462,27 @@ bool IPC_Unpack_Transferbuf( IPC_GUI_Xfer_Buff_T *rxbuf, uint8_t *data, uint16_t
 
 #if defined(RP2040_M0_0)
 
+    /******************************************************************************
+     * After having received the fonts list from Core1, 
+     * @brief Load all known fonts _once_ into GUI elem list, 
+     * @note  Core0 implementation
+     *****************************************************************************/     
+    void GUI_Init_Fonts_Core0(bool b)
+    {
+      UNUSED(b);
+      List_Elem_T *font;
+
+      /* Iterate thru all defined fonts and insert them into global item list */
+      /* List of defined fonts _MUST BE_ terminated by NULL,NULL */
+      for ( uint32_t i = 0; i < AllFontNum0; i++ ) {
+         font = LL_New_Element(GUI_ELEM_FONT,  (void *)AllFonts0[i].font, AllFonts0[i].fontname, &AllFonts0[i], AllFonts0[i].fontsize);
+         LL_append(&GUI_item_list, font);
+      }
+      printf("%d fonts located at 0x%p\n", AllFontNum0, AllFonts0);
+
+      /* After fonts are being loaded from Core 1, current elements may be modified with font info */
+      GUI_Init_Curr_Elems();
+    }
 /* Buffer to send one GUI element */
 static IPC_GUI_Xfer_Buff_T sendbuf;
 /*
@@ -594,7 +621,7 @@ static void GUI_create_entry(uint8_t *data, const GUI_Edit_T *editdata )
 List_Elem_T *GUI_new_or_update_entry(uint8_t *data, GUI_Edit_Enum gui_elem )
 {
   /* Find the edit receipe */
-  const GUI_Edit_T *edit = GUI_edit_get_receipe_for_elemtype( gui_elem );
+  const GUI_Edit_T *edit = Find_EditInfoByType( gui_elem );
   if ( !edit ) return NULL;
 
   /* find position of "name" field in raw data */
@@ -611,6 +638,7 @@ List_Elem_T *GUI_new_or_update_entry(uint8_t *data, GUI_Edit_Enum gui_elem )
     GUI_create_entry(data, edit);
   }
 }
+
 
 #endif /* USE_GUI_INTERFACE > 0 */ 
 

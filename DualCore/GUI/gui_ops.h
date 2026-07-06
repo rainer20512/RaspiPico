@@ -18,6 +18,7 @@
 #if USE_GUI_INTERFACE > 0
 #include "../GUI/gui_def.h"
 
+void GUI_Init_Curr_Elems(void);
 
 #if defined(RP2040_M0_1) || defined(CORE1_SIM)
     extern GUI_Font_T  *AllFonts1;

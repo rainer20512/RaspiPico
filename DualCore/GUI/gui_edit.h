@@ -61,6 +61,9 @@ extern       GUI_Arc_T cur_arc;             /* actual arc settings  */
 
 
 typedef void (*OnExitFn) ( void );
-void GUI_Edit( const GUI_Edit_T *edit, void *anyobj, OnExitFn OnExit );
+void      GUI_edit_dump_all    (const GUI_Edit_T *editdata, bool padded );
+bool      GUI_Edit_SetItem     (char *arg, size_t argsize, const GUI_Edit_T *edit, uint32_t idx );
+uint32_t  GUI_Edit_SetUsedBits ( const GUI_Edit_T *editdata, uint32_t andMask, uint32_t orMask );
+void      GUI_Edit             ( const GUI_Edit_T *edit, OnExitFn OnExit );
 #endif /* USE_GUI_INTERFACE > 0 */
 #endif /* _GUIDEF_H_ */

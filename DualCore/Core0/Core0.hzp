@@ -94,6 +94,8 @@
       <file file_name="../GUI/gui_lists.h" />
       <file file_name="../GUI/gui_ops.c" />
       <file file_name="../GUI/gui_ops.h" />
+      <file file_name="../GUI/variant.c" />
+      <file file_name="../GUI/variant.h" />
     </folder>
     <folder Name="lvgl">
       <folder
@@ -843,7 +845,9 @@
           exclude=""
           filter=""
           path="../lvgl/src/xtra_font"
-          recurse="No" />
+          recurse="No">
+          <configuration Name="THUMB Debug" build_exclude_from_build="Yes" />
+        </folder>
         <file file_name="../lvgl/src/lv_api_map_v8.h" />
         <file file_name="../lvgl/src/lv_api_map_v9_0.h" />
         <file file_name="../lvgl/src/lv_api_map_v9_1.h" />

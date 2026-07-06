@@ -14,6 +14,7 @@
 #include "system/circbuf.h"
 #include "system/util.h"
 #include "dev/i2cx.h"
+#include "parser_specs.h"
 #include "xml_feeder.h"
 #include "xml_parser_main.h"
 
@@ -32,6 +33,13 @@ Parser_Stack_T *xml_parser_tos=NULL;
 
 /* actual parser element */
 Parser_Item_T actual;
+
+
+/* Root may contain component(s) plus optional prolog */
+const char *xml_root[]      = XML_ROOT_SET;
+
+/* Component may contain styles, labels, arcs, NULL terminated array */
+const char *xml_component[] = XML_COMPONENT_SET;
 
 /******************************************************************************
  * @brief Push actual parser state to stack. Needed mem is allocated from heap
@@ -63,8 +71,9 @@ Parser_Stack_T * xml_parser_push ( Parser_Item_T *src )
 bool xml_parser_pop  ( Parser_Item_T *dest )
 {
   if ( XML_STACK_EMPTY() ) return false;
-  
   Parser_Stack_T *oldtos = xml_parser_tos;
+
+  if ( oldtos->parser_state.OnExit ) oldtos->parser_state.OnExit( &oldtos->parser_state );
   if (dest) *dest = oldtos->parser_state;
   xml_parser_tos = oldtos->next;
 
@@ -75,10 +84,11 @@ bool xml_parser_pop  ( Parser_Item_T *dest )
 /******************************************************************************
  * @brief  set all field of global var Parser_Item_T actual
  *****************************************************************************/
-void xml_set_actual( ParserFunc f, uint32_t st, const char *ew, const char *n )
+void xml_set_actual( ParserFunc f, uint32_t st, const GUI_Edit_T *edit, const char *ew, const char *n )
 {
     actual.pActual  = f;
     actual.state    = st;
+    actual.edit     = edit;
     actual.exitword = ew;
 #if DEBUG_PARSER > 0
     actual.name     = n;

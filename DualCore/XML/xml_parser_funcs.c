@@ -16,20 +16,23 @@
 #include "parser_specs.h"
 #include "xml_parser_main.h"
 #include "xml_feeder.h"
+#include "../../GUI/gui_edit.h"
 
 
+#if 0
 #define FLAG_CLOSEBRACKET       (1 <<  0)    /* Flag for "starttoken had '>'" at end */
 
 #define SET_FLAG(f)             actual.flags |= f;
 #define CLR_FLAG(f)             actual.flags &= ~(f)
 #define IS_FLAG_SET(f)          (actual.flags & f)
+#endif
 
-#define ATTR_MAXNAMELEN         16
 #define ATTR_MAXVALUELEN        64
+
 
 /* Helper structure to store one name/value pair when parsing attribute lists */
 typedef struct {
-  char name [ATTR_MAXNAMELEN];
+  char name [ID_MAXNAMELEN];
   char value[ATTR_MAXVALUELEN];
   uint8_t namelen;
   uint8_t valuelen;
@@ -41,15 +44,17 @@ Parser_Attr_T *act_attr = NULL;
 /* forward declarations ******************************************************/
 bool parse_prolog       ( char *token, uint32_t tokenlength, uint32_t state );
 bool parse_components   ( char *token, uint32_t tokenlength, uint32_t state );
-bool parse_lvgl_elem   ( char *token, uint32_t tokenlength, uint32_t state );
+bool parse_lvgl_elem    ( char *token, uint32_t tokenlength, uint32_t state );
 bool parse_attributes   ( char *token, uint32_t tokenlength, uint32_t state );
 
+/* item parse exit callbacks */
+void exit_lvgl_elem     ( Parser_Item_T *toPop);
 /******************************************************************************
  * @brief print a vector with length len
  *        quotation marks are handeled as every other character
  * @retval index of character in token [beginning with 0] or -1 if not found
  *****************************************************************************/
-static void DumpToken(char* token, uint32_t tokenlength) 
+void DumpToken(const char* token, uint32_t tokenlength) 
 {
     for( ; tokenlength--; token++) {
         DEBUG_PUTC(*token);
@@ -66,7 +71,7 @@ static void DumpToken(char* token, uint32_t tokenlength)
  *****************************************************************************/
  void AttrCopy(uint8_t *src, uint32_t srclen, uint32_t option )
  {
-    uint32_t  copylen = MIN(srclen, option==1 ? ATTR_MAXNAMELEN : ATTR_MAXVALUELEN);
+    uint32_t  copylen = MIN(srclen, option==1 ? ID_MAXNAMELEN : ATTR_MAXVALUELEN);
     uint8_t *lenptr = ( option == 1 ? &act_attr->namelen : &act_attr->valuelen );
     if ( copylen < srclen ) {
         #if DEBUG_PARSER > 0
@@ -84,6 +89,37 @@ static void DumpToken(char* token, uint32_t tokenlength)
 
     #endif 
 
+}
+
+/******************************************************************************
+ * @brief Update the GUI element in "edit" with the name/value combination
+ *        in act_attr
+ * @param edit  - GUI element description and workspace to use
+ * @param act_attr modul global variable with name/value
+ * @retval token
+ *****************************************************************************/
+void AttrUpdate( const GUI_Edit_T *edit )
+{
+    if (!edit) {
+        DEBUG_PRINTF("Err: AttrUpdate: No Edit data!!");
+        return;
+    }
+
+    int32_t idx = GetReceipeIdxByName( edit, act_attr->name, act_attr->namelen);
+    if ( idx < 0 ) {
+        DEBUG_PRINTF("Unknown Property Name: >");
+        DumpToken(act_attr->name, act_attr->namelen);
+        DEBUG_PUTC('<');DEBUG_PUTC('\n');
+        return;
+    }
+
+    if( !GUI_Edit_SetItem(act_attr->value, act_attr->valuelen, edit, (uint32_t)idx ) ) {
+        DEBUG_PRINTF("Invalid value >");
+        DumpToken(act_attr->value, act_attr->valuelen);
+        DEBUG_PRINTF(" for property >");
+        DumpToken(act_attr->name, act_attr->namelen);
+        DEBUG_PUTC('<');DEBUG_PUTC('\n');
+    }
 }
 
 /******************************************************************************
@@ -151,25 +187,11 @@ static bool CheckEscapedCloseBracket(char* token, uint32_t *tokenlength, const c
 static bool CheckCloseBracket(char* token, uint32_t *tokenlength) {
   if ( *(token+*tokenlength-1) == CLOSEBRACKET ) {
       (*tokenlength)--;
-      SET_FLAG(FLAG_CLOSEBRACKET)
+      // not used SET_FLAG(FLAG_CLOSEBRACKET) 
       return true;
   } 
   return false;
 }
-
-#if 0
-/******************************************************************************
- * @brief simplified strcmp with length delimiter
- * @retval 1 if s1 and s2 are identical up to len
- *****************************************************************************/
-static uint32_t strncmp( const char *s1, const char *s2, uint32_t len )
-{
-    while ( len-- ) {
-        if ( *(s1++) != *(s2++) ) return 0;
-    }
-    return 1;
-}
-#endif
 
 /******************************************************************************
  * @brief Check whether token has an exact match in "alternatives"
@@ -239,6 +261,18 @@ bool ExitLevel(void)
     return true;
 }
 
+void exit_lvgl_elem ( Parser_Item_T *toPop)
+{
+#if DEBUG_PARSER > 0
+  DEBUG_PRINTF("OnExit of %s:\n", toPop->name);
+#endif
+  const GUI_Edit_T *edit = toPop->edit;
+  if (!edit)  {
+      DEBUG_PRINTF("No edit\n");
+  } else {
+      GUI_edit_dump_all(edit, true );
+  }
+}
 /******************************************************************************
  * @brief parse lvgl element
  * @param  token       - actual input token
@@ -271,9 +305,10 @@ bool parse_lvgl_elem ( char *token, uint32_t tokenlength, uint32_t state )
         /* no exit word, no closing brackets */
         /* now check for elementame w/o closing brackets, that means: parse attribut list for that element */
         if ( CheckOneWord(token+1, reducedlength, actual.exitword) ) {
-            /* keep actual state, push it and start parsing attributes */
+            /* forward edit receipe, keep actual state, push it and start parsing attributes */
+            const GUI_Edit_T *keep = actual.edit;
             xml_parser_push(&actual);
-            SET_ACTUAL(parse_attributes, 0, NULL, "attributes" );
+            SET_ACTUAL(parse_attributes, 0, keep, NULL, "attributes" );
             return true;
         }
     }
@@ -315,11 +350,45 @@ bool parse_component ( char *token, uint32_t tokenlength, uint32_t state )
         if ( CheckOneWord(token+1, reducedlength, actual.exitword) ) {
             /* keep actual state, push it and start parsing attributes */
             xml_parser_push(&actual);
-            SET_ACTUAL(parse_attributes, 0, NULL, "attributes" );
+            /* component has no attributes, so edit is NULL */
+            SET_ACTUAL(parse_attributes, 0, NULL, NULL, "attributes" );
             return true;
         }
     }
+
     /* finally check for all subitems */
+    uint32_t idx = CheckWord(token+1, reducedlength, xml_component, &last_exitword);
+    if ( !idx ) {
+        /* not found */
+        #if DEBUG_PARSER > 0
+                DEBUG_PRINTF("component: found unhandeled subitem");
+                DumpToken(token+1, reducedlength);
+                DEBUG_PUTC('\n');
+        #endif 
+        return true;
+    }
+
+    /* Any allowed component item */
+    /* reset state to initial, push actual state 
+    /* then store exit word and start parsing item */
+    actual.state = 0;
+    xml_parser_push(&actual);
+    /* Get edit receipe, there should be one */
+    const GUI_Edit_T *edit = FindEditInfoByName( token+1, reducedlength);
+    if (!edit) {
+        #if DEBUG_PARSER > 0
+                DEBUG_PRINTF("Subitem w/o Receipe:");
+                DumpToken(token+1, reducedlength);
+                DEBUG_PUTC('\n');
+        #endif 
+    }
+    SET_ACTUAL(parse_lvgl_elem, 0, edit, last_exitword, xml_component[idx-1] );
+    /* Set callback when parsing of lvgl elem is done */
+    actual.OnExit = exit_lvgl_elem;
+    /* Reset all data fields GUI element */
+    GUI_Edit_SetUsedBits(edit, 0, 0);
+    xml_parse(token, tokenlength);
+#if 0
     switch( CheckWord(token+1, reducedlength, xml_component, &last_exitword)  ) {
       case 1:
          /* Style */
@@ -327,7 +396,7 @@ bool parse_component ( char *token, uint32_t tokenlength, uint32_t state )
          /* then store exit word and start parsing component */
         actual.state = 0;
         xml_parser_push(&actual);
-        SET_ACTUAL(parse_lvgl_elem, 0, last_exitword, "style" );
+        SET_ACTUAL(parse_lvgl_elem, 0, &edit_style, last_exitword, "style" );
         xml_parse(token, tokenlength);
         break;
       case 2:
@@ -336,7 +405,7 @@ bool parse_component ( char *token, uint32_t tokenlength, uint32_t state )
          /* then store exit word and start parsing component */
         actual.state = 0;
         xml_parser_push(&actual);
-        SET_ACTUAL(parse_lvgl_elem, 0, last_exitword, "label" );
+        SET_ACTUAL(parse_lvgl_elem, 0, &edit_label, last_exitword, "label" );
         xml_parse(token, tokenlength);
         break;
       case 3:
@@ -345,7 +414,7 @@ bool parse_component ( char *token, uint32_t tokenlength, uint32_t state )
         /* then store exit word and start parsing component */
         actual.state = 0;
         xml_parser_push(&actual);
-        SET_ACTUAL(parse_lvgl_elem, 0, last_exitword, "arc" );
+        SET_ACTUAL(parse_lvgl_elem, 0, &edit_arc, last_exitword, "arc" );
         xml_parse(token, tokenlength);
         break;
 #if DEBUG_PARSER > 0
@@ -353,6 +422,7 @@ bool parse_component ( char *token, uint32_t tokenlength, uint32_t state )
         DEBUG_PRINTF("component: found unhandeled content\n");
 #endif 
     } /* inner case */
+#endif
    return true; 
 } 
 /******************************************************************************
@@ -389,7 +459,7 @@ bool parse_root ( char *token, uint32_t tokenlength, uint32_t state )
          /* then store exit word and start parsing component */
         actual.state = 0;
         xml_parser_push(&actual);
-        SET_ACTUAL(parse_component, 0, last_exitword, "component" );
+        SET_ACTUAL(parse_component, 0, NULL, last_exitword, "component" );
         xml_parse(token, tokenlength);
         break;
       case 2:
@@ -398,7 +468,7 @@ bool parse_root ( char *token, uint32_t tokenlength, uint32_t state )
          /* then store exit word and start parsing component */
         actual.state = 0;
         xml_parser_push(&actual);
-        SET_ACTUAL(parse_component, 0, last_exitword, "prolog" );
+        SET_ACTUAL(parse_component, 0, NULL, last_exitword, "prolog" );
         xml_parse(token, tokenlength);
         break;
 #if DEBUG_PARSER > 0
@@ -502,6 +572,8 @@ bool parse_attributes ( char *token, uint32_t tokenlength, uint32_t state )
             if ( qmpos >= 0 ) {
               /* Copy attribute value */
               AttrCopy(token+1, qmpos, 2);
+              /* And set(update attribute value */
+              AttrUpdate(actual.edit);
             }
             /* something behind second '"' ? */
             if ( qmpos < tokenlength - 2 ) parse_attributes(token+1+qmpos+1, tokenlength-qmpos-2, actual.state);
@@ -529,7 +601,7 @@ void xml_parser_init(void)
    if ( !act_attr ) act_attr = my_malloc(sizeof(Parser_Attr_T));
 
    /* setup to parse root element */
-   SET_ACTUAL(parse_root, 0, NULL, "Root" );
+   SET_ACTUAL(parse_root, 0, NULL, NULL, "Root" );
    i2c_feeder_init();
 }
 
@@ -545,7 +617,7 @@ void xml_parser_deinit(void)
    if ( act_attr ) my_free(act_attr);
 
    /* setup to parse root element */
-   SET_ACTUAL(parse_root, 0, NULL, "Root" );
+   SET_ACTUAL(parse_root, 0, NULL, NULL, "Root" );
    i2c_feeder_init();
 }
 

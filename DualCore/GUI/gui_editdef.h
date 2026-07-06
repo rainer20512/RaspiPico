@@ -51,6 +51,7 @@ typedef struct {
   uint16_t   used_ofs;          /* offset of "used" bitfield in data structure    */
   uint16_t   name_ofs;          /* offset of "name" string in data structure      */
   uint16_t   total_size;        /* total size of GUI-Element data structure       */
+  uint8_t    *workspace;        /* pointer to associated GUI element data         */
   Edit_Receipe_T receipe[];     /* array edit receipes for all gui elements       */
 } GUI_Edit_T;
 
@@ -60,9 +61,12 @@ extern const GUI_Edit_T edit_label;        /* Edit receipe for label variables  
 extern const GUI_Edit_T edit_arc;          /* Edit receipe for arc variables      */
 
 /* Get the receipe for a GUI elemnt type                                          */
-const GUI_Edit_T    *GUI_edit_get_receipe_for_elemtype( GUI_Edit_Enum gui_elemtype );
-/* Find a Receipe by name or property index                                       */
-const Edit_Receipe_T *FindReceipeByName   ( const GUI_Edit_T *edit, const char *name);
+const GUI_Edit_T    *Find_EditInfoByType( GUI_Edit_Enum gui_elemtype );
+const GUI_Edit_T    *FindEditInfoByName( const char *name, const size_t namelen);
+
+/* Search for a property ba name and return its index                             */
+int32_t GetReceipeIdxByName( const GUI_Edit_T *edit, const char *name, const size_t namelen);
+/* Find a Receipe by property index                                               */
 const Edit_Receipe_T *FindReceipeByPropIdx( const GUI_Edit_T *edit, uint8_t prop_idx);
 
 #endif /* USE_GUI_INTERFACE > 0 */

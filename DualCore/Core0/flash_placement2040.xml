@@ -1,6 +1,6 @@
 <!DOCTYPE Linker_Placement_File>
 <Root name="Flash Section Placement">
-  <MemorySegment name="$(FLASH_NAME:FLASH);FLASH1">
+  <MemorySegment name="$(FLASH_NAME:FLASHCORE0);FLASH0">
     <ProgramSection alignment="4" load="Yes" name=".boot" />
     <ProgramSection alignment="0x100" load="Yes" name=".vectorscore0" address_symbol="__vectors_start__" end_symbol="__vectors_end__" />
     <ProgramSection alignment="4" load="Yes" name=".init" />
@@ -24,7 +24,7 @@
     <!-- RHB inserted: sort all preinit-functions of name .preinit_array.XXXXX into the following flash section --> 
     <ProgramSection alignment="4" load="Yes" name=".preinit_array" inputsections="KEEP (*(SORT(.preinit_array.*)))" />
   </MemorySegment>
-  <MemorySegment name="$(RAM_NAME:RAM);SRAM;RAM1">
+  <MemorySegment name="$(RAM_NAME:RAM);SRAM;RAM">
     <!-- The follwing section was inserted to meet pico sdk vector handling -->
     <ProgramSection alignment="0x100" load="No" name=".ram_vector_table" />
     <ProgramSection alignment="4" load="No" name=".bss" />
@@ -38,10 +38,10 @@
     <ProgramSection alignment="8" size="__STACKSIZE__" load="No" name=".stack" />
     <ProgramSection alignment="8" size="__STACKSIZE_PROCESS__" load="No" name=".stack_process" />
   </MemorySegment>
-  <MemorySegment name="$(FLASH2_NAME:FLASH2)">
+  <MemorySegment name="$(FLASH_NAME:FLASHCORE1);FLASH1">
     <ProgramSection alignment="4" load="Yes" name=".text2" />
     <ProgramSection alignment="4" load="Yes" name=".rodata2" />
-    <ProgramSection alignment="4" load="Yes" runin=".data2_run" name=".data2" />
+<!--    <ProgramSection alignment="4" load="Yes" runin=".data2_run" name=".data2" /> -->
   </MemorySegment>
   <MemorySegment name="$(RAM2_NAME:RAM2)">
     <ProgramSection alignment="4" load="No" name=".data2_run" />

@@ -14,21 +14,25 @@
 #define _XML_PARSER_MAIN_H_
 #include "config/config.h"
 #include "system/circbuf.h"
+#include "../../GUI/gui_editdef.h"
 
+struct Parser_Item;
 
-typedef bool ( *ParserFunc ) (char *token, uint32_t tokenlen, uint32_t state );
+typedef bool ( *ParserFunc  ) (char *token, uint32_t tokenlen, uint32_t state );
+typedef void ( *ParserOnPop ) ( struct Parser_Item *toPop);
 
 /******************************************************************************
  * Structure to store the actual parser state , ie
  * - actual parser function
  *****************************************************************************/
-typedef struct {
-  ParserFunc pActual;   /* actual parsing function */
-  uint32_t state;       /* optional state within that function */
-  uint32_t flags;       /* optional flag bits */
-  const char *exitword; /* optional exit word to exit the actual parse level */
+typedef struct Parser_Item{
+  ParserFunc pActual;     /* actual parsing function */
+  uint32_t state;         /* optional state within that function */
+  const GUI_Edit_T *edit; /* edit receipe for actual item, or NULL if no props */
+  const char *exitword;   /* optional exit word to exit the actual parse level */
+  ParserOnPop OnExit;     /* callback fn _before_ item is popped from stack    */
 #if DEBUG_PARSER > 0
-  const char *name;     /* user friendly name of that parsing element */
+  const char *name;       /* user friendly name of that parsing element */
 #endif 
 } Parser_Item_T;
 
@@ -46,11 +50,11 @@ bool            xml_parser_pop  ( Parser_Item_T *dest );
 
 void xml_parser_init  (void);
 void xml_parse        ( char *token, uint32_t tokenlength );
-void xml_set_actual   ( ParserFunc f, uint32_t st, const char *ew, const char *n );
+void xml_set_actual   ( ParserFunc f, uint32_t st, const GUI_Edit_T *edit, const char *ew, const char *n );
 #if DEBUG_PARSER > 0
-    #define SET_ACTUAL(f,st,e,n)  xml_set_actual(f,st,e,n)
+    #define SET_ACTUAL(f,st,ed,ex,n)  xml_set_actual(f,st,ed,ex,n)
 #else
-    #define SET_ACTUAL(f,st,n)  xml_set_actual(f,st,e,NULL)
+    #define SET_ACTUAL(f,st,ed,ex,n)  xml_set_actual(f,st,ed,ex,NULL)
 #endif
 
 bool task_init_xml    (void); 

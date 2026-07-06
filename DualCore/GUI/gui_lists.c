@@ -181,7 +181,35 @@ void LL_delete ( List_Elem_T **llist, List_Elem_T *delptr )
       llist = &(*llist)->ll_next;
     }
 }
+
+#if DEBUG_GUIEDIT > 0
+
+  #include "debug/debug_helper.h"
+
+  /*-----------------------------------------------------------------------------
+   * @brief  delete the list entry delptr points to 
+   * @param  llist  - linked list to use
+   * @param  delptr - element to be removed
+   *         initialize to list head
+   * @retval ptr to found entry
+   * @note   to progress, caller must use LL_next
+   *---------------------------------------------------------------------------*/
+  void LL_Dump ( List_Elem_T *llist  )
+  {
+      uint32_t cnt=0;
+       while ( llist) {
+         DEBUG_PRINTF("%2d: %15s %20s ", cnt, EditNames[llist->ll_type], llist->ll_name);
+         if ( llist->ll_type == GUI_ELEM_FONT )
+            DEBUG_PRINTF("%5d",llist->ll_additional);
+         else
+            DEBUG_PRINTF("     ");
+         DEBUG_PRINTF(" 0x%p\n", llist->ll_lvgl_obj); 
+         cnt++;
+         llist = llist->ll_next;
+      }
+  }
     
+#endif /* DEBUG_GUIEDIT > 0 */    
 
 
 

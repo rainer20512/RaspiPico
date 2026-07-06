@@ -2,10 +2,14 @@
 #if USE_GUI_INTERFACE > 0
 #include <string.h>
 #include "debug/debug_helper.h"
-	
+
+#include "parser_specs.h"
 #include "../GUI/gui_def.h"
 #include "../GUI/gui_edit.h"
 
+
+/*** forward declatations *****************************************************/
+void DumpToken        (const char* token, uint32_t tokenlength); 
 
 
 /* Edit receipe for Style structure */
@@ -17,6 +21,7 @@ const  GUI_Edit_T edit_style = {
   .used_ofs      = offsetof(GUI_Style_T, used),
   .name_ofs      = offsetof(GUI_Style_T, name),
   .total_size    = sizeof  (GUI_Style_T),
+  .workspace     = (uint8_t*)&cur_style,
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .receipe   = {  
 /*01*/
@@ -53,6 +58,7 @@ const  GUI_Edit_T edit_label = {
   .used_ofs      = offsetof(GUI_Label_T, used),
   .name_ofs      = offsetof(GUI_Label_T, name),
   .total_size    = sizeof  (GUI_Label_T),
+  .workspace     = (uint8_t*)&cur_label,
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .receipe   = { 
     { LABEL_STYLE,        "style",        GUI_STYLE,  offsetof(GUI_Label_T, style) }, 
@@ -70,6 +76,7 @@ const  GUI_Edit_T edit_arc = {
   .used_ofs      = offsetof(GUI_Arc_T, used),
   .name_ofs      = offsetof(GUI_Arc_T, name),
   .total_size    = sizeof  (GUI_Arc_T),
+  .workspace     = (uint8_t*)&cur_arc,
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .receipe   = { 
 /*01*/
@@ -89,31 +96,30 @@ const  GUI_Edit_T edit_arc = {
   },
 };
 
-/* one pair of GUI_Edit_Enum -> GUI_Edit_T  */
+/* one triple of GUI_Edit_Enum or ElementName -> GUI_Edit_T  */
 struct receipes_S {
-  GUI_Edit_Enum        gui_type;
+  GUI_Edit_Enum     gui_type;
   const GUI_Edit_T* gui_edit;
+  const char        name[ID_MAXNAMELEN];
 };
 
 /* complete list of Gui_elem_t -> Gui_Edit_T */
 static const struct receipes_S gui_to_receipe[GUI_ELEM_MAX] = {
-    { GUI_ELEM_NOTYPE, NULL },
-    { GUI_ELEM_FONT, NULL },
-    { GUI_ELEM_STYLE, &edit_style },
-    { GUI_ELEM_LABEL, &edit_label },
-    { GUI_ELEM_ARC,   &edit_arc   },
+    { GUI_ELEM_NOTYPE, NULL,        NULL },
+    { GUI_ELEM_FONT,   NULL,        NULL},
+    { GUI_ELEM_STYLE,  &edit_style, STYLE_IDSTR },
+    { GUI_ELEM_LABEL,  &edit_label, LABEL_IDSTR },
+    { GUI_ELEM_ARC,    &edit_arc,   ARC_IDSTR,   },
 };
 
 /******************************************************************************
- * @brief  Get the edit receipe for a GUI element
- * @param  gui_type  - GUI element type for what the receipe is requested
- * @param  editdata - edit receipe for raw data
+ * @brief  Get the edit receipe for a GUI element idetifiey by GUI Type ID
+ * @param  gui_type  - GUI element type ID for what the receipe is requested
  * @retval ptr to the receipe or NULL, if not found
  ******************************************************************************/
-const GUI_Edit_T *GUI_edit_get_receipe_for_elemtype( GUI_Edit_Enum gui_type )
+const GUI_Edit_T *Find_EditInfoByType( GUI_Edit_Enum gui_type )
 {
-    uint32_t limit = sizeof(gui_to_receipe)/sizeof(struct receipes_S);
-    for ( uint32_t i=0; i <limit; i++ ) {
+    for ( uint32_t i=0; i <GUI_ELEM_MAX; i++ ) {
         if ( gui_to_receipe[i].gui_type == gui_type ) return gui_to_receipe[i].gui_edit;
     }
     #if DEBUG_GUIEDIT
@@ -123,22 +129,57 @@ const GUI_Edit_T *GUI_edit_get_receipe_for_elemtype( GUI_Edit_Enum gui_type )
 }
 
 /******************************************************************************
- * @brief  Find the edit receipe for one property of an gui edit description 
+ * @brief  Find the edit receipe for an GUI element identified by name    
+ * @param  name  - GUI element name for what the receipe is requested
+ * @param  namelen - length of namestr
+ * @param  editdata - edit receipe for raw data
+ * @retval ptr to the receipe or NULL, if not found
+ ******************************************************************************/
+const GUI_Edit_T *FindEditInfoByName( const char *name, const size_t namelen)
+{
+    for ( uint32_t i=0; i <GUI_ELEM_MAX; i++ ) {
+        if ( strncmp(gui_to_receipe[i].name,name, namelen) == 0 ) 
+            return gui_to_receipe[i].gui_edit;
+    }
+    #if DEBUG_GUIEDIT
+        DEBUG_PUTS("ErrNo Receipe for GUI Element ");
+        DumpToken(name, namelen);
+        DEBUG_PUTC('\n');
+    #endif
+    return NULL;
+}
+
+#if 0
+/******************************************************************************
+ * @brief simplified strcmp with length delimiter
+ * @retval 1 if s1 and s2 are identical up to len
+ *****************************************************************************/
+static uint32_t strncmp( const char *s1, const char *s2, size_t len )
+{
+    while ( len-- ) {
+        if ( *(s1++) != *(s2++) ) return 0;
+    }
+    return 1;
+}
+#endif
+
+/******************************************************************************
+ * @brief  Find the  index for one property of an gui edit description 
 *          by the name of that property
  * @param  edit  - complete GUI element edit description
- * @param  name  - property name to find
- * @retval ptr to the single receipe or NULL, if not found
+ * @param  name/namelen  - property name to find
+ * @retval index of the property in "edit" (0 ...n) or -1 if not found
  * @note   no case conversion, match only if identical
  ******************************************************************************/
-const Edit_Receipe_T *FindReceipeByName   ( const GUI_Edit_T *edit, const char *name)
+int32_t GetReceipeIdxByName( const GUI_Edit_T *edit, const char *name, const size_t namelen)
 {
     for ( uint32_t i = 0; i < edit->count; i++ ) {
-        if ( strcmp(edit->receipe[i].elem_name, name) == 0 ) {
-            return &edit->receipe[i];
+        if ( strncmp(edit->receipe[i].elem_name, name, namelen) == 0 ) {
+            return i;
         }
     }
 
-    return NULL;
+    return -1;
 }
 
 /******************************************************************************

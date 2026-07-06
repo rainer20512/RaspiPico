@@ -41,7 +41,6 @@ void Init_OtherDevices(void)
 #include "task/minitask.h"
 #include "interpreters.h"
 #include "system/periodic.h"
-#include "xml_parser_main.h"
 
 #if USE_USB > 0
     void U2U_InitTask(void);
@@ -52,9 +51,12 @@ void Init_OtherDevices(void)
     bool task_init_lvgl1(void);
     void task_handle_lvgl1(uint32_t arg);
 #endif
-#if USE_GUI_INTERFACE &&  defined(RP2040_M0_0)
-    bool task_init_lvgl0(void);
-    void task_handle_lvgl0(uint32_t arg);
+#if defined(RP2040_M0_0)
+#include "xml_parser_main.h"
+    #if USE_GUI_INTERFACE 
+        bool task_init_lvgl0(void);
+        void task_handle_lvgl0(uint32_t arg);
+    #endif
 #endif
 
 void task_handle_out  (uint32_t);

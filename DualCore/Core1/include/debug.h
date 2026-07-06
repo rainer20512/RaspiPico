@@ -47,6 +47,7 @@
 #define DEBUG_PERIODIC      1
 #define DEBUG_SLEEP_STOP    0
 #define DEBUG_FEATURES      1 
+#define DEBUG_GUIEDIT       1
 
 #define DEBUG_PRINT_ADDITIONAL_TIMESTAMPS 0
 

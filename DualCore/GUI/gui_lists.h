@@ -12,7 +12,7 @@
 #define LL_MAX_NAMELEN 20
 
 typedef struct List_Elem{
-  GUI_Edit_Enum         ll_type;      /* type of list entry */
+  GUI_Edit_Enum    ll_type;        /* type of list entry */
   char             *ll_name;       /* ptr to friendly name of entr, may be a part of data entry */
   uint16_t         ll_additional;  /* optional second identifying property                      */
   void             *ll_entry;      /* ptr to the entry itself, typeless */
@@ -31,9 +31,12 @@ List_Elem_T *LL_iterate_by_type ( List_Elem_T *llist, GUI_Edit_Enum search_type 
 List_Elem_T *LL_find_by_type_n_name ( List_Elem_T *llist, GUI_Edit_Enum search_type, const char *name );
 List_Elem_T *LL_find_by_type_name_additional ( List_Elem_T *llist, GUI_Edit_Enum search_type, const char *name, uint32_t additional );
 List_Elem_T *LL_find_by_type_n_obj  ( List_Elem_T *llist, GUI_Edit_Enum search_type, void *lvgl_obj );
-
 void        LL_delete ( List_Elem_T **llist, List_Elem_T *delptr );
 
-
+#if DEBUG_GUIEDIT > 0
+  void LL_Dump ( List_Elem_T *llist  );
+#else
+  #define LL_Dump()
+#endif
 #endif /* USE_LVGL */
 #endif /* _GUI_LISTS_H_ */

@@ -172,7 +172,7 @@ typedef struct {
 
 void GUI_dump_coords ( lv_obj_t * obj );
 void GUI_Init_Fonts_Core1(void);
-
+void GUI_Init_Fonts_Core0(bool);
 struct List_Elem;
 struct List_Elem *GUI_new_or_update_entry(uint8_t *data, GUI_Edit_Enum gui_elem );
 

@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "cmdline.h"
 
+#include "../GUI/variant.h"
 #include "../GUI/gui_def.h"
 #include "../GUI/gui_edit.h"
 #include "../GUI/gui_lists.h"
@@ -13,31 +14,11 @@
 
 
 
-/* helper struct to define a string or font by char vector and length */ 
-/* and fontsize (only for fonts  )*/
-struct strfont { 
-    char *text;
-    size_t len;
-    uint8_t fontsize;
-};
-
-/* module global variable to hold data of edited item */
-static union {
-      uint32_t   u32;
-      uint32_t   u16[2];
-      uint8_t    u8[4];
-      int8_t     i8[4];
-      int16_t    i16[2];
-      int32_t    i32;
-      lv_color_t rgb;
-      struct strfont strfont;
-} GUI_Edit_tempval;
+Variant_T V_tempval;
 
 /* module global variable to copy string data out of inbuf */
 char tempstr[GUI_MAX_NAMELEN];
 
-/* the following two variables are set/maintained by "GUI_Edit" */
-uint8_t          *act_obj;    /* actual edited object   */
 const GUI_Edit_T *act_edit;   /* object's edit receipe  */
 OnExitFn         OnExitEdit;  /* Callback on Exit of Editing */
 
@@ -75,29 +56,25 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const Edit_Receipe_T *editelem, 
 
     /* copy data and output with specified format */
     /* GUI String requires special handling       */
-    GUI_Edit_tempval.u32=0;
+    V_Init(&V_tempval);
     switch ( editelem->elem_type ) {
       case GUI_STRING:
+           /* In case of string store ptr to string, it is NULL terminated */
+           V_tempval.str.text = (char *)bytes+editelem->elem_offset;
+           printf("%s", V_tempval.str.text );
+           break;
       case GUI_STYLE:
       case GUI_FONT:
-          switch ( editelem->elem_type ) {
-            case GUI_STRING:
-               /* In case of string store ptr to string */
-               GUI_Edit_tempval.strfont.text = (char *)bytes+editelem->elem_offset;
-               break;
-            case GUI_STYLE:
-            case GUI_FONT:
-               /* In case of Style or Font find it in GUI item list and store the name*/
-               search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
-               ll_elem = LL_find_by_type_n_obj( GUI_item_list, search_elem, *(void **)(bytes+editelem->elem_offset) );
-               GUI_Edit_tempval.strfont.text = (char *)ll_elem->ll_name;
-               /* In case of Fonts,also get the fontsize */
-               if ( search_elem == GUI_ELEM_FONT )
-                  GUI_Edit_tempval.strfont.fontsize = ((GUI_Font_T*)ll_elem->ll_entry)->fontsize;
-               break;
+           /* In case of Style or Font find it in GUI item list and store the name*/
+           search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
+           ll_elem = LL_find_by_type_n_obj( GUI_item_list, search_elem, *(void **)(bytes+editelem->elem_offset) );
+           V_tempval.font.fontname.text = (char *)ll_elem->ll_name;
+           printf("%s", V_tempval.font.fontname.text );
+           /* In case of Fonts,also get the fontsize */
+           if ( search_elem == GUI_ELEM_FONT ) {
+              V_tempval.font.fontsize = ((GUI_Font_T*)ll_elem->ll_entry)->fontsize;
+              printf(" %u", V_tempval.font.fontsize );
           }
-          printf("%s", GUI_Edit_tempval.strfont.text );
-          if (search_elem == GUI_ELEM_FONT) printf(" %u", GUI_Edit_tempval.strfont.fontsize );
           break;
       case GUI_UINT8:
       case GUI_UINT16:
@@ -107,29 +84,29 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const Edit_Receipe_T *editelem, 
       case GUI_INT16:
       case GUI_INT32:
           /* handle all tpye of numbers by just copying the raw bytes to tempval */
-          memmove(GUI_Edit_tempval.u8, bytes+editelem->elem_offset, GET_GUI_ELEM_LEN(editelem->elem_type) );
+          memmove(V_tempval.u8, bytes+editelem->elem_offset, GET_GUI_ELEM_LEN(editelem->elem_type) );
           /* And print with different formats/ lengths */
           switch(editelem->elem_type) {
             case GUI_UINT8:
-              printf("%u", GUI_Edit_tempval.u8[0] );
+              printf("%u", V_Get_U8(&V_tempval) );
               break;
             case GUI_UINT16:
-              printf("%u", GUI_Edit_tempval.u16[0] );
+              printf("%u", V_Get_U16(&V_tempval) );
               break;
             case GUI_RGB888:
-              printf("0x%02x%02x%02x",  GUI_Edit_tempval.rgb.blue, GUI_Edit_tempval.rgb.green, GUI_Edit_tempval.rgb.red );
+              printf("0x%06x", V_Get_Rgb(&V_tempval)&0xFFFFFF );
               break;
             case GUI_UINT32:
-              printf("%u", GUI_Edit_tempval.u32 );
+              printf("%u", V_Get_U32(&V_tempval) );
               break;
             case GUI_INT8:
-              printf("%d", GUI_Edit_tempval.i8[0] );
+              printf("%d", V_Get_I8(&V_tempval) );
               break;
             case GUI_INT16:
-              printf("%d", GUI_Edit_tempval.i16[0] );
+              printf("%d", V_Get_I16(&V_tempval) );
               break;
             case GUI_INT32:
-              printf("%d", GUI_Edit_tempval.i32 );
+              printf("%d", V_Get_I32(&V_tempval));
               break;
           } //inner switch
           break;
@@ -154,12 +131,27 @@ static uint32_t GUI_edit_get_maxtextlen ( const GUI_Edit_T *editdata )
 }
 
 /******************************************************************************
+ * @brief  Apply an "and" and "or" mask to one GUI element data items "used" flags 
+ * @param  editdata - edit receipe for GUI element
+ * @param  andMask  - AND mask to apply 
+ * @param  orMask   - OR mask to apply
+ * @retval          resulting flag arry is returned 
+ ******************************************************************************/
+uint32_t GUI_Edit_SetUsedBits(const GUI_Edit_T *editdata, uint32_t andMask, uint32_t orMask)
+{
+  /* Get position of 'used' field */
+  uint32_t *usedptr = (uint32_t *)(editdata->workspace + editdata->used_ofs );
+  /* apply masks */
+  *usedptr = *usedptr & andMask | orMask;
+  return *usedptr;
+}
+/******************************************************************************
  * @brief  Dump a complete GUI-Element,
  * @param  data     - raw element data
  * @param  editdata - edit receipe for raw data
  * @param  padded   - if true, data display is left aligned to description
  ******************************************************************************/
-void GUI_edit_dump_all(uint8_t *data, const GUI_Edit_T *editdata, bool padded )
+void GUI_edit_dump_all(const GUI_Edit_T *editdata, bool padded )
 {
   uint32_t padlen;
   bool used;
@@ -167,6 +159,7 @@ void GUI_edit_dump_all(uint8_t *data, const GUI_Edit_T *editdata, bool padded )
   if ( padded ) padlen = GUI_edit_get_maxtextlen(editdata);
 
   /* Dump all data */
+  uint8_t *data = editdata->workspace;
   for ( uint32_t i=0; i < editdata->count; i++ ) {
     /* get the used bit */
     used = *(uint32_t *)(data + editdata->used_ofs ) & ( 1 << i );
@@ -190,15 +183,14 @@ void GUI_Edit_Prompt(void)
  * @param anyobj - ptr to raw object data
  * @param edit   - edit receipe for that obj
  ******************************************************************************/
-void GUI_Edit( const GUI_Edit_T *edit, void *anyobj, OnExitFn OnExit  )
+void GUI_Edit( const GUI_Edit_T *edit, OnExitFn OnExit  )
 {
   /* Store edit pattern and data vector */
   act_edit   = edit;
-  act_obj    = (uint8_t *)anyobj;
   OnExitEdit = OnExit;
 
   /* First, dump the whole element */
-  GUI_edit_dump_all(act_obj, act_edit, true );
+  GUI_edit_dump_all(act_edit, true );
 
   /* change Input Handler */
   CMD_Handler_Push(handle_gui_edit_input, GUI_Edit_Prompt);
@@ -232,6 +224,7 @@ void GUI_Handler_Pop ( void )
     CMD_Handler_Pop();
 }
 
+#if 0
 #define min(a,b)    ((a)<(b)?a:b)
 /*********************************************************************************
  * @brief  copy the string tempval ( by char array/length ) to Null terminated
@@ -242,37 +235,37 @@ void GUI_Handler_Pop ( void )
 static char *GUI_tempval_to_str(char *dest)
 {
       /* copy string into data structure */
-      size_t len = min(GUI_MAX_NAMELEN-1, GUI_Edit_tempval.strfont.len);
-      strncpy(dest, GUI_Edit_tempval.strfont.text, len);
+      size_t len = min(GUI_MAX_NAMELEN-1, V_tempval.strfont.len);
+      strncpy(dest, V_tempval.strfont.text, len);
       /* incoming string is (vector, length) type so append \0 in any case */
       *(dest+len)='\0';
       return dest;
 }
-
+#endif
 /*********************************************************************************
  * @brief  update the "idx"th element of actual data element
- *         new value is stored in GUI_Edit_tempval union
+ *         new value is stored in V_tempval union
  * @param  bIsNull - true, if new value is <Unset> 
  ********************************************************************************/
-static void GUI_Edit_update( uint32_t idx, bool bIsUnset )
+static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset )
 {
 
     /* get reference to "used" bits */
-    uint32_t *used = (uint32_t *)(act_obj + act_edit->used_ofs);
+    uint32_t *used = (uint32_t *)(edit->workspace + edit->used_ofs);
 
     /* Handle <Unset> first */
     if ( bIsUnset ) {
        *used &= ~( 1 << idx );
-      return;
+      return true;
     } else {
        *used |= ( 1 << idx );
     }
 
     /* get the referenced edit element */
-    const Edit_Receipe_T *editelem = &act_edit->receipe[idx];
+    const Edit_Receipe_T *editelem = &edit->receipe[idx];
 
     /* Get the correct storage position of data */
-    uint8_t *datapos = act_obj + editelem->elem_offset;
+    uint8_t *datapos = edit->workspace + editelem->elem_offset;
     lv_style_t **keks = (lv_style_t **)datapos;
     GUI_Edit_Enum search_elem;
     uint32_t search_idx;
@@ -281,18 +274,18 @@ static void GUI_Edit_update( uint32_t idx, bool bIsUnset )
     switch ( editelem->elem_type ) {
       case GUI_STRING:
         /* copy string into data structure directly */
-        GUI_tempval_to_str((char *)datapos);
+        V_to_cstr(&V_tempval, (char *)datapos, GUI_MAX_NAMELEN);
         break;
       case GUI_STYLE:
       case GUI_FONT:
         /* Fonts and styles may be secified in two ways: by name and size  or position in list ( starting with 1 ) */
         search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
-        if ( CMD_is_numeric (GUI_Edit_tempval.strfont.text, GUI_Edit_tempval.strfont.len )) {
+        if ( CMD_is_numeric (V_tempval.font.fontname.text, V_tempval.font.fontname.len )) {
           /* Specified by number: convert to num and search for nth entry, LL_find_nth counts from 1 ... ! */
-          ll_elem = LL_find_nth ( GUI_item_list,  search_elem, CMD_to_number(GUI_Edit_tempval.strfont.text, GUI_Edit_tempval.strfont.len ) + 1 );
+          ll_elem = LL_find_nth ( GUI_item_list,  search_elem, CMD_to_number(V_tempval.font.fontname.text, V_tempval.font.fontname.len ) + 1 );
         } else {
           /* Specified by name: Get String copy from inbuf in any case */
-          GUI_tempval_to_str(tempstr);
+          V_to_cstr(&V_tempval, tempstr, GUI_MAX_NAMELEN);
           if ( editelem->elem_type == GUI_STYLE ) {
             /* find Style by name */
             ll_elem = LL_find_by_type_n_name(GUI_item_list, search_elem, tempstr);
@@ -312,6 +305,7 @@ static void GUI_Edit_update( uint32_t idx, bool bIsUnset )
         } else {
            printf("%s %s not found\n",EditNames[editelem->elem_type],tempstr);
            *used &= ~( 1 << idx );
+           return false;
         }
         break;
       case GUI_UINT8:
@@ -322,15 +316,17 @@ static void GUI_Edit_update( uint32_t idx, bool bIsUnset )
       case GUI_INT16:
       case GUI_INT32:
         /* All Number formats: copy required number of bytes to data element */
-        memmove(datapos, GUI_Edit_tempval.u8, GET_GUI_ELEM_LEN(editelem->elem_type) );
+        memmove(datapos, V_tempval.u8, GET_GUI_ELEM_LEN(editelem->elem_type) );
         /* Reverse byte order in RGB value */
-        if ( editelem->elem_type == GUI_RGB888 ) {
+        /* if ( editelem->elem_type == GUI_RGB888 ) {
           uint8_t c = *datapos; *datapos = *(datapos+2); *(datapos+2)=c;
-        }
+        } */
         break;
       default:
         printf("No Update receipe for data type %d\n",editelem->elem_type );
+        return false;
     } // case
+    return true;
 }
 
 /******************************************************************************
@@ -347,7 +343,7 @@ void GUI_list_entries(const GUI_Edit_Enum elemtype )
   /* Iterate thr all elements of current edit type */
   while ( ptr = LL_iterate_by_type ( ptr, elemtype ) ) {
     printf("%2d: %s", i, ptr->ll_name);
-    if ( elemtype == GUI_ELEM_FONT ) printf(" %u", i, ptr->ll_additional); 
+    if ( elemtype == GUI_ELEM_FONT ) printf(" %u", ptr->ll_additional); 
     putchar('\n');
     i++;
     ptr = LL_next(ptr);
@@ -358,19 +354,18 @@ void GUI_list_entries(const GUI_Edit_Enum elemtype )
 /********************************************************************************
  * @brief load an GUI Element 
  ********************************************************************************/
-static void GUI_load_entry( char *word, size_t wordlen, const GUI_Edit_T *editdata )
+static void GUI_load_entry( char *word, size_t wordlen, const GUI_Edit_T *edit )
 {
-  GUI_Edit_tempval.strfont.text = word;
-  GUI_Edit_tempval.strfont.len = wordlen;
-  GUI_tempval_to_str(tempstr);
+   V_Set_Str(&V_tempval, word, wordlen);
+   V_to_cstr(&V_tempval, tempstr, GUI_MAX_NAMELEN);
 
-  List_Elem_T *ll_elem = LL_find_by_type_n_name ( GUI_item_list, editdata->gui_elem_type, tempstr );
+  List_Elem_T *ll_elem = LL_find_by_type_n_name ( GUI_item_list, edit->gui_elem_type, tempstr );
   if ( !ll_elem ) {
-    printf("Err: %s %s not in item list\n",EditNames[editdata->gui_elem_type],tempstr);
+    printf("Err: %s %s not in item list\n",EditNames[edit->gui_elem_type],tempstr);
   } else {
     /* copy element data to current obj data */
-    memcpy_fast(act_obj, ll_elem->ll_entry, editdata->total_size);
-    printf("%s %s loaded\n",EditNames[editdata->gui_elem_type],tempstr);
+    memcpy_fast(edit->workspace, ll_elem->ll_entry, edit->total_size);
+    printf("%s %s loaded\n",EditNames[edit->gui_elem_type],tempstr);
   }
 
 }
@@ -459,22 +454,55 @@ static bool GUI_is_getword( char *word, size_t wordlen )
   return false;
 }
 
+/*********************************************************************************
+ * @brief  backend for "GUI_Edit_execute_XML" and GUI_Edit_execute_interactive"
+ * @param  arg    - property value as string not neccessarily NULL terminated
+ * @param  argsize - length of that string ( even if strin is NULL terminated
+ * @param  idx     - index of item in editdata whose property is altered
+ * @retval true, if property could be successful updated, falseid not
+ ********************************************************************************/
+bool GUI_Edit_SetItem(char *arg, size_t argsize, const GUI_Edit_T *edit, uint32_t idx )
+{
+
+    /* check idx for being in range*/
+    if ( idx >= edit->count ) {
+      printf("Edit SetItem: %d out of range 0 .. %d\n", idx, edit->count );
+      return false;
+    }
+    /* First check for NULL */
+    if ( GUI_is_nullword(arg, argsize) ) {
+        /* and update raw element data */
+       return GUI_Edit_update(edit, idx, true);
+    }
+
+    /* get the referenced edit element */
+    const Edit_Receipe_T *editelem = &edit->receipe[idx];
+
+   /* Thereafter check for number or string*/
+    if ( editelem->elem_type == GUI_STRING || editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_FONT) {
+        /* Strings, Fonts and Styles require a separate handling: pass reference to the string 
+         * to Updater, updater will handle string accordingly
+         */
+         V_Set_Str(&V_tempval, arg, argsize);
+    } else {
+         V_Set_U32(&V_tempval, CMD_to_number( arg, argsize ));
+    }
+
+    /* and update raw element data */
+    return GUI_Edit_update(edit, idx, false);
+
+
+}
 
 /*********************************************************************************
- * @brief  Execute command in GUI edit mode
+ * @brief  Execute command in GUI commandline edit mode. 
  * @param  word    - ptr to next unparsed word in input stream
  * @param  wordlen - length of next word
  * @param  idx     - numerical value of first ( already removed ) word in input stream
  * @retval true, if input could be parsed completely, false if not
  ********************************************************************************/
-static bool GUI_Edit_execute_entry ( char *word, size_t wordlen, uint32_t idx )
+static bool GUI_Edit_execute_interactive ( char *word, size_t wordlen, uint32_t idx )
 {
-
-    /* idx is the first numerical value of the command line, check for being in range*/
-    if ( idx >= act_edit->count ) {
-      printf("Edit entry: %d out of range 0 .. %d\n", idx, act_edit->count );
-      return false;
-    }
 
     /* read the new value for that entry */
     if ( CMD_argc() < 1 ) {
@@ -486,38 +514,19 @@ static bool GUI_Edit_execute_entry ( char *word, size_t wordlen, uint32_t idx )
     const Edit_Receipe_T *editelem = &act_edit->receipe[idx];
 
     CMD_get_one_word( &word, &wordlen );
-
-    /* First check for NULL */
-    if ( GUI_is_nullword(word, wordlen) ) {
-        /* and update raw element data */
-       GUI_Edit_update(idx, true);
-       return true;
-    }
     
-    /* Thereafter check for number or string*/
-    if ( editelem->elem_type == GUI_STRING || editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_FONT) {
-        /* Strings, Fonts and Styles require a separate handling: pass reference to the string 
-         * to Updater, updater will handle string accordingly
-         */
-         GUI_Edit_tempval.strfont.text = word;
-         GUI_Edit_tempval.strfont.len = wordlen;
-         if ( editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_FONT ) {
-            /* in Case of Styles/Fonts: if Parameter is '?', list all styles/fonts */
-            if ( wordlen == 1 && *word =='?' ) {
-              GUI_Edit_Enum search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
-              GUI_list_entries(search_elem);
-              return true;
-            }
-         }
-    } else {
-         GUI_Edit_tempval.u32 = CMD_to_number( word, wordlen );
+    /* Check, whether a list of all options is required */
+    if ( editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_FONT ) {
+        /* in Case of Styles/Fonts: if Parameter is '?', list all styles/fonts */
+        if ( wordlen == 1 && *word =='?' ) {
+            GUI_Edit_Enum search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
+            GUI_list_entries(search_elem);
+            return true;
+        }
     }
 
-    /* and update raw element data */
-    GUI_Edit_update(idx, false);
-   
-    return true;
-}
+    return GUI_Edit_SetItem(word, wordlen, act_edit, idx );
+   }
 
 
 /********************************************************************************
@@ -542,7 +551,7 @@ static void GUI_handle_word( char *word, size_t wordlen )
    /* handle print command */
    if ( GUI_is_dumpword( word, wordlen ) ) {
       putchar('\n');
-      GUI_edit_dump_all(act_obj, act_edit, true );
+      GUI_edit_dump_all(act_edit, true );
       return;
    }
 
@@ -555,7 +564,7 @@ static void GUI_handle_word( char *word, size_t wordlen )
    /* handle save command */
    if ( GUI_is_saveword( word, wordlen ) ) {
       putchar('\n');
-      GUI_new_or_update_entry(act_obj, act_edit->gui_elem_type );
+      GUI_new_or_update_entry(act_edit->workspace, act_edit->gui_elem_type );
       GUI_list_entries(act_edit->gui_elem_type);
       return;
    }
@@ -582,7 +591,7 @@ static void GUI_handle_word( char *word, size_t wordlen )
    /* handle numeric command */
    if ( CMD_is_numeric( word, wordlen ) ) {
       uint32_t idx = CMD_to_number( word, wordlen );
-      GUI_Edit_execute_entry(word, wordlen, idx );
+      GUI_Edit_execute_interactive(word, wordlen, idx );
       putchar('\n');
       return;
    }

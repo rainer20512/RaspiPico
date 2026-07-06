@@ -15,7 +15,7 @@
 #include "config/config.h"
 
 #include "xml_parser_main.h"
-
-void xml_parser_init(void);
+void DumpToken        (const char* token, uint32_t tokenlength); 
+void xml_parser_init  (void);
 
 #endif /* _XML_PARSER_FUNCS_H */

@@ -11,7 +11,7 @@
   */
 
 #include "config/config.h"
-
+#if USE_I2C0 > 0 || USE_I2C1 > 0 
 #include <stdio.h>
 
 #include "pico/stdlib.h"
@@ -83,6 +83,7 @@
   #define I2C_init_all() 
 #endif
 
+#endif // USE_I2C0 > 0 || USE_I2C1 > 0 
 
 
 /**
