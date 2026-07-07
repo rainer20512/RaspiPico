@@ -81,12 +81,11 @@ void DumpToken(const char* token, uint32_t tokenlength)
   
     memmove( ( option == 1 ? act_attr->name : act_attr->value ), src, copylen );
     *lenptr = copylen;
-    #if DEBUG_PARSER > 0
+    #if DEBUG_PARSER > 1
         if ( option == 2 )
         DEBUG_PRINTF("AttrCopy:"); DumpToken(act_attr->name, act_attr->namelen);
         DEBUG_PUTC('='); DumpToken(act_attr->value, act_attr->valuelen);
         DEBUG_PUTC('\n'); 
-
     #endif 
 
 }
@@ -101,7 +100,9 @@ void DumpToken(const char* token, uint32_t tokenlength)
 void AttrUpdate( const GUI_Edit_T *edit )
 {
     if (!edit) {
-        DEBUG_PRINTF("Err: AttrUpdate: No Edit data!!");
+        #if DEBUG_PARSER > 0
+            DEBUG_PRINTF("Err: AttrUpdate: No Edit data!!");
+        #endif
         return;
     }
 
@@ -263,14 +264,18 @@ bool ExitLevel(void)
 
 void exit_lvgl_elem ( Parser_Item_T *toPop)
 {
-#if DEBUG_PARSER > 0
+#if DEBUG_PARSER > 1
   DEBUG_PRINTF("OnExit of %s:\n", toPop->name);
 #endif
   const GUI_Edit_T *edit = toPop->edit;
   if (!edit)  {
-      DEBUG_PRINTF("No edit\n");
+      #if DEBUG_PARSER > 0
+          DEBUG_PRINTF("No edit\n");
+      #endif
   } else {
       GUI_edit_dump_all(edit, true );
+      GUI_new_or_update_entry(edit->workspace, edit->gui_elem_type );
+
   }
 }
 /******************************************************************************
@@ -361,7 +366,7 @@ bool parse_component ( char *token, uint32_t tokenlength, uint32_t state )
     if ( !idx ) {
         /* not found */
         #if DEBUG_PARSER > 0
-                DEBUG_PRINTF("component: found unhandeled subitem");
+                DEBUG_PRINTF("component: unhandeled subitem: ");
                 DumpToken(token+1, reducedlength);
                 DEBUG_PUTC('\n');
         #endif 
@@ -377,7 +382,7 @@ bool parse_component ( char *token, uint32_t tokenlength, uint32_t state )
     const GUI_Edit_T *edit = FindEditInfoByName( token+1, reducedlength);
     if (!edit) {
         #if DEBUG_PARSER > 0
-                DEBUG_PRINTF("Subitem w/o Receipe:");
+                DEBUG_PRINTF("Subitem w/o Receipe: ");
                 DumpToken(token+1, reducedlength);
                 DEBUG_PUTC('\n');
         #endif 
@@ -388,42 +393,7 @@ bool parse_component ( char *token, uint32_t tokenlength, uint32_t state )
     /* Reset all data fields GUI element */
     GUI_Edit_SetUsedBits(edit, 0, 0);
     xml_parse(token, tokenlength);
-#if 0
-    switch( CheckWord(token+1, reducedlength, xml_component, &last_exitword)  ) {
-      case 1:
-         /* Style */
-         /* reset state to initial, push actual state 
-         /* then store exit word and start parsing component */
-        actual.state = 0;
-        xml_parser_push(&actual);
-        SET_ACTUAL(parse_lvgl_elem, 0, &edit_style, last_exitword, "style" );
-        xml_parse(token, tokenlength);
-        break;
-      case 2:
-         /* Label */
-         /* reset state to initial, push actual state 
-         /* then store exit word and start parsing component */
-        actual.state = 0;
-        xml_parser_push(&actual);
-        SET_ACTUAL(parse_lvgl_elem, 0, &edit_label, last_exitword, "label" );
-        xml_parse(token, tokenlength);
-        break;
-      case 3:
-        /* Arc */
-        /* reset state to initial, push actual state 
-        /* then store exit word and start parsing component */
-        actual.state = 0;
-        xml_parser_push(&actual);
-        SET_ACTUAL(parse_lvgl_elem, 0, &edit_arc, last_exitword, "arc" );
-        xml_parse(token, tokenlength);
-        break;
-#if DEBUG_PARSER > 0
-      default:
-        DEBUG_PRINTF("component: found unhandeled content\n");
-#endif 
-    } /* inner case */
-#endif
-   return true; 
+    return true; 
 } 
 /******************************************************************************
  * @brief Parse optional prolog and root element
@@ -473,9 +443,11 @@ bool parse_root ( char *token, uint32_t tokenlength, uint32_t state )
         break;
 #if DEBUG_PARSER > 0
       default:
-        DEBUG_PRINTF("xml_root: found unhandeled alternative\n");
+        DEBUG_PRINTF("parse_root: found unhandeled subitem: ");
+        DumpToken(token+1, reducedlength);
+        DEBUG_PUTC('\n');
 #endif 
-            } /* inner case */
+   } /* case */
    return true; 
 } 
 

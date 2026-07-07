@@ -112,15 +112,15 @@ bool task_init_xml(void)
 
 void xml_parse ( char *token, uint32_t tokenlength )
 {
-#if DEBUG_PARSER > 0 
-  DEBUG_PRINTF("XML-Parse elem:%s, state: %d, token: %s\n", actual.name, actual.state, token);
-#endif
+    #if DEBUG_PARSER > 1 
+        DEBUG_PRINTF("XML-Parse elem:%s, state: %d, token: %s\n", actual.name, actual.state, token);
+    #endif
   if (actual.pActual) {
     actual.pActual(token, tokenlength, actual.state);
   } else {
-#if DEBUG_PARSER > 0 
-    DEBUG_PRINTF("Err: xml_parse: No parser set!\n");
-#endif
+  #if DEBUG_PARSER > 0 
+      DEBUG_PRINTF("Err: xml_parse: No parser set!\n");
+  #endif
   }
 }
 
@@ -131,8 +131,10 @@ void task_handle_xml  (uint32_t param)
   while ( tokenlength = CircBuff_GetToken(&in, tokenbuff, PARSER_TOKEN_SIZE-1)) {
      /* append terminator, just for safety */
      tokenbuff[tokenlength]='\0';
-     DEBUG_PRINTF("XML token: %s\n", tokenbuff );
-     xml_parse(tokenbuff, tokenlength);
+    #if DEBUG_PARSER > 2 
+        DEBUG_PRINTF("XML token: %s\n", tokenbuff );
+    #endif
+    xml_parse(tokenbuff, tokenlength);
   }
 }
   /**

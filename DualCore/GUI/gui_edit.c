@@ -290,20 +290,15 @@ static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset
             /* find Style by name */
             ll_elem = LL_find_by_type_n_name(GUI_item_list, search_elem, tempstr);
           } else {
-            /* search font by name and fontsize. For that read the next input word */
-            /* which has to be the fontsize */
-            char *word; size_t len;
-            if ( !CMD_get_one_word(&word, &len) ) 
-              ll_elem = NULL; 
-            else
-              ll_elem = LL_find_by_type_name_additional(GUI_item_list, search_elem, tempstr, CMD_to_number(word, len));
+            /* find font by name and fontsize */
+            ll_elem = LL_find_by_type_name_additional(GUI_item_list, search_elem, tempstr,V_tempval.font.fontsize);
           }
         }
         /* if found, copy lvgl obj ptr to structure, otherwise reset "used" bit */
         if ( ll_elem ) {
            *(void **)datapos = ll_elem->ll_lvgl_obj;
         } else {
-           printf("%s %s not found\n",EditNames[editelem->elem_type],tempstr);
+           printf("%s %s not found\n",EditNames[search_elem],tempstr);
            *used &= ~( 1 << idx );
            return false;
         }
@@ -484,6 +479,8 @@ bool GUI_Edit_SetItem(char *arg, size_t argsize, const GUI_Edit_T *edit, uint32_
          * to Updater, updater will handle string accordingly
          */
          V_Set_Str(&V_tempval, arg, argsize);
+
+         if (editelem->elem_type == GUI_FONT && ! V_Str_to_Font(&V_tempval) ) return false; 
     } else {
          V_Set_U32(&V_tempval, CMD_to_number( arg, argsize ));
     }

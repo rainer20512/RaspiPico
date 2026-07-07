@@ -49,7 +49,9 @@ void inbuf_flush(void)
     if ( written < iptr ) {
       DEBUG_PRINTF("Parser input overrun, %d chars lost\n", iptr-written);
     } else {
-      DEBUG_PRINTF("Parser input: wrote %d\n", written);
+      #if DEBUG_PARSER > 1 
+          DEBUG_PRINTF("Parser input: wrote %d\n", written);
+      #endif
     }
     INBUF_INIT();
     TaskNotify(TASK_XML);

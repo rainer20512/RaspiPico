@@ -46,8 +46,9 @@
 #define DEBUG_PROFILING     1
 #define DEBUG_PERIODIC      1
 #define DEBUG_FEATURES      1 
-#define DEBUG_PARSER        1
-#define DEBUG_GUIEDIT       1
+#define DEBUG_PARSER        1                 /* the higher the number, the more output */
+#define DEBUG_IPC           0
+#define DEBUG_GUIEDIT       1                 /* the higher the number, the more output */
 #define DEBUG_PRINT_ADDITIONAL_TIMESTAMPS 0
 
 #if DEBUG_MODE 

@@ -127,12 +127,16 @@ IPC_ResultCB onAck;
     {
         uint16_t ack;
         bool bAck;
-        DEBUG_PRINTF("Core0 FIFO Recv: 0x%08x\n", RECV_msg1to0.raw);
+        #if DEBUG_IPC > 0 
+            DEBUG_PRINTF("Core0 FIFO Recv: 0x%08x\n", RECV_msg1to0.raw);
+        #endif
         /* first check, whether it's an ACK message */
         if ( RECV_msg1to0.cooked.flags & MSG_FLAG_ACK ) {
           /* ACK msg: check ID and inc Send0ID */
           ack = RECV_msg1to0.cooked.SendID;
-          DEBUG_PRINTF("Core0 FIFO Recv Ack: %d\n", ack );
+          #if DEBUG_IPC > 0 
+              DEBUG_PRINTF("Core0 FIFO Recv Ack: %d\n", ack );
+          #endif
           bAck = ack == SEND_msg0to1;
           if (bAck ) {
             SEND_msg0to1 += 1;
@@ -257,12 +261,16 @@ IPC_ResultCB onAck;
     {
         uint16_t ack;
         bool bAck;
-        DEBUG_PRINTF("Core1 FIFO Recv: 0x%08x\n", RECV_msg0to1.raw);
+        #if DEBUG_IPC > 0
+            DEBUG_PRINTF("Core1 FIFO Recv: 0x%08x\n", RECV_msg0to1.raw);
+        #endif
         /* first check, whether it's an ACK message */
         if ( RECV_msg0to1.cooked.flags & MSG_FLAG_ACK ) {
           /* ACK msg: check ID and inc Send0ID */
           ack = RECV_msg0to1.cooked.SendID;
-          DEBUG_PRINTF("Core1 FIFO Recv Ack: %d\n", ack );
+          #if DEBUG_IPC > 0
+              DEBUG_PRINTF("Core1 FIFO Recv Ack: %d\n", ack );
+          #endif
           bAck = ack == SEND_msg1to0 ;
           if ( bAck) {
             SEND_msg1to0 += 1;

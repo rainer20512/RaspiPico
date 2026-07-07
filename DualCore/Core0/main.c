@@ -12,6 +12,7 @@
 
 #include "task/minitask.h"
 #include "hardware/sync.h"
+
 #include "dev/GC9A01.h"
 #include "dev/uarts.h"
 
@@ -88,6 +89,7 @@ void dump_unique_id(void)
 
 
 extern void LL_Blink(uint32_t nrofblinks, uint32_t delayms );
+extern void HardFault_Handler(void);
 
 #if ( USE_SPI1 > 0 || USE_SPI0 > 0 ) && USE_LVGL > 0
   void spi_init_all ( void )
@@ -128,6 +130,7 @@ bool rx_chars_available(void);
     spi_init_all();
 
     GC9A01_hard_reset();
+    // exception_set_exclusive_handler(HARDFAULT_EXCEPTION, HardFault_Handler);
 
     ProfilerInitTo(JOB_TASK_INIT);
 

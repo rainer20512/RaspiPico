@@ -76,8 +76,9 @@ typedef struct {
   bool Core0_Handle_Msg(uint8_t msgID)
   {
     bool ret = false;
-    DEBUG_PRINTF("Core0 received payload for msg #%d\n", msgID);
-
+    #if DEBUG_IPC > 0 
+        DEBUG_PRINTF("Core0 received payload for msg #%d\n", msgID);
+    #endif
     switch ( msgID ) {
       case IPC_MSG_1TO0_ECHO:
       case IPC_MSG_0TO1_ECHO:
@@ -316,8 +317,9 @@ typedef struct {
   bool Core1_Handle_Msg(uint8_t msgID)
   {
     bool ret = false;
-    DEBUG_PRINTF("Core1 received payload for msg #%d\n", msgID);
-
+    #if DEBUG_IPC > 0
+        DEBUG_PRINTF("Core1 received payload for msg #%d\n", msgID);
+    #endif
     switch ( msgID ) {
       case IPC_MSG_0TO1_INIT:
         ret = Core1_Handle_Init_IPC_Comm();
@@ -442,7 +444,9 @@ bool ack_wait_cb(repeating_timer_t *rt)
       if ( fsm->wait_retries-- > 0 ) {
         /* additional retry chances available: give it a retry */
         FSM_Goto( fsm, IPC_STATE_WAITACK );
-        DEBUG_PRINTF("Retrying when waiting for ACK\n");  
+        #if DEBUG_IPC > 0
+            DEBUG_PRINTF("Retrying when waiting for ACK\n");  
+        #endif
       } else {
         /* we got no ACK, no more retries, so final state is "failed" */
         FSM_SetResult(fsm, SM_FINALSTATE_FAIL);
@@ -472,7 +476,9 @@ bool ack_wait_cb(repeating_timer_t *rt)
    *****************************************************************************/
   void FSM_Ipc ( IPC_FmsT *fsm )
   {
-      DEBUG_PRINTF(SMNAME" in state %d\n", fsm->current_state);
+      #if DEBUG_IPC > 1
+          DEBUG_PRINTF(SMNAME" in state %d\n", fsm->current_state);
+      #endif
       switch ( fsm->current_state )
       {
         case IPC_STATE_START:
