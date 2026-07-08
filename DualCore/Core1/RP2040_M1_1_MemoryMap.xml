@@ -1,0 +1,15 @@
+<!DOCTYPE Board_Memory_Definition_File>
+<root name="RP2040_M1_1">
+  <MemorySegment access="ReadOnly" name="ROM"   size="0x00004000" start="0x00000000" />
+  <!-- Raspbery Pi Pico as 2MB Flash on board, which is divided equally btw. cores --> 
+  <MemorySegment access="ReadOnly" name="BOOT2" size="0x00000200" start="0x10000000" />
+  <MemorySegment access="ReadOnly" name="FLASH" size="0x00100000" start="0x10100000" />
+  <!-- Main RAM is 256k, which is divided equally btw. cores --> 
+  <MemorySegment access="Read/Write" name="RAM" size="0x00020000" start="0x20020000" />
+  <MemorySegment access="Read/Write" name="SCRATCH_X" size="0x00000800" start="0x20040800" />
+  <MemorySegment access="Read/Write" name="SCRATCH_Y" size="0x00001000" start="0x20041000" />
+  <MemorySegment access="ReadOnly" name="APB"   size="0x01000000" start="0x40000000" />
+  <MemorySegment access="ReadOnly" name="AHB"   size="0x01000000" start="0x50000000" />
+  <MemorySegment access="ReadOnly" name="SIO"   size="0x01000000" start="0xD0000000" />
+  <MemorySegment access="ReadOnly" name="PPB"   size="0x01000000" start="0xE0000000" />
+</root>

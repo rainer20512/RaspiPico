@@ -1,0 +1,23 @@
+<!DOCTYPE Board_Memory_Definition_File>
+<root name="RP2040_M0_0">
+  <!-- Raspbery Pi Pico as 2MB Flash on board, from 0x1000 0000 - 0x101f ffff -->
+  <!-- This Flash memory is divided equally between both cores --> 
+  <!-- Core0 0x1000 0000 - 0x100f ffff --> 
+  <!-- Core1 0x1010 0000 - 0x101f ffff --> 
+  <MemorySegment access="ReadOnly" name="ROM"         size="0x00004000" start="0x00000000" />
+  <MemorySegment access="ReadOnly" name="FLASHCORE0"  size="0x00100000" start="0x10000000" />
+  <MemorySegment access="ReadOnly" name="FLASHCORE1"  size="0x00100000" start="0x10100000" />
+  <!-- Main RAM is 256k, address range 0x2000 0000 - 02x2003 ffff -->
+  <!-- RAM memory is divided equally between cores -->
+  <!-- Core0 0x2000 0000 - 0x2001 ffff --> 
+  <!-- Core1 0x2002 0000 - 0x2003 ffff --> 
+  <MemorySegment access="Read/Write" name="RAM"       size="0x00020000" start="0x20000000" />
+  <MemorySegment access="Read/Write" name="RAMCORE1"  size="0x00020000" start="0x20020000" />
+  <!-- Scratch_X(used for _fast_run segment, is divided equally btw. cores --> 
+  <MemorySegment access="Read/Write" name="SCRATCH_X" size="0x00000800" start="0x20040000" />
+  <MemorySegment access="Read/Write" name="SCRATCH_Y" size="0x00001000" start="0x20041000" />
+  <MemorySegment access="ReadOnly" name="APB"         size="0x01000000" start="0x40000000" />
+  <MemorySegment access="ReadOnly" name="AHB"         size="0x01000000" start="0x50000000" />
+  <MemorySegment access="ReadOnly" name="SIO"         size="0x01000000" start="0xD0000000" />
+  <MemorySegment access="ReadOnly" name="PPB"         size="0x01000000" start="0xE0000000" />
+</root>

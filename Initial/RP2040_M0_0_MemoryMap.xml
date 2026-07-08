@@ -1,8 +1,0 @@
-<!DOCTYPE Board_Memory_Definition_File>
-<root name="RP2040_M0_0">
-  <MemorySegment access="ReadOnly" name="ROM"   size="0x00004000" start="0x00000000" />
-  <MemorySegment access="ReadOnly" name="FLASH" size="0x01000000" start="0x10000000" />
-  <MemorySegment access="Read/Write" name="RAM" size="0x00040000" start="0x20000000" />
-  <MemorySegment access="Read/Write" name="SCRATCH_X" size="0x00001000" start="0x20040000" />
-  <MemorySegment access="Read/Write" name="SCRATCH_Y" size="0x00001000" start="0x20041000" />
-</root>

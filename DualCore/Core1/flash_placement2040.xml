@@ -1,0 +1,60 @@
+<!DOCTYPE Linker_Placement_File>
+<Root name="Flash Section Placement">
+  <MemorySegment name="$(FLASH_NAME:BOOT2);BOOT2">
+    <ProgramSection alignment="4" load="Yes" name=".boot" />
+    <ProgramSection alignment="0x100" load="Yes" name=".vectorscore0" address_symbol="__vectors_start__" end_symbol="__vectors_end__" />
+  </MemorySegment>
+  <MemorySegment name="$(FLASH_NAME:FLASH);FLASH1">
+    <ProgramSection alignment="4" load="Yes" name=".vectorscore1" address_symbol="__vectors_start__" end_symbol="__vectors_end__" />
+    <ProgramSection alignment="4" load="Yes" name=".init" />
+    <ProgramSection alignment="4" load="Yes" name=".init_rodata" />
+    <ProgramSection alignment="4" load="Yes" name=".reset" />
+    <ProgramSection alignment="4" load="Yes" name=".text" />
+    <ProgramSection alignment="4" load="Yes" name=".dtors" />
+    <ProgramSection alignment="4" load="Yes" name=".ctors" />
+    <ProgramSection alignment="4" load="Yes" name=".rodata" />
+    <ProgramSection alignment="4" load="Yes" name=".ARM.exidx" address_symbol="__exidx_start" end_symbol="__exidx_end" />
+    <ProgramSection alignment="4" load="Yes" runin=".fast_run" name=".fast" inputsections="*(.fast .fast.* .time_critical.*)" />
+    <ProgramSection alignment="4" load="Yes" runin=".tdata_run" name=".tdata" />
+    <ProgramSection alignment="4" load="Yes" runin=".data_run" name=".data" />
+    <!-- RHB inserted: store all mutexes of section ".mutex_array" in a dedicated ram section --> 
+    <ProgramSection alignment="4" load="Yes" runin=".mutex_run" name=".mutex" inputsections="*(.mutex_array .mutex_array.* )" />
+    <ProgramSection alignment="4" load="Yes" runin=".after_data_run" name=".after_data" />
+    <ProgramSection alignment="4" load="Yes" runin=".scratch_x_run" name=".scratch_x" />
+    <ProgramSection alignment="4" load="Yes" runin=".scratch_y_run" name=".scratch_y" />
+    <ProgramSection alignment="4" load="Yes" name=".flashdata" />
+    <ProgramSection alignment="4" load="Yes" name=".init_array" />
+    <!-- RHB inserted: sort all preinit-functions of name .preinit_array.XXXXX into the following flash section --> 
+    <ProgramSection alignment="4" load="Yes" name=".preinit_array" inputsections="KEEP (*(SORT(.preinit_array.*)))" />
+  </MemorySegment>
+  <MemorySegment name="$(RAM_NAME:RAM);SRAM;RAM1">
+    <!-- The follwing section was inserted to meet pico sdk vector handling -->
+    <ProgramSection alignment="0x100" load="No" name=".ram_vector_table" />
+    <ProgramSection alignment="4" load="No" name=".bss" />
+    <ProgramSection alignment="4" load="No" name=".tbss" />
+    <ProgramSection alignment="4" load="No" name=".non_init" inputsections="*(.non_init .non_init.* .uninitialized_data.*)" />
+    <ProgramSection alignment="4" load="No" name=".tdata_run" />
+    <ProgramSection alignment="4" load="No" name=".data_run" />
+    <ProgramSection alignment="4" load="No" name=".mutex_run" address_symbol="__mutex_array_start" end_symbol="__mutex_array_end" />
+    <ProgramSection alignment="4" load="No" name=".after_data_run" />
+    <ProgramSection alignment="8" size="__HEAPSIZE__" load="No" name=".heap" />
+    <ProgramSection alignment="8" size="__STACKSIZE__" load="No" name=".stack" />
+    <ProgramSection alignment="8" size="__STACKSIZE_PROCESS__" load="No" name=".stack_process" />
+  </MemorySegment>
+  <MemorySegment name="$(FLASH2_NAME:FLASH2)">
+    <ProgramSection alignment="4" load="Yes" name=".text2" />
+    <ProgramSection alignment="4" load="Yes" name=".rodata2" />
+    <ProgramSection alignment="4" load="Yes" runin=".data2_run" name=".data2" />
+  </MemorySegment>
+  <MemorySegment name="$(RAM2_NAME:RAM2)">
+    <ProgramSection alignment="4" load="No" name=".data2_run" />
+    <ProgramSection alignment="4" load="No" name=".bss2" />
+  </MemorySegment>
+  <MemorySegment name="SCRATCH_X">
+    <ProgramSection alignment="4" load="No" name=".fast_run" />
+    <ProgramSection alignment="4" load="No" name=".scratch_x_run" />
+  </MemorySegment>
+  <MemorySegment name="SCRATCH_Y">
+    <ProgramSection alignment="4" load="No" name=".scratch_y_run" />
+  </MemorySegment>
+</Root>
