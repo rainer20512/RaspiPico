@@ -56,8 +56,11 @@ extern       GUI_Style_T cur_style;             /* actual style settings       *
 extern const GUI_Label_T def_label;             /* default label settings      */
 extern       GUI_Label_T cur_label;             /* actual label settings       */
 
-extern const GUI_Arc_T def_arc;             /* default arc settings */
-extern       GUI_Arc_T cur_arc;             /* actual arc settings  */
+extern const GUI_Arc_T def_arc;                 /* default arc settings */
+extern       GUI_Arc_T cur_arc;                 /* actual arc settings  */
+
+extern const GUI_Scale_T def_scale;             /* default arc settings */
+extern       GUI_Scale_T cur_scale;             /* actual arc settings  */
 
 
 typedef void (*OnExitFn) ( void );

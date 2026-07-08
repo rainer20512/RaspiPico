@@ -84,7 +84,7 @@ const  GUI_Edit_T edit_arc = {
     { ARC_INDSTYLE,     "indicatorstyle", GUI_STYLE,  offsetof(GUI_Arc_T, indstyle) }, 
     { ARC_X0,           "x",              GUI_UINT16, offsetof(GUI_Arc_T, x0) }, 
     { ARC_Y0,           "y",              GUI_UINT16, offsetof(GUI_Arc_T, y0) }, 
-    { ARC_ROTATE,       "rotation",       GUI_INT16,  offsetof(GUI_Arc_T, rotation) }, 
+    { ARC_ROTATE,       "rotation",       GUI_UINT16, offsetof(GUI_Arc_T, rotation) }, 
 /*06*/
     { ARC_BGSTART,      "bgstart",        GUI_INT16,  offsetof(GUI_Arc_T, bg_start) }, 
     { ARC_BGEND,        "bgend",          GUI_INT16,  offsetof(GUI_Arc_T, bg_end) }, 
@@ -95,6 +95,36 @@ const  GUI_Edit_T edit_arc = {
     { ARC_NAME,         "name",           GUI_STRING, offsetof(GUI_Arc_T, name) }, 
   },
 };
+
+const  GUI_Edit_T edit_scale = {
+  .count         = SCALE_EDIT_MAX,
+  .gui_elem_type = GUI_ELEM_SCALE,
+  .used_ofs      = offsetof(GUI_Scale_T, used),
+  .name_ofs      = offsetof(GUI_Scale_T, name),
+  .total_size    = sizeof  (GUI_Scale_T),
+  .workspace     = (uint8_t*)&cur_scale,
+  /* Element Order has to be the same as in corresponding "used"-bit set !!! */
+  .receipe   = { 
+/*01*/
+    { SCALE_MAINSTYLE,    "mainstyle",      GUI_STYLE,  offsetof(GUI_Scale_T, mainstyle) }, 
+    { SCALE_MAJORSTYLE,   "majorstyle",     GUI_STYLE,  offsetof(GUI_Scale_T, majorstyle) }, 
+    { SCALE_MINORSTYLE,   "minorstyle",     GUI_STYLE,  offsetof(GUI_Scale_T, minorstyle) }, 
+    { SCALE_MODE,         "mode",           GUI_UINT8,  offsetof(GUI_Scale_T, scalemode) },
+    { SCALE_TOTAL_TICKS,  "totalticks",     GUI_UINT16, offsetof(GUI_Scale_T, totalticks) },
+/* 06 */
+    { SCALE_MAJ_TICK_DIST,"tickdistance",   GUI_UINT16, offsetof(GUI_Scale_T, tickdistance) },
+    { SCALE_SHOWLABEL,    "showlabel",      GUI_UINT8,  offsetof(GUI_Scale_T, bLabelShow) },
+    { SCALE_MINVAL,       "minval",         GUI_INT16,  offsetof(GUI_Scale_T, minval) }, 
+    { SCALE_MAXVAL,       "maxval",         GUI_INT16,  offsetof(GUI_Scale_T, maxval) }, 
+    { SCALE_ANGLE_RANGE,  "anglerange",     GUI_UINT16, offsetof(GUI_Scale_T, angle_range) },
+/* 11 */
+    { SCALE_ROTATE,       "rotation",       GUI_UINT16, offsetof(GUI_Scale_T, rotation) }, 
+    { SCALE_X0,           "x",              GUI_UINT16, offsetof(GUI_Scale_T, x0) }, 
+    { SCALE_Y0,           "y",              GUI_UINT16, offsetof(GUI_Scale_T, y0) }, 
+    { SCALE_NAME,         "name",           GUI_STRING, offsetof(GUI_Scale_T, name) }, 
+  },
+};
+
 
 /* one triple of GUI_Edit_Enum or ElementName -> GUI_Edit_T  */
 struct receipes_S {
@@ -110,6 +140,7 @@ static const struct receipes_S gui_to_receipe[GUI_ELEM_MAX] = {
     { GUI_ELEM_STYLE,  &edit_style, STYLE_IDSTR },
     { GUI_ELEM_LABEL,  &edit_label, LABEL_IDSTR },
     { GUI_ELEM_ARC,    &edit_arc,   ARC_IDSTR,   },
+    { GUI_ELEM_SCALE,  &edit_scale, SCALE_IDSTR,   },
 };
 
 /******************************************************************************

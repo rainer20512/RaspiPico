@@ -33,11 +33,12 @@ typedef enum {
   GUI_ELEM_STYLE        = 2,              
   GUI_ELEM_LABEL        = 3,
   GUI_ELEM_ARC          = 4,
-  GUI_ELEM_MAX          = 5,              /* Last element whose value is the number of prev entries */
+  GUI_ELEM_SCALE        = 5,
+  GUI_ELEM_MAX          = 6,              /* Last element whose value is the number of prev entries */
 } GUI_Edit_Enum;
 
 /* Corresponding user friendly names of these of GUI elements */
-#define GUI_EDITNAMES   {"NoType", "Font", "Style", "Label", "Arc", "<Undef>" }
+#define GUI_EDITNAMES   {"NoType", "Font", "Style", "Label", "Arc", "Scale", "<Undef>" }
 extern const char *EditNames[];
 
 typedef struct {
@@ -162,12 +163,54 @@ typedef struct {
   lv_style_t 	*bgstyle;                   /* style to be used for background arc */	
   lv_style_t 	*indstyle;                  /* style to be used for indicator arc */	
   uint16_t 		x0, y0;                     /* reference position */
-  int16_t       rotation;                   /* rotation           */
+  uint16_t      rotation;                   /* rotation           */
   int16_t       bg_start, bg_end;           /* background start and end angle */
   int16_t       minval, maxval;             /* minimum and maximum values for arc */ 
   int16_t       curval;                     /* current value */
   char          name[GUI_MAX_NAMELEN];      /* User friendly name */      
 } GUI_Arc_T;
+
+/* Enumeration of all properties of a GUI_Scale_T */
+/* Order has to be the same as in corresponding Edit receipe !!! */
+typedef enum {
+  SCALE_MAINSTYLE     = 0,
+  SCALE_MAJORSTYLE    = 1,
+  SCALE_MINORSTYLE    = 2,
+  SCALE_MODE          = 3,
+  SCALE_TOTAL_TICKS   = 4,
+  SCALE_MAJ_TICK_DIST = 5,
+  SCALE_SHOWLABEL     = 6,
+  SCALE_MINVAL        = 7,
+  SCALE_MAXVAL        = 8,
+  SCALE_ANGLE_RANGE   = 9,
+  SCALE_ROTATE        = 10,
+  SCALE_X0            = 11,
+  SCALE_Y0            = 12, 
+  SCALE_NAME          = 13,
+  SCALE_EDIT_MAX      = 14,                    /* mandatory last entry  */
+} SCALE_Used_T;
+
+#define SCALE_HAS_PROP(scale, id) ( (scale)->used &  (  1 << (id) ) )
+#define SCALE_SET_PROP(scale, id) ( (scale)->used |=  ( 1 << (id) ) )
+#define SCALE_CLR_PROP(scale, id) ( (scale)->used &= ~( 1 << (id) ) )
+
+
+/* Properties that define an scale, not all LVGL properties supported */
+typedef struct {
+  uint32_t      used;                       /* bitfield of used properties */
+  lv_style_t 	*mainstyle;                 /* line style to be used for main line */	
+  lv_style_t 	*majorstyle;                /* major ticks and labels */
+  uint8_t       scalemode;                  /* horiz/top=0, horiz/bot=1, vert/left=2, vert/right=4, round/inner=8, round/outer=10 */	
+  lv_style_t 	*minorstyle;                /* minor ticks  */	
+  uint16_t 		totalticks;                 /* number of ticks in total */
+  uint16_t      tickdistance;               /* number of ticks betw major ticks     */
+  uint8_t       bLabelShow;                 /* boolean for "ShowLabels"             */ 
+  int16_t       minval, maxval;             /* minimum and maximum values for scale */ 
+  uint16_t      angle_range;                /* set the angel the round scale uses   */
+  uint16_t      rotation;                   /* clockwise angular offset (in degrees) from the 3-o'clock position of the low end of the scale */
+  uint16_t      x0, y0;                     /* refernece position */
+  char          name[GUI_MAX_NAMELEN];      /* User friendly name */      
+} GUI_Scale_T;
 
 
 void GUI_dump_coords ( lv_obj_t * obj );

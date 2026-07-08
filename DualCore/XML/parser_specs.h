@@ -27,7 +27,7 @@
 #define STYLE_IDSTR     "style"
 #define LABEL_IDSTR     "label"
 #define ARC_IDSTR       "arc"
-
+#define SCALE_IDSTR     "scale"
 
 /****************************************************************************** 
  * Specify max length of a property or element name in XML
@@ -41,6 +41,6 @@ extern const char *xml_root[];
 
 /* Component may contain styles, labels, arcs, NULL terminated array */
 extern const char *xml_component[];
-#define XML_COMPONENT_SET  { STYLE_IDSTR, LABEL_IDSTR, ARC_IDSTR, NULL }
+#define XML_COMPONENT_SET  { STYLE_IDSTR, LABEL_IDSTR, ARC_IDSTR, SCALE_IDSTR, NULL }
 
 #endif /* _PARSER_SPECS_H_  */

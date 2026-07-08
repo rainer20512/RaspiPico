@@ -77,6 +77,27 @@ const GUI_Arc_T def_arc = {
 
 GUI_Arc_T cur_arc;         /* Init'ed by GUI_Init_Curr_Elems */
 
+const GUI_Scale_T def_scale = {
+    .used     = 0b11111111111000,
+    .mainstyle    = NULL,
+    .majorstyle   = NULL,
+    .minorstyle   = NULL,
+    .scalemode    = 8,    /* see gui_def.h */
+    .totalticks   = 101,  /* 0-100, major ticks every 10 */
+    .tickdistance = 10,
+    .bLabelShow   = 1,
+    .minval       = 0,
+    .maxval       = 100,
+    .angle_range  = 270,
+    .rotation     = 135,
+    .x0           = 0, 
+    .y0           = 0, 
+    .name         = "Scale01",
+};
+
+GUI_Scale_T cur_scale;         /* Init'ed by GUI_Init_Curr_Elems */
+
+
 /* user friendly names of these of GUI elements */
 const char *EditNames[]  = GUI_EDITNAMES;
 
@@ -97,6 +118,7 @@ typedef struct {
       GUI_Style_T gui_style;
       GUI_Label_T gui_label;
       GUI_Arc_T   gui_arc;
+      GUI_Scale_T gui_scale;
   } gui_elem;
   char x_names[MAX_X_NAMES][GUI_MAX_NAMELEN];
 } IPC_GUI_Xfer_Buff_T;
@@ -269,6 +291,46 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
       lv_arc_set_value(arc, newval);
     }
 
+    /******************************************************************************
+     * @brief  Create a new LVGL scale or update an existing scale 
+     *         from GUI_Scale_T variable. 
+     *         if scale IS NULL, new LVGL object will be created, if != NULL it is
+     *         regarded as a valid lvgl scale object and updated accordingly  
+     * @param  act    - GUI description of LVGL scale
+     * @param  scale  - ptr to associated existing scale object in LVGL or NULL
+     * @retval pointer to new or updated LVGL scale
+     * @note   the lvgl object variable is dynamically allocated from heap
+     *         user is repsonsible for freeing if no longer needed
+     *****************************************************************************/     
+    static lv_obj_t* GUI_new_or_update_scale ( GUI_Scale_T *act, lv_obj_t *scale )
+    {
+    	/* Check, whether scale is already created in LVGL */
+    	if ( !scale ) { 
+          if ( !(scale = GUI_Allocate( scale, sizeof(lv_obj_t*))) ) return NULL;
+          scale = lv_scale_create(lv_screen_active());
+        }
+        /* 1 */
+        if ( SCALE_HAS_PROP(act, SCALE_MAINSTYLE))      lv_obj_add_style(scale, act->mainstyle, LV_PART_MAIN );
+        if ( SCALE_HAS_PROP(act, SCALE_MAJORSTYLE))     lv_obj_add_style(scale, act->majorstyle, LV_PART_INDICATOR);
+        if ( SCALE_HAS_PROP(act, SCALE_MINORSTYLE))     lv_obj_add_style(scale, act->minorstyle, LV_PART_ITEMS);
+        if ( SCALE_HAS_PROP(act, SCALE_MODE))           lv_scale_set_mode(scale, act->scalemode);
+        if ( SCALE_HAS_PROP(act, SCALE_X0))             lv_obj_set_x(scale, act->x0);
+        /* 6 */
+        if ( SCALE_HAS_PROP(act, SCALE_Y0))             lv_obj_set_y(scale, act->y0); 
+        if ( SCALE_HAS_PROP(act, SCALE_MINVAL))         lv_scale_set_min_value(scale, act->minval);
+        if ( SCALE_HAS_PROP(act, SCALE_MAXVAL))         lv_scale_set_max_value(scale, act->maxval);
+        if ( SCALE_HAS_PROP(act, SCALE_TOTAL_TICKS))    lv_scale_set_total_tick_count(scale, act->totalticks);
+        if ( SCALE_HAS_PROP(act, SCALE_MAJ_TICK_DIST))  lv_scale_set_major_tick_every(scale, act->tickdistance);
+        /* 11 */
+        if ( SCALE_HAS_PROP(act, SCALE_SHOWLABEL))      lv_scale_set_label_show(scale, act->bLabelShow != 0);
+        if ( SCALE_HAS_PROP(act, SCALE_ANGLE_RANGE))    lv_scale_set_angle_range(scale, act->angle_range);
+        if ( SCALE_HAS_PROP(act, SCALE_ROTATE))         lv_scale_set_rotation(scale, act->rotation);
+        GUI_dump_coords(scale);
+
+        return scale;
+
+    }
+
 #if defined(RP2040_M0_1) || defined(CORE1_SIM)
     /******************************************************************************
      * @brief Load all known fonts _once_ into GUI elem list, 
@@ -309,6 +371,9 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
             break;
           case GUI_ELEM_ARC:
             return  GUI_new_or_update_arc ( (GUI_Arc_T *)data, (lv_obj_t *)lvgl_obj );
+            break;
+          case GUI_ELEM_SCALE:
+            return  GUI_new_or_update_scale ( (GUI_Scale_T *)data, (lv_obj_t *)lvgl_obj );
             break;
           default:
             printf("Err: No LVGL Update handler for LVGL %s\n", EditNames[editdata->gui_elem_type]);
@@ -384,7 +449,7 @@ bool IPC_Pack_Transferbuf( IPC_GUI_Xfer_Buff_T *txbuf, uint8_t *data, const GUI_
     
     /* We do not need to handle each type individually, the following switch/case */
     /* is jut to ensure, you check all entities when adding new GUI element types */
-    if ( editdata->gui_elem_type != GUI_ELEM_STYLE && editdata->gui_elem_type != GUI_ELEM_LABEL && editdata->gui_elem_type != GUI_ELEM_ARC ) 
+    if ( editdata->gui_elem_type != GUI_ELEM_STYLE && editdata->gui_elem_type != GUI_ELEM_LABEL && editdata->gui_elem_type != GUI_ELEM_ARC && editdata->gui_elem_type != GUI_ELEM_SCALE ) 
     { 
         printf("Err: No Transfer handler for LVGL %s\n", EditNames[editdata->gui_elem_type]);
         return false;

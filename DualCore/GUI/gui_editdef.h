@@ -59,6 +59,7 @@ typedef struct {
 extern const GUI_Edit_T edit_style;        /* Edit receipe for style variables    */
 extern const GUI_Edit_T edit_label;        /* Edit receipe for label variables    */
 extern const GUI_Edit_T edit_arc;          /* Edit receipe for arc variables      */
+extern const GUI_Edit_T edit_scale;        /* Edit receipe for scale variables    */
 
 /* Get the receipe for a GUI elemnt type                                          */
 const GUI_Edit_T    *Find_EditInfoByType( GUI_Edit_Enum gui_elemtype );

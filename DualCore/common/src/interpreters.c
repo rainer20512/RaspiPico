@@ -883,8 +883,11 @@ static lv_obj_t * obj=NULL;
     	case 3:
         	GUI_Edit(&edit_arc, NULL);
             break;
-#if USE_LVGL > 0
     	case 4:
+        	GUI_Edit(&edit_scale, NULL);
+            break;
+#if USE_LVGL > 0
+    	case 5:
             /*Change the active screen's background color*/
             lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0x003a57), LV_PART_MAIN);
 
@@ -927,9 +930,10 @@ static lv_obj_t * obj=NULL;
         { "Style Editor" ,          ctype_fn, .exec.fn = GUI_Test_Menu,VOID(1), "Edit Style(s)" },
         { "Label Editor",           ctype_fn, .exec.fn = GUI_Test_Menu,VOID(2), "Edit Label(s)" },
         { "Arc Editor",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(3), "Edit Arc(s)" },
+        { "Scale Editor",           ctype_fn, .exec.fn = GUI_Test_Menu,VOID(4), "Edit Scale(s)" },
 
 #if USE_LVGL > 0
-        { "Draw Label",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(4), "Draw a fixed Label" },
+        { "Draw Label",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(5), "Draw a fixed Label" },
 #endif
 #if DEBUG_GUIEDIT > 0
         { "Dump GUI Elements",      ctype_fn, .exec.fn = GUI_Test_Menu,VOID(97), "Dump all GUI Elements" },

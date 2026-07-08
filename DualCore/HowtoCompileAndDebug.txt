@@ -187,3 +187,59 @@ Core 1 auf Core 0 simulieren
 82. Neu bauen
 
 83. Nun rennt der gesamte Core1-Kram auf dem Core0
+
+
+
+-------------------------------------------------------------------------------
+Neues Widget über XML/GUI konfigurieren
+-------------------------------------------------------------------------------
+
+100. in "gui_def.h":
+
+  a. GUI_Edit_Enum um einen weiteren Wert ergänzen, MAX erhöhen,
+     "GUI_EDITNAMES" erweitern
+
+  b. am einfachsten den kompletten Abschnitt eines bestehenden
+     Widgets kopieren und die Namen/Konstanten anpassen
+
+  c. Die konfigurierbaren Eigenschaften in der enum anpassen
+
+101. in "gui_def.c":
+
+   a. einen default-Eintrag und eine cur_ variable für das neue Widget anlegen, 
+      auch am einfachsten über Kopieren/Anpassen eines bestehenden 
+      default-eintrages eines widget.
+      
+   b. paar Zeilen weiter unten in "IPC_GUI_Xfer_Buff_T" die union um den neuen
+      Typ erweitern
+   c. weiter unten die Funktion GUI_new_or_update_<widget> erstellen, am
+      einfachsten auch über das Kopieren/anpassen einer vorhandenen Funktion
+   d. in "GUI_Create_or_update_LVGL_Core1" 
+      - einen case für die in c. erstellte update-funktion einfügen
+   e. in "IPC_Pack_Transferbuf" die if-Bedingung um den neuen Typ erweitern
+
+   f. in "gui_edit.h" extern-Deklarationen für das neue def_ und cur_ element eintragen
+
+102. in "parser_specs.h"
+
+   a. ein neues #define für das neue GUI-Element anhängen -und -
+
+   b. in " XML_COMPONENT_SET" eintragen
+
+103. in "gui_editdef.c"
+   
+   a. ein neues edit-receipe für das neue GUI-Element einfügen, am einfachsten
+      wieder über kopieren/anpassen eines bestehnden receipes
+
+   b. weiter unten in gui_to_receipe[GUI_ELEM_MAX]
+      einen weiteren Eintrag für das in a. erstelle receipe anhängen
+
+104. in "gui_editdef.h"
+   
+   b. eine neue extern-deklaration für das edit receipe aus 103 einfügen
+
+105. in "gui_ops.h" , "GUI_Init_Curr_Elems"
+   
+   a. das def_ element des neuen GUI-Elementes auf das cur_ element kopieren
+
+105. (optional) in "interpreters.c" einen Eintrag zum Editieren von Scales einbauen

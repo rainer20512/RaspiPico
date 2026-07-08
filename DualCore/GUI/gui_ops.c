@@ -65,6 +65,7 @@ void GUI_Init_Curr_Elems(void)
     cur_style = def_style;
     cur_label = def_label;
     cur_arc   = def_arc;
+    cur_scale = def_scale; 
 
     /* Now the default setting may be enhanced */
 
