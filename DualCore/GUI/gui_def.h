@@ -29,16 +29,17 @@
 /* Different types of GUI elements */
 typedef enum {
   GUI_ELEM_NOTYPE       = 0,              /* No type specified */
-  GUI_ELEM_FONT         = 1,
-  GUI_ELEM_STYLE        = 2,              
-  GUI_ELEM_LABEL        = 3,
-  GUI_ELEM_ARC          = 4,
-  GUI_ELEM_SCALE        = 5,
-  GUI_ELEM_MAX          = 6,              /* Last element whose value is the number of prev entries */
+  GUI_ELEM_FONT         = 1,              /* keep this two the first two ones !*/
+  GUI_ELEM_SCREEN       = 2,              
+  GUI_ELEM_STYLE        = 3,              
+  GUI_ELEM_LABEL        = 4,
+  GUI_ELEM_ARC          = 5,
+  GUI_ELEM_SCALE        = 6,
+  GUI_ELEM_MAX          = 7,              /* Last element whose value is the number of prev entries */
 } GUI_Edit_Enum;
 
 /* Corresponding user friendly names of these of GUI elements */
-#define GUI_EDITNAMES   {"NoType", "Font", "Style", "Label", "Arc", "Scale", "<Undef>" }
+#define GUI_EDITNAMES   {"NoType", "Font", "Screen", "Style", "Label", "Arc", "Scale", "<Undef>" }
 extern const char *EditNames[];
 
 typedef struct {
@@ -50,6 +51,41 @@ typedef struct {
 /* Filled by Init on Core1, by IPC on Core0 */
 extern GUI_Font_T *AllFonts;
 
+/* Enumeration of all properties of a GUI_Screen_T */
+/* Order has to be the same as in corresponding Edit receipe !!! */
+typedef enum {
+  SCREEN_ROTATE       = 0, 
+  SCREEN_BGOPA        = 1,
+  SCREEN_BGCOLOR      = 2,
+  SCREEN_BGMAINOPA    = 3, 
+  SCREEN_BGGRDCOLOR   = 4, 
+  SCREEN_BGGRADOPA    = 5, 
+  SCREEN_BGGRADDIR    = 6, 
+  SCREEN_BGMAINSTOP   = 7, 
+  SCREEN_BGGRADSTOP   = 8,
+  SCREEN_NAME         = 9,
+  SCREEN_EDIT_MAX     = 10,                  /* mandatory last entry  */
+} Screen_Used_T;
+
+#define SCREEN_HAS_PROP(scr, id) ( (scr)->used &  (  1 << (id) ) )
+#define SCREEN_SET_PROP(scr, id) ( (scr)->used |=  ( 1 << (id) ) )
+#define SCREEN_CLR_PROP(scr, id) ( (scr)->used &= ~( 1 << (id) ) )
+
+/* Properties of a screen, not all LVGL screen properties supported */
+typedef struct {
+  uint16_t        rotation;                 /* screen rotation, multiples of 90 or 0 */
+  uint32_t        used;                     /* bitfield of used properties */
+  uint8_t         bgopa;					/* BG opacity 0=full transparent, 255=full cover */	
+  lv_color_t      bgcolor;                  /* Background color */
+  uint8_t         bgmainopa;				/* BG main gradient color opacity */	
+  lv_color_t      bggradcolor;              /* Background gradient color */
+  uint8_t         bggradopa;				/* BG gradient color opacity */	
+  uint8_t         bggraddir;                /* Gradient direction: 0=None; 1=vertical; 2=horizontal */
+  uint8_t         bgmainstop;               /* start point of gradient main color 0=immediate, 128 = middle, 255=none */
+  uint8_t         bggradstop;               /* stop point of gradient grad color; 255=end, 128 = middle, 0=none */
+  char            name[GUI_MAX_NAMELEN];    /* User friendly name */      
+} GUI_Screen_T;
+
 
 /* Enumeration of all properties of a GUI_Style_T */
 /* Order has to be the same as in corresponding Edit receipe !!! */
@@ -59,22 +95,28 @@ typedef enum {
   STYLE_OBJALIGN     = 2,
   STYLE_BGOPA        = 3,
   STYLE_BGCOLOR      = 4,
-  STYLE_BORDERWIDTH  = 5,
-  STYLE_BORDERRADIUS = 6,
-  STYLE_BORDERCOLOR  = 7,
-  STYLE_SHADOWWIDTH  = 8,
-  STYLE_SHADOWOPA    = 9,
-  STYLE_SHADOWXREF   = 10,
-  STYLE_SHADOWYREF   = 11,
-  STYLE_SHADOWCOLOR  = 12,
-  STYLE_TEXTALIGN    = 13,
-  STYLE_TEXTCOLOR    = 14,
-  STYLE_TEXTFONT     = 15,
-  STYLE_ARCWIDTH     = 16,
-  STYLE_ARCOPA       = 17,
-  STYLE_ARCCOLOR     = 18,
-  STYLE_NAME         = 19,
-  STYLE_EDIT_MAX     = 20,                  /* mandatory last entry  */
+  STYLE_BGMAINOPA    = 5, 
+  STYLE_BGGRDCOLOR   = 6, 
+  STYLE_BGGRADOPA    = 7, 
+  STYLE_BGGRADDIR    = 8, 
+  STYLE_BGMAINSTOP   = 9, 
+  STYLE_BGGRADSTOP   = 10,
+  STYLE_BORDERWIDTH  = 11,
+  STYLE_BORDERRADIUS = 12,
+  STYLE_BORDERCOLOR  = 13,
+  STYLE_SHADOWWIDTH  = 14,
+  STYLE_SHADOWOPA    = 15,
+  STYLE_SHADOWXREF   = 16,
+  STYLE_SHADOWYREF   = 17,
+  STYLE_SHADOWCOLOR  = 18,
+  STYLE_TEXTALIGN    = 19,
+  STYLE_TEXTCOLOR    = 20,
+  STYLE_TEXTFONT     = 21,
+  STYLE_ARCWIDTH     = 22,
+  STYLE_ARCOPA       = 23,
+  STYLE_ARCCOLOR     = 24,
+  STYLE_NAME         = 25, 
+  STYLE_EDIT_MAX     = 26,                /* mandatory last entry  */
 } Style_Used_T;
 
 #define STYLE_HAS_PROP(style, id) ( (style)->used &  (  1 << (id) ) )
@@ -88,8 +130,16 @@ typedef struct {
   uint32_t        used;                     /* bitfield of used properties */
   uint16_t        def_width, def_height;	/* default width and height in px */
   uint8_t         objalign;                 /* Alignment of obj wihin parent obj*/
-  uint8_t         bgopa;					/* BG opacity */	
+  uint8_t         bgopa;					/* BG opacity 0=full transparent, 255=full cover */	
   lv_color_t      bgcolor;                  /* Background color */
+
+  uint8_t         bgmainopa;				/* BG main gradient color opacity */	
+  lv_color_t      bggradcolor;              /* Background gradient color */
+  uint8_t         bggradopa;				/* BG gradient color opacity */	
+  uint8_t         bggraddir;                /* Gradient direction: 0=None; 1=vertical; 2=horizontal */
+  uint8_t         bgmainstop;               /* start point of gradient main color 0=immediate, 128 = middle, 255=none */
+  uint8_t         bggradstop;               /* stop point of gradient grad color; 255=end, 128 = middle, 0=none */
+
   uint8_t         borderwidth;
   uint8_t         borderradius;
   lv_color_t      bordercolor;			
@@ -213,11 +263,12 @@ typedef struct {
 } GUI_Scale_T;
 
 
-void GUI_dump_coords ( lv_obj_t * obj );
-void GUI_Init_Fonts_Core1(void);
-void GUI_Init_Fonts_Core0(bool);
+void GUI_dump_coords      ( lv_obj_t * obj );
+void GUI_Init_Fonts_Core1 (void);
+void GUI_Init_Fonts_Core0 (bool);
+void GUI_update_screen    (GUI_Screen_T *act, lv_obj_t *scr );
 struct List_Elem;
-struct List_Elem *GUI_new_or_update_entry(uint8_t *data, GUI_Edit_Enum gui_elem );
-
+struct List_Elem *GUI_new_or_update_entry (uint8_t *data, GUI_Edit_Enum gui_elem );
+void              GUI_delete_entry        (uint8_t *data, GUI_Edit_Enum gui_elem );
 #endif /*  USE_GUI_INTERFACE */
 #endif /* _GUIDEF_H_ */

@@ -19,6 +19,7 @@
 #include "../GUI/gui_def.h"
 
 void GUI_Init_Curr_Elems(void);
+void GUI_Reset_GUI( void );
 
 #if defined(RP2040_M0_1) || defined(CORE1_SIM)
     extern GUI_Font_T  *AllFonts1;

@@ -846,6 +846,7 @@ static lv_obj_t * obj=NULL;
 
     #include "../../GUI/gui_def.h"
     #include "../../GUI/gui_edit.h"
+    #include "../../GUI/gui_ops.h"
 
     #if USE_LVGL > 0
       #include "../../lvgl/lvgl.h"
@@ -913,6 +914,9 @@ static lv_obj_t * obj=NULL;
     	case 99:
             DBG_heap_useage();
             break;
+    	case 100:
+            GUI_Reset_GUI();
+            break;
     	default: 
         	puts("Unknown Test");
             return false;
@@ -941,6 +945,7 @@ static lv_obj_t * obj=NULL;
 #ifdef RP2040_M0_0
         { "Reset XML Parser",	    ctype_fn, .exec.fn = GUI_Test_Menu,VOID(98),"Reset XML parser to known state" },
 #endif
+        { "Reset GUI",	            ctype_fn, .exec.fn = GUI_Test_Menu,VOID(100),"delete all GUI elements" },
         { "Heap Useage",	        ctype_fn, .exec.fn = GUI_Test_Menu,VOID(99),"Show Max Heap Useage" },
     };
     ADD_SUBMODULE(GUII);

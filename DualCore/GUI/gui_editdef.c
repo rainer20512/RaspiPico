@@ -11,6 +11,35 @@
 /*** forward declatations *****************************************************/
 void DumpToken        (const char* token, uint32_t tokenlength); 
 
+/* Edit receipe for screen structure */
+const  GUI_Edit_T edit_screen = {
+  .count         = SCREEN_EDIT_MAX,
+  .gui_elem_type = GUI_ELEM_SCREEN,
+  /* the foloowing two items are used to find used bits and name when */
+  /* structure will be converted to raw data in "gui_edit"            */
+  .used_ofs      = offsetof(GUI_Screen_T, used),
+  .name_ofs      = offsetof(GUI_Screen_T, name),
+  .total_size    = sizeof  (GUI_Screen_T),
+  .workspace     = (uint8_t*)&cur_screen,
+  /* Element Order has to be the same as in corresponding "used"-bit set !!! */
+  .receipe   = {  
+/*01*/
+    { SCREEN_ROTATE,      "rotate",       GUI_UINT16, offsetof(GUI_Screen_T, rotation) }, 
+    { SCREEN_BGOPA,       "bgopaqe",      GUI_UINT8,  offsetof(GUI_Screen_T, bgopa) }, 
+    { SCREEN_BGCOLOR,     "bgcolor",      GUI_RGB888, offsetof(GUI_Screen_T, bgcolor) }, 
+    { SCREEN_BGMAINOPA,    "bgmainopa",   GUI_UINT8,  offsetof(GUI_Screen_T, bgmainopa) }, 
+    { SCREEN_BGGRDCOLOR,   "bggradcolor", GUI_RGB888, offsetof(GUI_Screen_T, bggradcolor) }, 
+/*06*/
+    { SCREEN_BGGRADOPA,    "bggradopa",   GUI_UINT8,  offsetof(GUI_Screen_T, bggradopa) }, 
+    { SCREEN_BGGRADDIR,    "bggraddir",   GUI_UINT8,  offsetof(GUI_Screen_T, bggraddir) }, 
+    { SCREEN_BGMAINSTOP,   "bgmainstop",  GUI_UINT8,  offsetof(GUI_Screen_T, bgmainstop) }, 
+    { SCREEN_BGGRADSTOP,   "bggradstop",  GUI_UINT8,  offsetof(GUI_Screen_T, bggradstop) }, 
+    { SCREEN_NAME,          "name",       GUI_STRING, offsetof(GUI_Screen_T, name) }, 
+/*11*/
+  },
+};
+
+
 
 /* Edit receipe for Style structure */
 const  GUI_Edit_T edit_style = {
@@ -31,24 +60,31 @@ const  GUI_Edit_T edit_style = {
     { STYLE_BGOPA,        "bgopaqe",      GUI_UINT8,  offsetof(GUI_Style_T, bgopa) }, 
     { STYLE_BGCOLOR,      "bgcolor",      GUI_RGB888, offsetof(GUI_Style_T, bgcolor) }, 
 /*06*/
+    { STYLE_BGMAINOPA,    "bgmainopa",    GUI_UINT8,  offsetof(GUI_Style_T, bgmainopa) }, 
+    { STYLE_BGGRDCOLOR,   "bggradcolor",  GUI_RGB888, offsetof(GUI_Style_T, bggradcolor) }, 
+    { STYLE_BGGRADOPA,    "bggradopa",    GUI_UINT8,  offsetof(GUI_Style_T, bggradopa) }, 
+    { STYLE_BGGRADDIR,    "bggraddir",    GUI_UINT8,  offsetof(GUI_Style_T, bggraddir) }, 
+    { STYLE_BGMAINSTOP,   "bgmainstop",   GUI_UINT8,  offsetof(GUI_Style_T, bgmainstop) }, 
+/*11*/
+    { STYLE_BGGRADSTOP,   "bggradstop",   GUI_UINT8,  offsetof(GUI_Style_T, bggradstop) }, 
     { STYLE_BORDERWIDTH,  "borderwidth",  GUI_UINT8,  offsetof(GUI_Style_T, borderwidth) }, 
     { STYLE_BORDERRADIUS, "borderradius", GUI_UINT8,  offsetof(GUI_Style_T, borderradius) }, 
     { STYLE_BORDERCOLOR,  "bordercolor",  GUI_RGB888, offsetof(GUI_Style_T, bordercolor) }, 
     { STYLE_SHADOWWIDTH,  "shadowwidth",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_width) }, 
+/*16*/
     { STYLE_SHADOWOPA,    "shadowopaqe",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_opa) }, 
-/*11*/
     { STYLE_SHADOWXREF,   "shadowxref",   GUI_UINT8,  offsetof(GUI_Style_T, sh_x) }, 
-    {  STYLE_SHADOWYREF,  "shadowyref",   GUI_UINT8,  offsetof(GUI_Style_T, sh_y) }, 
+    { STYLE_SHADOWYREF,   "shadowyref",   GUI_UINT8,  offsetof(GUI_Style_T, sh_y) }, 
     { STYLE_SHADOWCOLOR,  "shadowColor",  GUI_RGB888, offsetof(GUI_Style_T, shadowcolor) }, 
     { STYLE_TEXTALIGN,    "textalign",    GUI_UINT8,  offsetof(GUI_Style_T, textalign) }, 
+/*21*/
     { STYLE_TEXTCOLOR,    "textcolor",    GUI_RGB888, offsetof(GUI_Style_T, textcolor) }, 
-/*16*/
     { STYLE_TEXTFONT,     "textfont",     GUI_FONT,   offsetof(GUI_Style_T, textfont) }, 
     { STYLE_ARCWIDTH,     "arcwidth",     GUI_UINT8,  offsetof(GUI_Style_T, arcwidth) }, 
     { STYLE_ARCOPA,       "arcopaque",    GUI_UINT8,  offsetof(GUI_Style_T, arcopa) }, 
     { STYLE_ARCCOLOR,     "arccolor",     GUI_RGB888, offsetof(GUI_Style_T, arccolor) }, 
+/*26*/
     { STYLE_NAME,         "name",         GUI_STRING, offsetof(GUI_Style_T, name) }, 
-/*21*/
   },
 };
 
@@ -135,12 +171,13 @@ struct receipes_S {
 
 /* complete list of Gui_elem_t -> Gui_Edit_T */
 static const struct receipes_S gui_to_receipe[GUI_ELEM_MAX] = {
-    { GUI_ELEM_NOTYPE, NULL,        NULL },
-    { GUI_ELEM_FONT,   NULL,        NULL},
-    { GUI_ELEM_STYLE,  &edit_style, STYLE_IDSTR },
-    { GUI_ELEM_LABEL,  &edit_label, LABEL_IDSTR },
-    { GUI_ELEM_ARC,    &edit_arc,   ARC_IDSTR,   },
-    { GUI_ELEM_SCALE,  &edit_scale, SCALE_IDSTR,   },
+    { GUI_ELEM_NOTYPE, NULL,          NULL },
+    { GUI_ELEM_FONT,   NULL,          NULL},
+    { GUI_ELEM_SCREEN, &edit_screen,  SCREEN_IDSTR },
+    { GUI_ELEM_STYLE,  &edit_style,   STYLE_IDSTR },
+    { GUI_ELEM_LABEL,  &edit_label,   LABEL_IDSTR },
+    { GUI_ELEM_ARC,    &edit_arc,     ARC_IDSTR,   },
+    { GUI_ELEM_SCALE,  &edit_scale,   SCALE_IDSTR,   },
 };
 
 /******************************************************************************
@@ -172,7 +209,7 @@ const GUI_Edit_T *FindEditInfoByName( const char *name, const size_t namelen)
         if ( strncmp(gui_to_receipe[i].name,name, namelen) == 0 ) 
             return gui_to_receipe[i].gui_edit;
     }
-    #if DEBUG_GUIEDIT
+    #if DEBUG_GUIEDIT > 0
         DEBUG_PUTS("ErrNo Receipe for GUI Element ");
         DumpToken(name, namelen);
         DEBUG_PUTC('\n');

@@ -24,6 +24,7 @@
  * be LC, too. Be sure to only use this constants onyl when referring to GUI
  * elements by receipes name
  *****************************************************************************/ 
+#define SCREEN_IDSTR    "screen"
 #define STYLE_IDSTR     "style"
 #define LABEL_IDSTR     "label"
 #define ARC_IDSTR       "arc"
@@ -37,7 +38,7 @@
 
 /* Root may contain component(s) plus optional prolog, NULL terminated array */
 extern const char *xml_root[];
-#define XML_ROOT_SET       {"component", "?xml", NULL }
+#define XML_ROOT_SET       {"screen", "?xml", NULL }
 
 /* Component may contain styles, labels, arcs, NULL terminated array */
 extern const char *xml_component[];

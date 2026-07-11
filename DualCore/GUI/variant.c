@@ -10,7 +10,7 @@
  * @param maxlen - maximal length that dest can take, including terminating \0
  * @retval       - ptr to destination
  *************************************************************************************************************/
-char *V_to_cstr(Variant_T *v, char *dest, size_t maxlen)
+char *V_to_cstr(char *dest, Variant_T *v, size_t maxlen)
 {
       String_T *src;
       /* check type */

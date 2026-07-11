@@ -50,6 +50,9 @@ extern const GUI_Edit_TypeSpec_T GUI_TypeSpec[GUI_MAXELEM];
 /* For test/edit purposes: One constant element type as default setting        */
 /* and one current element type which is modified when editing                 */
 
+extern const GUI_Screen_T def_screen;           /* default style settings      */
+extern       GUI_Screen_T cur_screen;           /* actual style settings       */
+
 extern const GUI_Style_T def_style;             /* default style settings      */
 extern       GUI_Style_T cur_style;             /* actual style settings       */
 

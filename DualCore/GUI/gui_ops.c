@@ -2,6 +2,7 @@
 #if USE_GUI_INTERFACE > 0
 
 #include <stdio.h>
+#include "system/util.h"
 #include "../GUI/gui_ops.h"
 #include "../GUI/gui_edit.h"
 #include "../GUI/gui_lists.h"
@@ -62,10 +63,11 @@
 void GUI_Init_Curr_Elems(void)
 {
     /* initialize all current elements with their static default setting */
-    cur_style = def_style;
-    cur_label = def_label;
-    cur_arc   = def_arc;
-    cur_scale = def_scale; 
+    cur_screen  = def_screen;
+    cur_style   = def_style;
+    cur_label   = def_label;
+    cur_arc     = def_arc;
+    cur_scale   = def_scale; 
 
     /* Now the default setting may be enhanced */
 
@@ -114,5 +116,36 @@ void GUI_Init_Ops_Core1(void)
   }
 #endif /* RP2040_M0_0 */
 
-#endif /* USE_LVGL > 0 */ 
+/******************************************************************************
+ * @brief Delete all GUI elements / LVGL elements
+ *****************************************************************************/     
+void GUI_Reset_GUI( void )
+{
+    List_Elem_T* next;
+    List_Elem_T* ll;
+    
+    /* first run: delete all widgets */
+    ll = GUI_item_list;
+    while ( ll ) {
+        // ll will be deleted below, so save ptr to next elem 
+        next = LL_next(ll);  
+        if ( ll->ll_type != GUI_ELEM_FONT && ll->ll_type != GUI_ELEM_STYLE ) {
+            GUI_delete_entry(ll->ll_entry, ll->ll_type );          
+        }
+        ll = next;
+    }
+
+    /* second run: reset all styles */
+    ll = GUI_item_list;
+    while ( ll ) {
+        // ll will be deleted below, so save ptr to next elem 
+        next = LL_next(ll);  
+        if ( ll->ll_type == GUI_ELEM_STYLE ) {
+            GUI_delete_entry(ll->ll_entry, ll->ll_type ); 
+        }         
+        ll = next;
+    }
+}
+
+#endif /*  USE_GUI_INTERFACE > 0 */ 
 

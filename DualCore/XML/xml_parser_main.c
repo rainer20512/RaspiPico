@@ -90,6 +90,8 @@ void xml_set_actual( ParserFunc f, uint32_t st, const GUI_Edit_T *edit, const ch
     actual.state    = st;
     actual.edit     = edit;
     actual.exitword = ew;
+    /* OnExit has to be set separately */
+    actual.OnExit   =NULL;
 #if DEBUG_PARSER > 0
     actual.name     = n;
 #else

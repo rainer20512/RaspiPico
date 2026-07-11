@@ -216,9 +216,11 @@ Neues Widget über XML/GUI konfigurieren
       einfachsten auch über das Kopieren/anpassen einer vorhandenen Funktion
    d. in "GUI_Create_or_update_LVGL_Core1" 
       - einen case für die in c. erstellte update-funktion einfügen
-   e. in "IPC_Pack_Transferbuf" die if-Bedingung um den neuen Typ erweitern
+   e. in "GUI_Delete_LVGL_Core1" 
+      - dito 
+   f. in "IPC_Pack_Transferbuf" die if-Bedingung um den neuen Typ erweitern
 
-   f. in "gui_edit.h" extern-Deklarationen für das neue def_ und cur_ element eintragen
+   g. in "gui_edit.h" extern-Deklarationen für das neue def_ und cur_ element eintragen
 
 102. in "parser_specs.h"
 

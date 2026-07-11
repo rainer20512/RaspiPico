@@ -43,7 +43,7 @@ Parser_Attr_T *act_attr = NULL;
 
 /* forward declarations ******************************************************/
 bool parse_prolog       ( char *token, uint32_t tokenlength, uint32_t state );
-bool parse_components   ( char *token, uint32_t tokenlength, uint32_t state );
+bool parse_screen    ( char *token, uint32_t tokenlength, uint32_t state );
 bool parse_lvgl_elem    ( char *token, uint32_t tokenlength, uint32_t state );
 bool parse_attributes   ( char *token, uint32_t tokenlength, uint32_t state );
 
@@ -262,6 +262,33 @@ bool ExitLevel(void)
     return true;
 }
 
+/******************************************************************************
+ * @brief OnExit function when screen attributes have been successfully parsed:
+ *        Immediately set the screen parameters to the specified values
+ * @param  toPop - current parser stack that will be popped after OnExit call
+ *****************************************************************************/
+void exit_screen ( Parser_Item_T *toPop)
+{
+#if DEBUG_PARSER > 1
+  DEBUG_PRINTF("OnExit of %s:\n", toPop->name);
+#endif
+  const GUI_Edit_T *edit = toPop->edit;
+  if (!edit)  {
+      #if DEBUG_PARSER > 0
+          DEBUG_PRINTF("No edit\n");
+      #endif
+  } else {
+      GUI_edit_dump_all(edit, true );
+      GUI_update_screen( (GUI_Screen_T*)(edit->workspace), lv_scr_act() );
+  }
+}
+
+
+/******************************************************************************
+ * @brief OnExit function when lvgl elem has been successfully parsed:
+ *        Create or Update the corresponding GUI element
+ * @param  toPop - current parser stack that will be popped after OnExit call
+ *****************************************************************************/
 void exit_lvgl_elem ( Parser_Item_T *toPop)
 {
 #if DEBUG_PARSER > 1
@@ -328,7 +355,7 @@ bool parse_lvgl_elem ( char *token, uint32_t tokenlength, uint32_t state )
  * @param  tokenlength - length of token
  * @retval 
  *****************************************************************************/
-bool parse_component ( char *token, uint32_t tokenlength, uint32_t state )
+bool parse_screen ( char *token, uint32_t tokenlength, uint32_t state )
 {
     const char *last_exitword;
 
@@ -353,10 +380,10 @@ bool parse_component ( char *token, uint32_t tokenlength, uint32_t state )
         /* no exit word, no closing brackets */
         /* now check for elementame w/o closing brackets, that means: parse attribut list for that element */
         if ( CheckOneWord(token+1, reducedlength, actual.exitword) ) {
-            /* keep actual state, push it and start parsing attributes */
+            /* forward edit receipe, keep actual state, push it and start parsing attributes */
+            const GUI_Edit_T *keep = actual.edit;
             xml_parser_push(&actual);
-            /* component has no attributes, so edit is NULL */
-            SET_ACTUAL(parse_attributes, 0, NULL, NULL, "attributes" );
+            SET_ACTUAL(parse_attributes, 0, keep, NULL, "attributes" );
             return true;
         }
     }
@@ -424,12 +451,16 @@ bool parse_root ( char *token, uint32_t tokenlength, uint32_t state )
     /* Now check for allowed subitems */
     switch( CheckWord(token+1, reducedlength, xml_root, &last_exitword)  ) {
       case 1:
-         /* component */
+         /* screen */
          /* reset state to initial, push actual state 
          /* then store exit word and start parsing component */
         actual.state = 0;
         xml_parser_push(&actual);
-        SET_ACTUAL(parse_component, 0, NULL, last_exitword, "component" );
+        SET_ACTUAL(parse_screen, 0, &edit_screen, last_exitword, "screen" );
+        /* Set callback when parsing of screen is done */
+        actual.OnExit = exit_screen;
+        /* Reset all default data fields of screen variable */
+        GUI_Edit_SetUsedBits(&edit_screen, 0, 0);
         xml_parse(token, tokenlength);
         break;
       case 2:
@@ -438,7 +469,7 @@ bool parse_root ( char *token, uint32_t tokenlength, uint32_t state )
          /* then store exit word and start parsing component */
         actual.state = 0;
         xml_parser_push(&actual);
-        SET_ACTUAL(parse_component, 0, NULL, last_exitword, "prolog" );
+        SET_ACTUAL(parse_screen, 0, NULL, last_exitword, "prolog" );
         xml_parse(token, tokenlength);
         break;
 #if DEBUG_PARSER > 0

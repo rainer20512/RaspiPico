@@ -56,6 +56,7 @@ typedef struct {
 } GUI_Edit_T;
 
 /* The edit receipes for all known GUI elements                                   */
+extern const GUI_Edit_T edit_screen;       /* Edit receipe for screen properties  */
 extern const GUI_Edit_T edit_style;        /* Edit receipe for style variables    */
 extern const GUI_Edit_T edit_label;        /* Edit receipe for label variables    */
 extern const GUI_Edit_T edit_arc;          /* Edit receipe for arc variables      */

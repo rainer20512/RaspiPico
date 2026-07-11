@@ -18,6 +18,20 @@
   #include "debug/debug_helper.h"
 #endif
 
+
+/******************************************************************************
+/* Define, how the default screen looks like
+ ******************************************************************************/
+const GUI_Screen_T def_screen = 
+    { .used         = 0b1000000111,
+      .rotation     = 180, 
+      .bgopa        = 255, 
+      .bgcolor      = {0xFF, 0x7f, 0x7f},
+      .name         = "Default",
+    };
+
+GUI_Screen_T cur_screen;    /* Init'ed by GUI_Init_Curr_Elems */
+
 /******************************************************************************
 /* When setting default properties at compile time, keep in mind not to set 
  * fonts bcs they are loaded at runtime. 
@@ -26,12 +40,13 @@
  ******************************************************************************/
 
 const GUI_Style_T def_style = 
-    { .used         = 0b10000111111101011111,
+                    /*0b10'0001'1111'1101'0000'0001'1111 */
+    { .used         = 0x21fd01f,
       .def_width    = 120, 
       .def_height   = 20, 
       .objalign     = LV_ALIGN_CENTER,
-      .bgopa        = 128, 
-      .bgcolor      = {0xC0, 0xC0, 0xC0},
+      .bgopa        = 255, 
+      .bgcolor      = {0x00, 0x00, 0x00},
       .borderwidth  = 0, 
       .borderradius = 5, 
       .bordercolor  = {0x00, 0x00, 0x00},
@@ -97,12 +112,11 @@ const GUI_Scale_T def_scale = {
 
 GUI_Scale_T cur_scale;         /* Init'ed by GUI_Init_Curr_Elems */
 
-
 /* user friendly names of these of GUI elements */
 const char *EditNames[]  = GUI_EDITNAMES;
 
 /* Maximum number of translations binary->name */
-#define MAX_X_NAMES     4
+#define MAX_X_NAMES     3
 /******************************************************************************
  * Internal buffer for sending/receiving one GUI element
  * It consists of GUI elem type, the GUI descrioption data and the
@@ -113,12 +127,14 @@ const char *EditNames[]  = GUI_EDITNAMES;
  *****************************************************************************/
 typedef struct {
   uint16_t      size;      /* we also store the size bcs IPC routines dont know that */ 
-  GUI_Edit_Enum    elem_type; /* GUI element type in gui_elem      */
+  uint8_t       bDelete;   /* 1 = delete object, 0 = create or update object         */
+  GUI_Edit_Enum elem_type; /* GUI element type in gui_elem                           */
   union {
-      GUI_Style_T gui_style;
-      GUI_Label_T gui_label;
-      GUI_Arc_T   gui_arc;
-      GUI_Scale_T gui_scale;
+      GUI_Screen_T  gui_screen;
+      GUI_Style_T   gui_style;
+      GUI_Label_T   gui_label;
+      GUI_Arc_T     gui_arc;
+      GUI_Scale_T   gui_scale;
   } gui_elem;
   char x_names[MAX_X_NAMES][GUI_MAX_NAMELEN];
 } IPC_GUI_Xfer_Buff_T;
@@ -167,7 +183,57 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
       }
     }
 
+   /******************************************************************************
+     * @brief  translate the allowed display rotation angles 0,90,180,270
+     *         to corresponding LVGL constants
+     * @retval true,if o, false if any other value than 0,90,180,270 is passed
+     *****************************************************************************/     
+    bool GUI_display_set_rotation ( uint16_t rotation )
+    {
+        lv_display_rotation_t rot;
+        switch(rotation) {
+          case   0: rot = LV_DISPLAY_ROTATION_0;   break;
+          case  90: rot = LV_DISPLAY_ROTATION_90;  break;
+          case 180: rot = LV_DISPLAY_ROTATION_180; break;
+          case 270: rot = LV_DISPLAY_ROTATION_270; break;
+          default:
+            #if DEBUG_GUIEDIT > 0
+                DEBUG_PRINTF("Err: _set_rotation: Illegal value %d\n", rotation);
+            #endif
+            return false;
+        }
 
+        lv_display_set_rotation       (NULL, rot);
+        return true;
+    }
+   /******************************************************************************
+     * @brief  Update the current screen settings from GUI_Screen_T variable. 
+     *         if style is NULL, new LVGL style will be created, if != NULL it is
+     *         regarded as a valid lvgl style object and updated accordingly  
+     * @param  act    - GUI description of LVGL style
+     * @param  style  - ptr to associated existing style object in LVGL or NULL
+     * @retval pointer to new or updated LVGL style
+     * @note   the lvgl style variable is dynamically allocated from heap
+     *         user is repsonsible for freeing if no longer needed
+     *****************************************************************************/     
+    void GUI_update_screen ( GUI_Screen_T *act, lv_obj_t *scr )
+    { 
+    	/* set screen properties */
+/*  1 */
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGOPA))        lv_obj_set_style_bg_opa       (scr, act->bgopa,       LV_PART_MAIN);
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGCOLOR))      lv_obj_set_style_bg_color     (scr, act->bgcolor,     LV_PART_MAIN);
+        if ( SCREEN_HAS_PROP(act, SCREEN_ROTATE))       GUI_display_set_rotation      ( act->rotation);
+
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGMAINOPA))    lv_obj_set_style_bg_main_opa  (scr, act->bgmainopa,   LV_PART_MAIN); 
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGGRDCOLOR))   lv_obj_set_style_bg_grad_color(scr, act->bggradcolor, LV_PART_MAIN);
+/*  6 */        
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGGRADOPA))    lv_obj_set_style_bg_main_opa  (scr, act->bggradopa,   LV_PART_MAIN);
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGGRADDIR))    lv_obj_set_style_bg_grad_dir  (scr, act->bggraddir,   LV_PART_MAIN);
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGMAINSTOP))   lv_obj_set_style_bg_main_stop (scr, act->bgmainstop,  LV_PART_MAIN);
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGGRADSTOP))   lv_obj_set_style_bg_grad_stop (scr, act->bggradstop,  LV_PART_MAIN);
+    }
+
+ 
     /******************************************************************************
      * @brief  Create a new LVGL style or update an existing style 
      *         from GUI_Style_T variable. 
@@ -190,20 +256,31 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
         }
 
     	/* assign _All_ style properties */
+/*  1 */
     	if ( STYLE_HAS_PROP(act, STYLE_DEFWIDTH))     lv_style_set_width            (style, act->def_width);    else lv_style_remove_prop(style, LV_STYLE_WIDTH);
     	if ( STYLE_HAS_PROP(act, STYLE_DEFHEIGHT))    lv_style_set_height           (style, act->def_height);   else lv_style_remove_prop(style, LV_STYLE_HEIGHT);
         if ( STYLE_HAS_PROP(act, STYLE_OBJALIGN))     lv_style_set_align	        (style, act->objalign);     else lv_style_remove_prop(style, LV_STYLE_ALIGN);
         if ( STYLE_HAS_PROP(act, STYLE_BGOPA))        lv_style_set_bg_opa           (style, act->bgopa);        else lv_style_remove_prop(style, LV_STYLE_BG_OPA);
         if ( STYLE_HAS_PROP(act, STYLE_BGCOLOR))      lv_style_set_bg_color         (style, act->bgcolor);      else lv_style_remove_prop(style, LV_STYLE_BG_COLOR);
+/*  6 */
+        if ( STYLE_HAS_PROP(act, STYLE_BGMAINOPA))    lv_style_set_bg_main_opa      (style, act->bgmainopa);    else lv_style_remove_prop(style, LV_STYLE_BG_MAIN_OPA);
+        if ( STYLE_HAS_PROP(act, STYLE_BGGRDCOLOR))   lv_style_set_bg_grad_color    (style, act->bggradcolor);  else lv_style_remove_prop(style, LV_STYLE_BG_GRAD_COLOR);
+        if ( STYLE_HAS_PROP(act, STYLE_BGGRADOPA))    lv_style_set_bg_main_opa      (style, act->bggradopa);    else lv_style_remove_prop(style, LV_STYLE_BG_GRAD_OPA);
+        if ( STYLE_HAS_PROP(act, STYLE_BGGRADDIR))    lv_style_set_bg_grad_dir      (style, act->bggraddir);    else lv_style_remove_prop(style, LV_STYLE_BG_GRAD_DIR);
+        if ( STYLE_HAS_PROP(act, STYLE_BGMAINSTOP))   lv_style_set_bg_main_stop     (style, act->bgmainstop);   else lv_style_remove_prop(style, LV_STYLE_BG_MAIN_STOP);
+/* 11 */
+        if ( STYLE_HAS_PROP(act, STYLE_BGGRADSTOP))   lv_style_set_bg_grad_stop     (style, act->bggradstop);   else lv_style_remove_prop(style, LV_STYLE_BG_GRAD_STOP);
         if ( STYLE_HAS_PROP(act, STYLE_BORDERWIDTH))  lv_style_set_border_width     (style, act->borderwidth);  else lv_style_remove_prop(style, LV_STYLE_BG_COLOR);
         if ( STYLE_HAS_PROP(act, STYLE_BORDERRADIUS)) lv_style_set_radius           (style, act->borderradius); else lv_style_remove_prop(style, LV_STYLE_RADIUS);
         if ( STYLE_HAS_PROP(act, STYLE_BORDERCOLOR))  lv_style_set_border_color     (style, act->bordercolor);  else lv_style_remove_prop(style, LV_STYLE_BORDER_COLOR);
         if ( STYLE_HAS_PROP(act, STYLE_SHADOWXREF))   lv_style_set_shadow_offset_x  (style, act->sh_x);         else lv_style_remove_prop(style, LV_STYLE_SHADOW_OFS_X);
+/* 16 */
         if ( STYLE_HAS_PROP(act, STYLE_SHADOWYREF))   lv_style_set_shadow_offset_y  (style, act->sh_y);         else lv_style_remove_prop(style, LV_STYLE_SHADOW_OFS_Y);
         if ( STYLE_HAS_PROP(act, STYLE_SHADOWWIDTH))  lv_style_set_shadow_width     (style, act->shadow_width); else lv_style_remove_prop(style, LV_STYLE_SHADOW_WIDTH);
         if ( STYLE_HAS_PROP(act, STYLE_SHADOWOPA))    lv_style_set_shadow_opa       (style, act->shadow_opa);   else lv_style_remove_prop(style, LV_STYLE_SHADOW_OPA);
         if ( STYLE_HAS_PROP(act, STYLE_SHADOWCOLOR))  lv_style_set_shadow_color     (style, act->shadowcolor);  else lv_style_remove_prop(style, LV_STYLE_SHADOW_COLOR);
         if ( STYLE_HAS_PROP(act, STYLE_TEXTALIGN))    lv_style_set_text_align	    (style, act->textalign);    else lv_style_remove_prop(style, LV_STYLE_TEXT_ALIGN);
+/* 21 */
         if ( STYLE_HAS_PROP(act, STYLE_TEXTCOLOR))    lv_style_set_text_color       (style, act->textcolor);    else lv_style_remove_prop(style, LV_STYLE_TEXT_COLOR);
         if ( STYLE_HAS_PROP(act, STYLE_TEXTFONT))     lv_style_set_text_font        (style, act->textfont);     else lv_style_remove_prop(style, LV_STYLE_TEXT_FONT);
         if ( STYLE_HAS_PROP(act, STYLE_ARCWIDTH))     lv_style_set_arc_width        (style, act->arcwidth);     else lv_style_remove_prop(style, LV_STYLE_ARC_WIDTH);
@@ -213,6 +290,29 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
         /* update using widgets about style change */
         lv_obj_report_style_change(style);
     	return style;	
+    }
+
+    /******************************************************************************
+     * @brief  Resets a LVGL style to empty and informs all style users
+     *         styles cannot be deleted but reset and must be handeled separately
+     *****************************************************************************/     
+    static lv_style_t * GUI_reset_style ( lv_style_t *style ) 
+    {
+        lv_style_reset( style);
+        /* update using widgets about style change */
+        lv_obj_report_style_change(style);
+    }
+
+    /******************************************************************************
+     * @brief  delete an LVGL GUI object ( label, arc, scale, ... )
+     *         styles cannot be deleted but reset and must be handeled separately
+     *****************************************************************************/     
+    void GUI_delete_obj ( lv_obj_t *anyobj  )
+    {
+        /* delete LVGL object first */
+        lv_obj_delete(anyobj);
+        /* free object ptr */
+        my_free( anyobj );
     }
 
     /******************************************************************************
@@ -380,6 +480,31 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
         }
     }
 
+        /******************************************************************************
+     * @brief  Create a new or update a LVGL element from GUI-Element
+     * @param  data     - raw GUI element data
+     * @param  editdata - edit receipe for raw data
+     * @retval untyped ptr to updated or new created LVGL obj or NULL, if creation failed
+     ******************************************************************************/
+    void GUI_Delete_LVGL_Core1(uint8_t *data, const GUI_Edit_T *editdata, void *lvgl_obj )
+    {
+        switch(editdata->gui_elem_type) {
+          case GUI_ELEM_NOTYPE:
+            printf("Err: Cannot delete untyped LVGL object\n");
+            break;
+          case GUI_ELEM_STYLE:
+            GUI_reset_style( (lv_style_t *)lvgl_obj );
+            break;
+          case GUI_ELEM_LABEL:
+          case GUI_ELEM_ARC:
+          case GUI_ELEM_SCALE:
+             GUI_delete_obj( (lv_obj_t *)lvgl_obj );
+            break;
+          default:
+            printf("Err: No LVGL Delete handler for LVGL %s\n", EditNames[editdata->gui_elem_type]);
+        } /* switch */
+    }
+
 #endif /* defined(RP2040_M0_1) || defined(CORE1_SIM) */
   
 #endif /* USE_LVGL > 0 */
@@ -442,7 +567,7 @@ static bool IPC_Pack_Translate_Objs(IPC_GUI_Xfer_Buff_T *txbuf,  const GUI_Edit_
     return true;
 }
 
-bool IPC_Pack_Transferbuf( IPC_GUI_Xfer_Buff_T *txbuf, uint8_t *data, const GUI_Edit_T *editdata )
+bool IPC_Pack_Transferbuf( IPC_GUI_Xfer_Buff_T *txbuf, uint8_t *data, const GUI_Edit_T *editdata, uint8_t bDelete )
 {
     /* Determine size of packet */
     uint8_t sendsize = sizeof(IPC_GUI_Xfer_Buff_T);
@@ -455,6 +580,7 @@ bool IPC_Pack_Transferbuf( IPC_GUI_Xfer_Buff_T *txbuf, uint8_t *data, const GUI_
         return false;
     }
     txbuf->size      = sendsize;
+    txbuf->bDelete   = bDelete;
     txbuf->elem_type = editdata->gui_elem_type;
 
     /* Copy GUI Element, length depending from type */
@@ -548,13 +674,14 @@ bool IPC_Unpack_Transferbuf( IPC_GUI_Xfer_Buff_T *rxbuf, uint8_t *data, uint16_t
       /* After fonts are being loaded from Core 1, current elements may be modified with font info */
       GUI_Init_Curr_Elems();
     }
-/* Buffer to send one GUI element */
-static IPC_GUI_Xfer_Buff_T sendbuf;
-/*
- * In Core0, we don not have LVGL Objects. In order to identify objects by obj pointers
- * we use Fake pointers instead, which are only unit32_t values in ascending order
- */
-static uint32_t *obj_FakeID = (uint32_t*)4; /* Don't start with 0 to avoid confusion with NULL */
+
+    /* Buffer to send one GUI element */
+    static IPC_GUI_Xfer_Buff_T sendbuf;
+    /*
+     * In Core0, we don not have LVGL Objects. In order to identify objects by obj pointers
+     * we use Fake pointers instead, which are only unit32_t values in ascending order
+     */
+    static uint32_t *obj_FakeID = (uint32_t*)4; /* Don't start with 0 to avoid confusion with NULL */
 
     /******************************************************************************
      * @brief  Core0 Implementation of "GUI_Create_or_update_LVGL":
@@ -572,9 +699,22 @@ static uint32_t *obj_FakeID = (uint32_t*)4; /* Don't start with 0 to avoid confu
             obj_FakeID ++;
         }
         /* pack GUI Element and initiate transfer, which is done asynchronally */
-        if ( IPC_Pack_Transferbuf(&sendbuf, data, editdata ) ) Core0_Send_Gui_Elem ( &sendbuf, NULL );
+        if ( IPC_Pack_Transferbuf(&sendbuf, data, editdata, 0 ) ) Core0_Send_Gui_Elem ( &sendbuf, NULL );
 
         return lvgl_obj;
+    }
+
+    /******************************************************************************
+     * @brief  Core0 Implementation of "GUI_Delete_LVGL":
+     *         just send the GUI_Item data via IPC to Core 1 with the "delete"-flag set
+     * @param  data     - raw GUI element data
+     * @param  editdata - edit receipe for raw data
+     ******************************************************************************/
+    void GUI_Delete_LVGL_Core0(uint8_t *data, const GUI_Edit_T *editdata, void *lvgl_obj )
+    {
+        UNUSED(lvgl_obj);
+        /* pack GUI Element and initiate transfer, which is done asynchronally */
+        if ( IPC_Pack_Transferbuf(&sendbuf, data, editdata, 1 ) ) Core0_Send_Gui_Elem ( &sendbuf, NULL );
     }
 
 #endif /* defined(RP2040_M0_0) */
@@ -596,6 +736,7 @@ static IPC_GUI_Xfer_Buff_T recvbuf;
      ******************************************************************************/
     void Core1_Receive_LVGL_obj(uint8_t *data, uint16_t buflen)
     {
+      uint8_t bDelete;
       /* unpack data into recvbuf */
       IPC_Unpack_Transferbuf( &recvbuf, data, buflen );
 
@@ -604,7 +745,11 @@ static IPC_GUI_Xfer_Buff_T recvbuf;
       #if DEBUG_GUIDEF > 0
           DEBUG_PRINTF("Received GUI element of type %s\n", EditNames[ recvbuf.elem_type]);
       #endif
-      GUI_new_or_update_entry( (uint8_t*)&recvbuf.gui_elem, recvbuf.elem_type );
+
+      if ( recvbuf.bDelete ) 
+          GUI_delete_entry( (uint8_t*)&recvbuf.gui_elem, recvbuf.elem_type );
+      else
+          GUI_new_or_update_entry( (uint8_t*)&recvbuf.gui_elem, recvbuf.elem_type );
     }
 
 
@@ -668,6 +813,62 @@ static void GUI_create_entry(uint8_t *data, const GUI_Edit_T *editdata )
     LL_append(&GUI_item_list, new );
 
     printf("%s %s created\n",EditNames[editdata->gui_elem_type],name);
+  }
+
+
+/******************************************************************************
+ * @brief  Delete am GUI element in LVGL and from global list
+ *         Styles cannot be deleted, only reset to empty
+ *         Fonts are statically linked and cannot be deleted
+ *         and create the corresponding LVGL object
+ * @param  data     - raw element data
+ * @param  editdata - edit receipe for raw data
+ ******************************************************************************/
+void GUI_delete_entry(uint8_t *data, GUI_Edit_Enum gui_elem )
+{
+   /* Find the edit receipe */
+   const GUI_Edit_T *editdata = Find_EditInfoByType( gui_elem );
+   if ( !editdata )NULL;
+   
+   if (editdata->gui_elem_type == GUI_ELEM_FONT) {
+        #if DEBUG_GUIDEF > 0
+            DEBUG_PRINTF("Err: Attempt to delete Font!\n");
+        #endif
+        return;
+    }
+    
+    /* find position of "name" field in raw data */
+    char *name = (char *)(data + editdata->name_ofs);
+    /* Fonts cannot be deleted, so we don't have to care about additional info here, just find by name and type */
+    List_Elem_T *del = LL_find_by_type_n_name ( GUI_item_list, editdata->gui_elem_type, name );
+    if  ( !del ) {
+        #if DEBUG_GUIDEF > 0
+            DEBUG_PRINTF("Err: %s %s not found when trying to delete !\n", EditNames[editdata->gui_elem_type], name);
+        #endif
+        return;
+    }
+
+    /* Delete associated LVGL obj */
+    void *lvgl_obj=NULL;
+    #if defined(RP2040_M0_1) || defined(CORE1_SIM) 
+        GUI_Delete_LVGL_Core1( data, editdata, del->ll_lvgl_obj);
+    #endif
+    #if defined(RP2040_M0_0)
+        GUI_Delete_LVGL_Core0( data, editdata, del->ll_lvgl_obj);
+    #endif
+
+    /* Styles cannot be deleted, they have been reset by GUI_delete, so reset them in internal data, too */
+    if ( editdata->gui_elem_type == GUI_ELEM_STYLE ) {
+        GUI_Edit_SetUsedBits(editdata, 0,0 );
+        printf("%s %s reset\n",EditNames[editdata->gui_elem_type],name);
+    } else {
+        del->ll_lvgl_obj = NULL;
+        /* first delete internal edit data */
+        printf("%s %s deleted\n",EditNames[editdata->gui_elem_type],name);
+        my_free( del->ll_entry);
+        /* thereafter delete element in GUI item list */
+        LL_delete(&GUI_item_list, del);
+    }
   }
 
 /******************************************************************************

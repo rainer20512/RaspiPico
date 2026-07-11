@@ -274,24 +274,28 @@ static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset
     switch ( editelem->elem_type ) {
       case GUI_STRING:
         /* copy string into data structure directly */
-        V_to_cstr(&V_tempval, (char *)datapos, GUI_MAX_NAMELEN);
+        V_to_cstr((char *)datapos, &V_tempval, GUI_MAX_NAMELEN);
         break;
       case GUI_STYLE:
       case GUI_FONT:
         /* Fonts and styles may be secified in two ways: by name and size  or position in list ( starting with 1 ) */
         search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
-        if ( CMD_is_numeric (V_tempval.font.fontname.text, V_tempval.font.fontname.len )) {
+        if ( CMD_is_numeric (V_tempval.str.text, V_tempval.str.len )) {
           /* Specified by number: convert to num and search for nth entry, LL_find_nth counts from 1 ... ! */
           ll_elem = LL_find_nth ( GUI_item_list,  search_elem, CMD_to_number(V_tempval.font.fontname.text, V_tempval.font.fontname.len ) + 1 );
         } else {
-          /* Specified by name: Get String copy from inbuf in any case */
-          V_to_cstr(&V_tempval, tempstr, GUI_MAX_NAMELEN);
           if ( editelem->elem_type == GUI_STYLE ) {
+            /* Specified by name: Get String copy from inbuf*/
+            V_to_cstr(tempstr, &V_tempval, GUI_MAX_NAMELEN);
             /* find Style by name */
             ll_elem = LL_find_by_type_n_name(GUI_item_list, search_elem, tempstr);
           } else {
+            /* Specified by <name><sep><size>: Copy from inbuf to variant */
+            if ( !V_Str_to_Font(&V_tempval) ) return false; 
+            /* Copy back NULL terminated Fontname as search parameter */
+            V_to_cstr(tempstr, &V_tempval, GUI_MAX_NAMELEN);
             /* find font by name and fontsize */
-            ll_elem = LL_find_by_type_name_additional(GUI_item_list, search_elem, tempstr,V_tempval.font.fontsize);
+            ll_elem = LL_find_by_type_name_additional(GUI_item_list, search_elem, tempstr, V_tempval.font.fontsize);
           }
         }
         /* if found, copy lvgl obj ptr to structure, otherwise reset "used" bit */
@@ -352,7 +356,7 @@ void GUI_list_entries(const GUI_Edit_Enum elemtype )
 static void GUI_load_entry( char *word, size_t wordlen, const GUI_Edit_T *edit )
 {
    V_Set_Str(&V_tempval, word, wordlen);
-   V_to_cstr(&V_tempval, tempstr, GUI_MAX_NAMELEN);
+   V_to_cstr(tempstr, &V_tempval, GUI_MAX_NAMELEN);
 
   List_Elem_T *ll_elem = LL_find_by_type_n_name ( GUI_item_list, edit->gui_elem_type, tempstr );
   if ( !ll_elem ) {
@@ -479,8 +483,6 @@ bool GUI_Edit_SetItem(char *arg, size_t argsize, const GUI_Edit_T *edit, uint32_
          * to Updater, updater will handle string accordingly
          */
          V_Set_Str(&V_tempval, arg, argsize);
-
-         if (editelem->elem_type == GUI_FONT && ! V_Str_to_Font(&V_tempval) ) return false; 
     } else {
          V_Set_U32(&V_tempval, CMD_to_number( arg, argsize ));
     }
