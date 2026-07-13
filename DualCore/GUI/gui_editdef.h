@@ -31,8 +31,9 @@ typedef enum {
   GUI_INT32   = 6,
   GUI_STRING  = 7,
   GUI_STYLE   = 8,
-  GUI_FONT    = 9,
-  GUI_MAXELEM = 10,
+  GUI_RAWIMG  = 9,
+  GUI_FONT    = 10,
+  GUI_MAXELEM = 11,
 } GUI_E_Datatype_Enum;
 
 
@@ -61,6 +62,7 @@ extern const GUI_Edit_T edit_style;        /* Edit receipe for style variables  
 extern const GUI_Edit_T edit_label;        /* Edit receipe for label variables    */
 extern const GUI_Edit_T edit_arc;          /* Edit receipe for arc variables      */
 extern const GUI_Edit_T edit_scale;        /* Edit receipe for scale variables    */
+extern const GUI_Edit_T edit_image;        /* Edit receipe for image variables    */
 
 /* Get the receipe for a GUI elemnt type                                          */
 const GUI_Edit_T    *Find_EditInfoByType( GUI_Edit_Enum gui_elemtype );

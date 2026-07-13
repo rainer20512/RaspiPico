@@ -57,7 +57,8 @@ const GUI_Style_T def_style =
       .shadowcolor  = {0x80, 0x80, 0x80},
       .textalign    = LV_TEXT_ALIGN_CENTER,  
       .textcolor    = {0xff, 0x00, 0x00}, 
-      /* textfont, .arcwidth, .arcopa, .arccolor not set! */
+      /* associated textfont is set at runtime by "GUI_Init_Curr_Elems" */
+      /* .arcwidth, .arcopa, .arccolor not set! */
       .name         = "Style01",
     };
 
@@ -112,6 +113,22 @@ const GUI_Scale_T def_scale = {
 
 GUI_Scale_T cur_scale;         /* Init'ed by GUI_Init_Curr_Elems */
 
+const GUI_Image_T def_image = {
+    .used     = 0b111111110,
+    /* associated image is set at runtime by "GUI_Init_Curr_Elems" */
+    .xofs         = 0, 
+    .yofs         = 0, 
+    .align        = LV_ALIGN_CENTER,
+    .rot_angle    = 0,
+    .scale        = 256,
+    .pivotx       = 0,
+    .pivoty       = 0,
+    .name         = "Image01",
+};
+
+GUI_Image_T cur_image;         /* Init'ed by GUI_Init_Curr_Elems */
+
+
 /* user friendly names of these of GUI elements */
 const char *EditNames[]  = GUI_EDITNAMES;
 
@@ -135,6 +152,7 @@ typedef struct {
       GUI_Label_T   gui_label;
       GUI_Arc_T     gui_arc;
       GUI_Scale_T   gui_scale;
+      GUI_Image_T   gui_image;
   } gui_elem;
   char x_names[MAX_X_NAMES][GUI_MAX_NAMELEN];
 } IPC_GUI_Xfer_Buff_T;
@@ -431,7 +449,61 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
 
     }
 
+    /******************************************************************************
+     * @brief  Create a new LVGL image or update an existing image 
+     *         from GUI_Image_T variable. 
+     *         if img IS NULL, new LVGL object will be created, if != NULL it is
+     *         regarded as a valid lvgl image object and updated accordingly  
+     * @param  act    - GUI description of LVGL img
+     * @param  img    - ptr to associated existing img object in LVGL or NULL
+     * @retval pointer to new or updated LVGL image
+     * @note   the lvgl object variable is dynamically allocated from heap
+     *         user is repsonsible for freeing if no longer needed
+     *****************************************************************************/     
+    static lv_obj_t* GUI_new_or_update_image ( GUI_Image_T *act, lv_obj_t *img )
+    {
+    	/* Check, whether scale is already created in LVGL */
+    	if ( !img ) { 
+          if ( !(img = GUI_Allocate( img, sizeof(lv_obj_t*))) ) return NULL;
+          img = lv_img_create(lv_screen_active());
+        }
+        /* 1 */
+        if ( IMAGE_HAS_PROP(act, IMAGE_IMAGE))          lv_image_set_src(img, act->image);
+        if ( IMAGE_HAS_PROP(act, IMAGE_XOFS))           lv_image_set_offset_x(img, act->xofs);
+        if ( IMAGE_HAS_PROP(act, IMAGE_YOFS))           lv_image_set_offset_y(img, act->yofs); 
+        if ( IMAGE_HAS_PROP(act, IMAGE_ALIGN))          lv_image_set_inner_align(img, act->align);
+        if ( IMAGE_HAS_PROP(act, IMAGE_ROTATE))         lv_image_set_rotation(img, act->rot_angle);
+        /* 6 */
+        if ( IMAGE_HAS_PROP(act, IMAGE_SCALE))          lv_image_set_scale(img, act->scale);
+        if ( IMAGE_HAS_PROP(act, IMAGE_PIVOTX))         lv_image_set_pivot_x(img, act->pivotx);
+        if ( IMAGE_HAS_PROP(act, IMAGE_PIVOTY))         lv_image_set_pivot_y(img, act->pivoty); 
+
+        GUI_dump_coords(img);
+
+        return img;
+
+    }
+
+
 #if defined(RP2040_M0_1) || defined(CORE1_SIM)
+    /******************************************************************************
+     * @brief Load all known images _once_ into GUI elem list, 
+     * @note  Core1 implementation
+     *****************************************************************************/     
+    void GUI_Init_Images_Core1(void)
+    {
+      List_Elem_T *img;
+
+      /* Iterate thru all defined imgs and insert them into global item list */
+      /* List of defined imgs _MUST BE_ terminated by NULL,NULL */
+      for ( uint32_t i = 0; i < AllImagesNum1; i++ ) {
+         img = LL_New_Element(GUI_ELEM_RAWIMG,  (void *)AllImages1[i].image, AllImages1[i].imagename, &AllImages1[i], 0);
+         LL_append(&GUI_item_list, img);
+         i++;
+      }
+      printf("%d images loaded from 0x%p\n", AllImagesNum1,AllImages1);
+    }
+
     /******************************************************************************
      * @brief Load all known fonts _once_ into GUI elem list, 
      * @note  Core1 implementation
@@ -449,6 +521,7 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
       }
       printf("%d fonts loaded from 0x%p\n", AllFontNum1,AllFonts1);
     }
+
 
     /******************************************************************************
      * @brief  Create a new or update a LVGL element from GUI-Element
@@ -475,6 +548,9 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
           case GUI_ELEM_SCALE:
             return  GUI_new_or_update_scale ( (GUI_Scale_T *)data, (lv_obj_t *)lvgl_obj );
             break;
+          case GUI_ELEM_IMAGE:
+            return  GUI_new_or_update_image ( (GUI_Image_T *)data, (lv_obj_t *)lvgl_obj );
+            break;
           default:
             printf("Err: No LVGL Update handler for LVGL %s\n", EditNames[editdata->gui_elem_type]);
         }
@@ -498,6 +574,7 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
           case GUI_ELEM_LABEL:
           case GUI_ELEM_ARC:
           case GUI_ELEM_SCALE:
+          case GUI_ELEM_IMAGE:
              GUI_delete_obj( (lv_obj_t *)lvgl_obj );
             break;
           default:
@@ -574,7 +651,9 @@ bool IPC_Pack_Transferbuf( IPC_GUI_Xfer_Buff_T *txbuf, uint8_t *data, const GUI_
     
     /* We do not need to handle each type individually, the following switch/case */
     /* is jut to ensure, you check all entities when adding new GUI element types */
-    if ( editdata->gui_elem_type != GUI_ELEM_STYLE && editdata->gui_elem_type != GUI_ELEM_LABEL && editdata->gui_elem_type != GUI_ELEM_ARC && editdata->gui_elem_type != GUI_ELEM_SCALE ) 
+    if (     editdata->gui_elem_type != GUI_ELEM_STYLE && editdata->gui_elem_type != GUI_ELEM_LABEL && editdata->gui_elem_type != GUI_ELEM_ARC 
+          && editdata->gui_elem_type != GUI_ELEM_SCALE && editdata->gui_elem_type != GUI_ELEM_IMAGE 
+       ) 
     { 
         printf("Err: No Transfer handler for LVGL %s\n", EditNames[editdata->gui_elem_type]);
         return false;
@@ -653,11 +732,35 @@ bool IPC_Unpack_Transferbuf( IPC_GUI_Xfer_Buff_T *rxbuf, uint8_t *data, uint16_t
 
 #if defined(RP2040_M0_0)
 
+    void GUI_InitOps_Fonts_Core0(bool b);
+
+    /******************************************************************************
+     * After having received the Image list from Core1, 
+     * @brief Load all known images _once_ into GUI elem list, 
+     * @note  Core0 implementation
+     *****************************************************************************/     
+    void GUI_Init_Images_Core0(bool b)
+    {
+      UNUSED(b);
+      List_Elem_T *img;
+
+      /* Iterate thru all defined images and insert them into global item list */
+      /* List of defined images _MUST BE_ terminated by NULL,NULL */
+      for ( uint32_t i = 0; i < AllImagesNum0; i++ ) {
+         img = LL_New_Element(GUI_ELEM_RAWIMG,  (void *)AllImages0[i].image, AllImages0[i].imagename, &AllImages0[i], 0);
+         LL_append(&GUI_item_list, img);
+      }
+      printf("%d images located at 0x%p\n", AllImagesNum0, AllImages0);
+
+      /* continue with querying font infos from core1 */
+      GUI_InitOps_Fonts_Core0(true);
+    }
     /******************************************************************************
      * After having received the fonts list from Core1, 
      * @brief Load all known fonts _once_ into GUI elem list, 
      * @note  Core0 implementation
      *****************************************************************************/     
+
     void GUI_Init_Fonts_Core0(bool b)
     {
       UNUSED(b);
@@ -671,7 +774,7 @@ bool IPC_Unpack_Transferbuf( IPC_GUI_Xfer_Buff_T *rxbuf, uint8_t *data, uint16_t
       }
       printf("%d fonts located at 0x%p\n", AllFontNum0, AllFonts0);
 
-      /* After fonts are being loaded from Core 1, current elements may be modified with font info */
+      /* After images _and_ fonts have being loaded from Core 1, current elements may be modified with font info */
       GUI_Init_Curr_Elems();
     }
 
@@ -830,9 +933,9 @@ void GUI_delete_entry(uint8_t *data, GUI_Edit_Enum gui_elem )
    const GUI_Edit_T *editdata = Find_EditInfoByType( gui_elem );
    if ( !editdata )NULL;
    
-   if (editdata->gui_elem_type == GUI_ELEM_FONT) {
+   if (editdata->gui_elem_type == GUI_ELEM_FONT || editdata->gui_elem_type == GUI_ELEM_RAWIMG) {
         #if DEBUG_GUIDEF > 0
-            DEBUG_PRINTF("Err: Attempt to delete Font!\n");
+            DEBUG_PRINTF("Err: Attempt to delete Image or Font!\n");
         #endif
         return;
     }

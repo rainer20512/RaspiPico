@@ -161,6 +161,30 @@ const  GUI_Edit_T edit_scale = {
   },
 };
 
+const  GUI_Edit_T edit_image = {
+  .count         = IMAGE_EDIT_MAX,
+  .gui_elem_type = GUI_ELEM_IMAGE,
+  .used_ofs      = offsetof(GUI_Image_T, used),
+  .name_ofs      = offsetof(GUI_Image_T, name),
+  .total_size    = sizeof  (GUI_Image_T),
+  .workspace     = (uint8_t*)&cur_image,
+  /* Element Order has to be the same as in corresponding "used"-bit set !!! */
+  .receipe   = { 
+/* 01 */
+    { IMAGE_IMAGE,        "rawimage",       GUI_RAWIMG,  offsetof(GUI_Image_T, image) }, 
+    { IMAGE_XOFS,         "x",              GUI_INT16, offsetof(GUI_Image_T, xofs) }, 
+    { IMAGE_YOFS,         "y",              GUI_INT16, offsetof(GUI_Image_T, yofs) }, 
+    { IMAGE_ALIGN,        "align",          GUI_UINT8,  offsetof(GUI_Image_T, align) }, 
+    { IMAGE_ROTATE,       "rotation",       GUI_INT16,  offsetof(GUI_Image_T, rot_angle) }, 
+/* 06 */
+    { IMAGE_SCALE,        "scale",          GUI_UINT16, offsetof(GUI_Image_T, scale) }, 
+    { IMAGE_PIVOTX,       "pivotx",         GUI_INT16, offsetof(GUI_Image_T, pivotx) }, 
+    { IMAGE_PIVOTY,       "pivoty",         GUI_INT16, offsetof(GUI_Image_T, pivoty) }, 
+    { IMAGE_NAME,         "name",           GUI_STRING, offsetof(GUI_Image_T, name) }, 
+  },
+};
+
+
 
 /* one triple of GUI_Edit_Enum or ElementName -> GUI_Edit_T  */
 struct receipes_S {
@@ -172,12 +196,14 @@ struct receipes_S {
 /* complete list of Gui_elem_t -> Gui_Edit_T */
 static const struct receipes_S gui_to_receipe[GUI_ELEM_MAX] = {
     { GUI_ELEM_NOTYPE, NULL,          NULL },
+    { GUI_ELEM_RAWIMG,  NULL,          NULL},
     { GUI_ELEM_FONT,   NULL,          NULL},
     { GUI_ELEM_SCREEN, &edit_screen,  SCREEN_IDSTR },
     { GUI_ELEM_STYLE,  &edit_style,   STYLE_IDSTR },
     { GUI_ELEM_LABEL,  &edit_label,   LABEL_IDSTR },
     { GUI_ELEM_ARC,    &edit_arc,     ARC_IDSTR,   },
     { GUI_ELEM_SCALE,  &edit_scale,   SCALE_IDSTR,   },
+    { GUI_ELEM_IMAGE,  &edit_image,   IMAGE_IDSTR,   },
 };
 
 /******************************************************************************

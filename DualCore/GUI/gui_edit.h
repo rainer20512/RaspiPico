@@ -24,7 +24,7 @@
 typedef struct {
   GUI_E_Datatype_Enum e;    /* GUI Element Type                                                              */
   uint8_t is_obj;           /* set to TRUE, if datatype is a ptr to LVGL obj ( like style, label, arc, ... ) */
-                            /* strings and fonts are excluded, they are handeled directly                    */
+                            /* strings, images and fonts are excluded, they are handeled directly            */
   uint8_t bytelen;          /* length of datatype in bytes                                                   */
   GUI_Edit_Enum gui_elem;   /* GUI element type that is represented by that object                           */
 } GUI_Edit_TypeSpec_T;
@@ -32,10 +32,10 @@ typedef struct {
 /* enum and const must match in element count                      */
 /* the index and thus the order must match the order of Enum above */
 #define GUI_TYPE_SPECS  {\
-  {GUI_UINT8, 0, 1, 0,},            {GUI_UINT16, 0, 2, 0,},             {GUI_RGB888, 0, 3, 0,},\
-  {GUI_UINT32, 0, 4, 0,},           {GUI_INT8, 0, 1, 0,},               {GUI_INT16, 0, 2, 0,},\
-  {GUI_INT32, 0, 4, 0,},            {GUI_STRING, 0, 4, 0, },            {GUI_STYLE, 1, 4, GUI_ELEM_STYLE},\
-  {GUI_FONT, 1, 4, GUI_ELEM_FONT },\
+  {GUI_UINT8, 0, 1, 0,},              {GUI_UINT16, 0, 2, 0,},             {GUI_RGB888, 0, 3, 0,},\
+  {GUI_UINT32, 0, 4, 0,},             {GUI_INT8, 0, 1, 0,},               {GUI_INT16, 0, 2, 0,},\
+  {GUI_INT32, 0, 4, 0,},              {GUI_STRING, 0, 4, 0, },            {GUI_STYLE, 1, 4, GUI_ELEM_STYLE},\
+  {GUI_RAWIMG, 1, 4, GUI_ELEM_RAWIMG }, {GUI_FONT, 1, 4, GUI_ELEM_FONT },\
 }
 
 extern const GUI_Edit_TypeSpec_T GUI_TypeSpec[GUI_MAXELEM];
@@ -62,8 +62,11 @@ extern       GUI_Label_T cur_label;             /* actual label settings       *
 extern const GUI_Arc_T def_arc;                 /* default arc settings */
 extern       GUI_Arc_T cur_arc;                 /* actual arc settings  */
 
-extern const GUI_Scale_T def_scale;             /* default arc settings */
-extern       GUI_Scale_T cur_scale;             /* actual arc settings  */
+extern const GUI_Scale_T def_scale;             /* default scale settings */
+extern       GUI_Scale_T cur_scale;             /* actual scale settings  */
+
+extern const GUI_Image_T def_image;             /* default image settings */
+extern       GUI_Image_T cur_image;             /* actual image settings  */
 
 
 typedef void (*OnExitFn) ( void );

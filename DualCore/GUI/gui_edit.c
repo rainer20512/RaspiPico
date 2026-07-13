@@ -64,9 +64,19 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const Edit_Receipe_T *editelem, 
            printf("%s", V_tempval.str.text );
            break;
       case GUI_STYLE:
+      case GUI_RAWIMG:
       case GUI_FONT:
-           /* In case of Style or Font find it in GUI item list and store the name*/
-           search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
+           /* In case of Style, Image or Font find it in GUI item list and store the name*/
+           switch(editelem->elem_type) {
+             case GUI_STYLE:
+               search_elem = GUI_ELEM_STYLE;
+               break;
+             case GUI_RAWIMG:
+               search_elem = GUI_ELEM_RAWIMG;
+               break;
+             default:
+               search_elem = GUI_ELEM_FONT;
+           }
            ll_elem = LL_find_by_type_n_obj( GUI_item_list, search_elem, *(void **)(bytes+editelem->elem_offset) );
            V_tempval.font.fontname.text = (char *)ll_elem->ll_name;
            printf("%s", V_tempval.font.fontname.text );
@@ -277,9 +287,19 @@ static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset
         V_to_cstr((char *)datapos, &V_tempval, GUI_MAX_NAMELEN);
         break;
       case GUI_STYLE:
+      case GUI_RAWIMG:
       case GUI_FONT:
         /* Fonts and styles may be secified in two ways: by name and size  or position in list ( starting with 1 ) */
-        search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
+        switch(editelem->elem_type) {
+          case GUI_STYLE:
+            search_elem = GUI_ELEM_STYLE;
+            break;
+          case GUI_RAWIMG:
+            search_elem = GUI_ELEM_RAWIMG;
+            break;
+          default:
+            search_elem = GUI_ELEM_FONT;
+        }
         if ( CMD_is_numeric (V_tempval.str.text, V_tempval.str.len )) {
           /* Specified by number: convert to num and search for nth entry, LL_find_nth counts from 1 ... ! */
           ll_elem = LL_find_nth ( GUI_item_list,  search_elem, CMD_to_number(V_tempval.font.fontname.text, V_tempval.font.fontname.len ) + 1 );
@@ -478,7 +498,7 @@ bool GUI_Edit_SetItem(char *arg, size_t argsize, const GUI_Edit_T *edit, uint32_
     const Edit_Receipe_T *editelem = &edit->receipe[idx];
 
    /* Thereafter check for number or string*/
-    if ( editelem->elem_type == GUI_STRING || editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_FONT) {
+    if ( editelem->elem_type == GUI_STRING || editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_RAWIMG || editelem->elem_type == GUI_FONT) {
         /* Strings, Fonts and Styles require a separate handling: pass reference to the string 
          * to Updater, updater will handle string accordingly
          */
@@ -515,12 +535,22 @@ static bool GUI_Edit_execute_interactive ( char *word, size_t wordlen, uint32_t 
     CMD_get_one_word( &word, &wordlen );
     
     /* Check, whether a list of all options is required */
-    if ( editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_FONT ) {
+    if ( editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_RAWIMG || editelem->elem_type == GUI_FONT ) {
         /* in Case of Styles/Fonts: if Parameter is '?', list all styles/fonts */
         if ( wordlen == 1 && *word =='?' ) {
-            GUI_Edit_Enum search_elem = ( editelem->elem_type == GUI_STYLE ? GUI_ELEM_STYLE : GUI_ELEM_FONT );
-            GUI_list_entries(search_elem);
-            return true;
+        GUI_Edit_Enum search_elem; 
+        switch(editelem->elem_type) {
+          case GUI_STYLE:
+             search_elem = GUI_ELEM_STYLE;
+             break;
+          case GUI_RAWIMG:
+             search_elem = GUI_ELEM_RAWIMG;
+             break;
+          default:
+             search_elem = GUI_ELEM_FONT;
+        }
+        GUI_list_entries(search_elem);
+        return true;
         }
     }
 

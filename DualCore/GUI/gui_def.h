@@ -29,19 +29,28 @@
 /* Different types of GUI elements */
 typedef enum {
   GUI_ELEM_NOTYPE       = 0,              /* No type specified */
-  GUI_ELEM_FONT         = 1,              /* keep this two the first two ones !*/
-  GUI_ELEM_SCREEN       = 2,              
-  GUI_ELEM_STYLE        = 3,              
-  GUI_ELEM_LABEL        = 4,
-  GUI_ELEM_ARC          = 5,
-  GUI_ELEM_SCALE        = 6,
-  GUI_ELEM_MAX          = 7,              /* Last element whose value is the number of prev entries */
+  GUI_ELEM_RAWIMG       = 1,
+  GUI_ELEM_FONT         = 2,              /* keep this three the first three ones in this order !*/
+  GUI_ELEM_SCREEN       = 3,              
+  GUI_ELEM_STYLE        = 4,              
+  GUI_ELEM_LABEL        = 5,
+  GUI_ELEM_ARC          = 6,
+  GUI_ELEM_SCALE        = 7,
+  GUI_ELEM_IMAGE        = 8,
+  GUI_ELEM_MAX          = 9,              /* Last element whose value is the number of prev entries */
 } GUI_Edit_Enum;
 
 /* Corresponding user friendly names of these of GUI elements */
-#define GUI_EDITNAMES   {"NoType", "Font", "Screen", "Style", "Label", "Arc", "Scale", "<Undef>" }
+#define GUI_EDITNAMES   {"NoType", "Image", "Font", "Screen", "Style", "Label", "Arc", "Scale", "Image", "<Undef>" }
 extern const char *EditNames[];
 
+/* - How we describe an image ( mostly stored in flash memory -------------- */
+typedef struct {
+  char                  imagename[GUI_MAX_NAMELEN];
+  const lv_image_dsc_t  *image;
+} GUI_RawImage_T;
+
+/* - How we describe a font ( mostly stored in flash memory ---------------- */
 typedef struct {
   char             fontname[GUI_MAX_NAMELEN];
   uint8_t          fontsize;
@@ -49,7 +58,8 @@ typedef struct {
 } GUI_Font_T;
 
 /* Filled by Init on Core1, by IPC on Core0 */
-extern GUI_Font_T *AllFonts;
+extern GUI_RawImage_T *AllImages;
+extern GUI_Font_T     *AllFonts;
 
 /* Enumeration of all properties of a GUI_Screen_T */
 /* Order has to be the same as in corresponding Edit receipe !!! */
@@ -263,9 +273,45 @@ typedef struct {
 } GUI_Scale_T;
 
 
+/* Enumeration of all properties of a GUI_Image_T */
+/* Order has to be the same as in corresponding Edit receipe !!! */
+typedef enum {
+  IMAGE_IMAGE         = 0,
+  IMAGE_XOFS          = 1,
+  IMAGE_YOFS          = 2, 
+  IMAGE_ALIGN         = 3,
+  IMAGE_ROTATE        = 4,
+  IMAGE_SCALE         = 5,
+  IMAGE_PIVOTX        = 6,
+  IMAGE_PIVOTY        = 7, 
+  IMAGE_NAME          = 8,
+  IMAGE_EDIT_MAX      = 9,                    /* mandatory last entry  */
+} IMAGE_Used_T;
+
+#define IMAGE_HAS_PROP(img, id) ( (img)->used &  (  1 << (id) ) )
+#define IMAGE_SET_PROP(img, id) ( (img)->used |=  ( 1 << (id) ) )
+#define IMAGE_CLR_PROP(img, id) ( (img)->used &= ~( 1 << (id) ) )
+
+
+/* Properties that define an image, not all LVGL properties supported */
+typedef struct {
+  uint32_t      used;                       /* bitfield of used properties */
+  lv_img_dsc_t  *image;                     /* associated image */
+  int16_t      xofs, yofs;                 /* reference position */
+  int16_t       rot_angle;                  /* rotation angel of the original image in 0.1deg; pos=cw, neg=ccw  */
+  uint16_t      scale;                      /* 256 = original size, 128= half size, 512 = double size, ...      */	
+  int16_t      pivotx, pivoty;             /* center of rotation */
+  uint8_t       align;                      /* alignment as deined in lv_align_t */	
+  char          name[GUI_MAX_NAMELEN];      /* User friendly name */      
+} GUI_Image_T;
+
+
 void GUI_dump_coords      ( lv_obj_t * obj );
 void GUI_Init_Fonts_Core1 (void);
 void GUI_Init_Fonts_Core0 (bool);
+void GUI_Init_Images_Core1(void);
+void GUI_Init_Images_Core0(bool);
+
 void GUI_update_screen    (GUI_Screen_T *act, lv_obj_t *scr );
 struct List_Elem;
 struct List_Elem *GUI_new_or_update_entry (uint8_t *data, GUI_Edit_Enum gui_elem );

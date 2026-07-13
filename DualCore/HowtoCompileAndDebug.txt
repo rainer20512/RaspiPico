@@ -240,8 +240,8 @@ Neues Widget über XML/GUI konfigurieren
    
    b. eine neue extern-deklaration für das edit receipe aus 103 einfügen
 
-105. in "gui_ops.h" , "GUI_Init_Curr_Elems"
+105. in "gui_ops.c" , "GUI_Init_Curr_Elems"
    
    a. das def_ element des neuen GUI-Elementes auf das cur_ element kopieren
 
-105. (optional) in "interpreters.c" einen Eintrag zum Editieren von Scales einbauen
+105. (optional) in "interpreters.c" einen Eintrag zum Editieren von <neues GUI element> einbauen

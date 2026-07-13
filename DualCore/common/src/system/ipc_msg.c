@@ -23,6 +23,14 @@ static IPC_FmsT ipcfsm;               /* IPC state machine */
 void FSM_Ipc ( IPC_FmsT *fsm );
 
 /******************************************************************************
+ * Used in IPC to transfer Info about loaded images from Core1 to Core0
+ *****************************************************************************/
+typedef struct {
+ GUI_RawImage_T *imageinfo;    /* Ptr to GUI_Font_T array          */
+ uint8_t         imagenum;     /* number of elements in this array */
+} IPC_Imageinfo_T;
+
+/******************************************************************************
  * Used in IPC to transfer Info about loaded fonts from Core1 to Core0
  *****************************************************************************/
 typedef struct {
@@ -84,11 +92,18 @@ typedef struct {
       case IPC_MSG_0TO1_ECHO:
         ret = Core0_Handle_Echo();
         break;
+      case IPC_MSG_0TO1_QRY_IMAGEINFO:
+        /* We got fontinfo From Core1 */
+        IPC_Imageinfo_T *imgbuff = (IPC_Imageinfo_T *) buf1to0.buff;
+        AllImages0    = imgbuff->imageinfo;
+        AllImagesNum0 = imgbuff->imagenum;
+        DEBUG_PRINTF("Core0 fontinfo: %d fonts\n",AllFontNum0);
+        break;        
       case IPC_MSG_0TO1_QRY_FONTINFO:
         /* We got fontinfo From Core1 */
-        IPC_Fontinfo_T *buff = (IPC_Fontinfo_T *) buf1to0.buff;
-        AllFonts0   = buff->fontinfo;
-        AllFontNum0 = buff->fontnum;
+        IPC_Fontinfo_T *fntbuff = (IPC_Fontinfo_T *) buf1to0.buff;
+        AllFonts0   = fntbuff->fontinfo;
+        AllFontNum0 = fntbuff->fontnum;
         DEBUG_PRINTF("Core0 fontinfo: %d fonts\n",AllFontNum0);
         break;        
       default:
@@ -181,6 +196,24 @@ typedef struct {
     FSM_Start(&ipcfsm);
   }
 
+  /******************************************************************************
+   * IPC Query Imageinfo from Core1 to Core 0
+   *****************************************************************************/
+  static bool Core0_Qry_ImageinfoInternal ( void* userdata, IPC_ResultCB pfAck )
+  { 
+    /* No payload */
+    buf0to1.uSize = 0;
+    /* Send */
+    IPC_SignalCore0to1 (IPC_MSG_0TO1_QRY_IMAGEINFO, false, pfAck );
+    return true;
+  }
+
+  bool Core0_Qry_Imageinfo ( void* arg, IPC_ResultCB onCompletion )
+  {
+    FSM_Init(&ipcfsm, arg, Core0_Qry_ImageinfoInternal, FSM_Ipc );
+    if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
+    FSM_Start(&ipcfsm);
+  }
   /******************************************************************************
    * IPC Query fontinfo from Core1 to Core 0
    *****************************************************************************/
@@ -328,11 +361,20 @@ typedef struct {
       case IPC_MSG_1TO0_ECHO:
         ret = Core1_Handle_Echo();
         break;
+      case IPC_MSG_0TO1_QRY_IMAGEINFO:
+        /* Return imageinfo from Core1 to Core0 */
+        IPC_Imageinfo_T *imgbuff = (IPC_Imageinfo_T *) pbuf1to0->buff;
+        imgbuff->imageinfo = AllImages1;
+        imgbuff->imagenum =  AllImagesNum1;
+        pbuf1to0->uSize = sizeof(IPC_Imageinfo_T);
+        /* We generated new payload, so return true */
+        ret = true;
+        break;
       case IPC_MSG_0TO1_QRY_FONTINFO:
         /* Return fontinfo from Core1 to Core0 */
-        IPC_Fontinfo_T *buff = (IPC_Fontinfo_T *) pbuf1to0->buff;
-        buff->fontinfo = AllFonts1;
-        buff->fontnum =  AllFontNum1;
+        IPC_Fontinfo_T *fntbuff = (IPC_Fontinfo_T *) pbuf1to0->buff;
+        fntbuff->fontinfo = AllFonts1;
+        fntbuff->fontnum =  AllFontNum1;
         pbuf1to0->uSize = sizeof(IPC_Fontinfo_T);
         /* We generated new payload, so return true */
         ret = true;

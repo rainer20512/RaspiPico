@@ -17,11 +17,12 @@
 
 #define IPC_INIT_WAITRETRIES  5         /* Number of Retries when waiting for initial ACK */
 
-#define IPC_MSG_0TO1_INIT         1         /* Initialize Core1 with essential runtime data */
-#define IPC_MSG_0TO1_ECHO         2         /* Core1 Simply echoes a msg from core0 (for test purposes)     */
-#define IPC_MSG_1TO0_ECHO         3         /* Core0 Simply echoes a msg from core1 (for test purposes)     */
-#define IPC_MSG_0TO1_QRY_FONTINFO 4         /* Core0 queries fontinfo an number of loaded fonts from Core1  */
-#define IPC_MSG_0TO1_GUIELEM      5         /* Core0 sends GUI Element data to Core 1                       */
+#define IPC_MSG_0TO1_INIT          1         /* Initialize Core1 with essential runtime data */
+#define IPC_MSG_0TO1_ECHO          2         /* Core1 Simply echoes a msg from core0 (for test purposes)      */
+#define IPC_MSG_1TO0_ECHO          3         /* Core0 Simply echoes a msg from core1 (for test purposes)      */
+#define IPC_MSG_0TO1_QRY_FONTINFO  4         /* Core0 queries fontinfo an number of loaded fonts from Core1   */
+#define IPC_MSG_0TO1_QRY_IMAGEINFO 5         /* Core0 queries imageinfo an number of loaded images from Core1 */
+#define IPC_MSG_0TO1_GUIELEM       6         /* Core0 sends GUI Element data to Core 1                        */
 
 bool Core0_Handle_Msg           (uint8_t msgID);
 void task_handle_ipc0           ( uint32_t arg );
@@ -31,6 +32,7 @@ void task_handle_ipc1           ( uint32_t arg );
 void Core0_Setup_Core1_BootInfo ( void );   /* Seup core1 boot info */
 bool Core0_Init_IPC_Comm        ( void*, IPC_ResultCB );   /* Setup essential IPC data in core 1 */ 
 bool Core0_SendEcho             ( void* arg, IPC_ResultCB onCompletion );  /* for testing */
+bool Core0_Qry_Imageinfo        ( void* arg, IPC_ResultCB onCompletion );
 bool Core0_Qry_Fontinfo         ( void* arg, IPC_ResultCB onCompletion );
 bool Core0_Send_Gui_Elem        ( void* arg, IPC_ResultCB onCompletion );  /* Transfer one GUI element */
 

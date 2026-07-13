@@ -813,6 +813,19 @@ static lv_obj_t * obj=NULL;
             lv_example_scale_3();
             printf("Scale Example\n"); 
             break;
+        case 10:
+            if ( CMD_argc() < 1 ) {
+              printf("Usage: 'Image <size>\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            temp = CMD_to_number ( word, wordlen );
+            LV_IMG_DECLARE(Idiot_Rund_240px);
+            lv_obj_t * img1 = lv_img_create(lv_scr_act());
+            lv_img_set_src(img1, &Idiot_Rund_240px);
+            lv_obj_align(img1, LV_ALIGN_CENTER, 0, 0);
+            lv_obj_set_size(img1, temp, temp);
+            break;
         default:
           DEBUG_PUTS("Lvgl-Menu: command not implemented");
       } /* end switch */
@@ -837,6 +850,7 @@ static lv_obj_t * obj=NULL;
         { "Set Border Radius <r>",  ctype_fn, .exec.fn = LVGL_Menu,VOID(7), "Border radius <r> Pixels" },
         { "SPI-DMA [0|1]",          ctype_fn, .exec.fn = LVGL_Menu,VOID(8), "Enable/Disable SPI-DMA" },
         { "Scale-Example",          ctype_fn, .exec.fn = LVGL_Menu,VOID(9), "Display scale example" },
+        { "Image <size>",           ctype_fn, .exec.fn = LVGL_Menu,VOID(10),"Display image of size <size>" },
     };
     ADD_SUBMODULE(LVGL);
 #endif
@@ -887,8 +901,11 @@ static lv_obj_t * obj=NULL;
     	case 4:
         	GUI_Edit(&edit_scale, NULL);
             break;
-#if USE_LVGL > 0
     	case 5:
+        	GUI_Edit(&edit_image, NULL);
+            break;
+#if USE_LVGL > 0
+    	case 90:
             /*Change the active screen's background color*/
             lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0x003a57), LV_PART_MAIN);
 
@@ -935,9 +952,10 @@ static lv_obj_t * obj=NULL;
         { "Label Editor",           ctype_fn, .exec.fn = GUI_Test_Menu,VOID(2), "Edit Label(s)" },
         { "Arc Editor",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(3), "Edit Arc(s)" },
         { "Scale Editor",           ctype_fn, .exec.fn = GUI_Test_Menu,VOID(4), "Edit Scale(s)" },
+        { "Image Editor",           ctype_fn, .exec.fn = GUI_Test_Menu,VOID(5), "Edit Image(s)" },
 
 #if USE_LVGL > 0
-        { "Draw Label",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(5), "Draw a fixed Label" },
+        { "Draw Label",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(90), "Draw a fixed Label" },
 #endif
 #if DEBUG_GUIEDIT > 0
         { "Dump GUI Elements",      ctype_fn, .exec.fn = GUI_Test_Menu,VOID(97), "Dump all GUI Elements" },
