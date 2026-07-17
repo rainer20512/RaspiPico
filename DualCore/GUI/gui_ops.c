@@ -7,6 +7,7 @@
 #include "../GUI/gui_edit.h"
 #include "../GUI/gui_lists.h"
 
+#include "debug/debug_helper.h"
 
 #if defined(RP2040_M0_1) || defined(CORE1_SIM)
   static const GUI_Font_T DefinedFonts[] =
@@ -39,8 +40,10 @@
 
   LV_IMAGE_DECLARE(Idiot_Rund_240px);
   LV_IMAGE_DECLARE(img_needle00);
+  LV_IMAGE_DECLARE(Achtung);
   static const GUI_RawImage_T DefinedImages[] =
   {
+    {"Achtung",     &Achtung },
     {"DerIdiot",    &Idiot_Rund_240px },
     {"ScNeedle0",   &img_needle00 },
   };
@@ -99,7 +102,7 @@ void GUI_Init_Curr_Elems(void)
     /* Set the image of the default image */
     /* First try to use DEFAULT_IMAGENUM, if not exit FALLBACK_FONTNUM */
     if ( ALL_IMAGESNUM >= DEFAULT_IMAGENUM ) {
-        cur_image.image = ALL_IMAGES[DEFAULT_IMAGENUM].image;
+        cur_image.image = (lv_img_dsc_t  *)ALL_IMAGES[DEFAULT_IMAGENUM].image;
         STYLE_SET_PROP(&cur_image, IMAGE_IMAGE);
     }
 }
@@ -119,9 +122,11 @@ void GUI_Init_Ops_Core1(void)
   AllImagesNum1 = sizeof(DefinedImages) / sizeof(GUI_RawImage_T);
   AllFonts1     = (GUI_Font_T *)DefinedFonts;
   AllFontNum1   = sizeof(DefinedFonts) / sizeof(GUI_Font_T);
+  GUI_Init_Images_Core1();
   GUI_Init_Fonts_Core1();
 
-  /* Update curent elements wirh font settings */  
+
+  /* Update curent elements with font settings */  
   GUI_Init_Curr_Elems();
 }
 #endif
@@ -179,14 +184,14 @@ void GUI_Reset_GUI( void )
 {
     List_Elem_T* next;
     List_Elem_T* ll;
-    
+    DEBUG_PRINTF("GUI-Reset start ...\n"); 
     /* first run: delete all widgets */
     ll = GUI_item_list;
     while ( ll ) {
         // ll will be deleted below, so save ptr to next elem 
         next = LL_next(ll);  
         if ( ll->ll_type != GUI_ELEM_FONT && ll->ll_type != GUI_ELEM_RAWIMG && ll->ll_type != GUI_ELEM_STYLE ) {
-            GUI_delete_entry(ll->ll_entry, ll->ll_type );          
+            GUI_delete_entry(ll->ll_entry, ll->ll_type );
         }
         ll = next;
     }
@@ -201,6 +206,11 @@ void GUI_Reset_GUI( void )
         }         
         ll = next;
     }
+
+    /* finaylly clear screen */
+    lv_obj_clean(lv_scr_act());
+    
+    DEBUG_PRINTF("GUI-Reset finished\n"); 
 }
 
 #endif /*  USE_GUI_INTERFACE > 0 */ 

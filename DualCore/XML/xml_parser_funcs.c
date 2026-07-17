@@ -117,7 +117,7 @@ void AttrUpdate( const GUI_Edit_T *edit )
     if( !GUI_Edit_SetItem(act_attr->value, act_attr->valuelen, edit, (uint32_t)idx ) ) {
         DEBUG_PRINTF("Invalid value >");
         DumpToken(act_attr->value, act_attr->valuelen);
-        DEBUG_PRINTF(" for property >");
+        DEBUG_PRINTF("< for property >");
         DumpToken(act_attr->name, act_attr->namelen);
         DEBUG_PUTC('<');DEBUG_PUTC('\n');
     }
@@ -258,7 +258,7 @@ bool ExitLevel(void)
         #endif 
         return false;
     } 
-    xml_parser_pop(&actual);
+    xml_parser_pop(&actual, &actual);
     return true;
 }
 
@@ -269,8 +269,8 @@ bool ExitLevel(void)
  *****************************************************************************/
 void exit_screen ( Parser_Item_T *toPop)
 {
-#if DEBUG_PARSER > 1
-  DEBUG_PRINTF("OnExit of %s:\n", toPop->name);
+#if DEBUG_PARSER > 0
+  DEBUG_PRINTF("ExitScreen of %s:\n", toPop->name);
 #endif
   const GUI_Edit_T *edit = toPop->edit;
   if (!edit)  {
@@ -279,7 +279,8 @@ void exit_screen ( Parser_Item_T *toPop)
       #endif
   } else {
       GUI_edit_dump_all(edit, true );
-      GUI_update_screen( (GUI_Screen_T*)(edit->workspace), lv_scr_act() );
+      // RHB ToDo 
+     GUI_new_or_update_entry(edit->workspace,  edit->gui_elem_type );
   }
 }
 
@@ -291,8 +292,8 @@ void exit_screen ( Parser_Item_T *toPop)
  *****************************************************************************/
 void exit_lvgl_elem ( Parser_Item_T *toPop)
 {
-#if DEBUG_PARSER > 1
-  DEBUG_PRINTF("OnExit of %s:\n", toPop->name);
+#if DEBUG_PARSER > 0
+  DEBUG_PRINTF("Exit LVGL-Elem of %s:\n", toPop->name);
 #endif
   const GUI_Edit_T *edit = toPop->edit;
   if (!edit)  {
@@ -300,7 +301,7 @@ void exit_lvgl_elem ( Parser_Item_T *toPop)
           DEBUG_PRINTF("No edit\n");
       #endif
   } else {
-      GUI_edit_dump_all(edit, true );
+      // GUI_edit_dump_all(edit, true );
       GUI_new_or_update_entry(edit->workspace, edit->gui_elem_type );
 
   }
@@ -341,6 +342,8 @@ bool parse_lvgl_elem ( char *token, uint32_t tokenlength, uint32_t state )
             const GUI_Edit_T *keep = actual.edit;
             xml_parser_push(&actual);
             SET_ACTUAL(parse_attributes, 0, keep, NULL, "attributes" );
+            /* Set callback when parsing of attributes is done */
+            actual.OnExit = exit_lvgl_elem;
             return true;
         }
     }
@@ -384,6 +387,8 @@ bool parse_screen ( char *token, uint32_t tokenlength, uint32_t state )
             const GUI_Edit_T *keep = actual.edit;
             xml_parser_push(&actual);
             SET_ACTUAL(parse_attributes, 0, keep, NULL, "attributes" );
+            /* Set callback when parsing of attributes is done */
+            actual.OnExit = exit_screen;
             return true;
         }
     }
@@ -415,8 +420,6 @@ bool parse_screen ( char *token, uint32_t tokenlength, uint32_t state )
         #endif 
     }
     SET_ACTUAL(parse_lvgl_elem, 0, edit, last_exitword, xml_component[idx-1] );
-    /* Set callback when parsing of lvgl elem is done */
-    actual.OnExit = exit_lvgl_elem;
     /* Reset all data fields GUI element */
     GUI_Edit_SetUsedBits(edit, 0, 0);
     xml_parse(token, tokenlength);
@@ -457,8 +460,6 @@ bool parse_root ( char *token, uint32_t tokenlength, uint32_t state )
         actual.state = 0;
         xml_parser_push(&actual);
         SET_ACTUAL(parse_screen, 0, &edit_screen, last_exitword, "screen" );
-        /* Set callback when parsing of screen is done */
-        actual.OnExit = exit_screen;
         /* Reset all default data fields of screen variable */
         GUI_Edit_SetUsedBits(&edit_screen, 0, 0);
         xml_parse(token, tokenlength);
@@ -534,8 +535,10 @@ bool parse_attributes ( char *token, uint32_t tokenlength, uint32_t state )
 
     /* Thereafter for simple closing bracket */
     reflen=1;
-    if (CheckCloseBracket(token, &reflen)) return ExitLevel();
- 
+    if (CheckCloseBracket(token, &reflen)) {
+      return ExitLevel();
+    }
+
     /* therafter search for "=" within token */
     if ( tokenlength > 1 ) {
         int32_t eqpos = FindInToken(token, tokenlength, '=', 1,false);
@@ -599,7 +602,7 @@ bool parse_attributes ( char *token, uint32_t tokenlength, uint32_t state )
 void xml_parser_init(void) 
 {  
    /* clear stack from previous parse runs */
-   while(!XML_STACK_EMPTY() ) xml_parser_pop(NULL);
+   while(!XML_STACK_EMPTY() ) xml_parser_pop(NULL, NULL);
   
    if ( !act_attr ) act_attr = my_malloc(sizeof(Parser_Attr_T));
 
@@ -615,7 +618,7 @@ void xml_parser_init(void)
 void xml_parser_deinit(void) 
 {  
    /* clear stack from previous parse runs */
-   while(!XML_STACK_EMPTY() ) xml_parser_pop(NULL);
+   while(!XML_STACK_EMPTY() ) xml_parser_pop(NULL, NULL);
   
    if ( act_attr ) my_free(act_attr);
 

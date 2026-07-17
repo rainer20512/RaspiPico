@@ -93,18 +93,18 @@ typedef struct {
         ret = Core0_Handle_Echo();
         break;
       case IPC_MSG_0TO1_QRY_IMAGEINFO:
-        /* We got fontinfo From Core1 */
+        /* We got image info From Core1 */
         IPC_Imageinfo_T *imgbuff = (IPC_Imageinfo_T *) buf1to0.buff;
         AllImages0    = imgbuff->imageinfo;
         AllImagesNum0 = imgbuff->imagenum;
-        DEBUG_PRINTF("Core0 fontinfo: %d fonts\n",AllFontNum0);
+        DEBUG_PRINTF("Core0 image info: %d fonts\n",AllImagesNum0);
         break;        
       case IPC_MSG_0TO1_QRY_FONTINFO:
         /* We got fontinfo From Core1 */
         IPC_Fontinfo_T *fntbuff = (IPC_Fontinfo_T *) buf1to0.buff;
         AllFonts0   = fntbuff->fontinfo;
         AllFontNum0 = fntbuff->fontnum;
-        DEBUG_PRINTF("Core0 fontinfo: %d fonts\n",AllFontNum0);
+        DEBUG_PRINTF("Core0 font info: %d fonts\n",AllFontNum0);
         break;        
       default:
         DEBUG_PRINTF("No handler for IPC msg #%d\n", msgID);

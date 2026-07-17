@@ -45,7 +45,7 @@ typedef struct Parser_Stack {
 } Parser_Stack_T;
 
 Parser_Stack_T *xml_parser_push ( Parser_Item_T *src ); 
-bool            xml_parser_pop  ( Parser_Item_T *dest );
+bool            xml_parser_pop  (Parser_Item_T *current,  Parser_Item_T *dest );
 #define XML_STACK_EMPTY() (xml_parser_tos==NULL)
 
 void xml_parser_init  (void);

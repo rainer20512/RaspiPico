@@ -68,15 +68,17 @@ Parser_Stack_T * xml_parser_push ( Parser_Item_T *src )
  * @note   global TOP pointer "xml_parser_tos" will be actualized, too.
  *         heap mem is freed
  *****************************************************************************/
-bool xml_parser_pop  ( Parser_Item_T *dest )
+bool xml_parser_pop  ( Parser_Item_T *current, Parser_Item_T *dest )
 {
-  if ( XML_STACK_EMPTY() ) return false;
-  Parser_Stack_T *oldtos = xml_parser_tos;
+  /* if we have an actual OnExit, then call it now */
+  if (current && current->OnExit ) current->OnExit( current );
 
-  if ( oldtos->parser_state.OnExit ) oldtos->parser_state.OnExit( &oldtos->parser_state );
+  if ( XML_STACK_EMPTY() ) return false;
+
+  /* get TOS, copy it to dest, move TOS to nex, then delete old TOS */
+  Parser_Stack_T *oldtos = xml_parser_tos;
   if (dest) *dest = oldtos->parser_state;
   xml_parser_tos = oldtos->next;
-
   my_free(oldtos);
   return true;
 }
@@ -91,7 +93,7 @@ void xml_set_actual( ParserFunc f, uint32_t st, const GUI_Edit_T *edit, const ch
     actual.edit     = edit;
     actual.exitword = ew;
     /* OnExit has to be set separately */
-    actual.OnExit   =NULL;
+    actual.OnExit   = NULL;
 #if DEBUG_PARSER > 0
     actual.name     = n;
 #else

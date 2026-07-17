@@ -82,6 +82,7 @@ typedef struct linear_buffer {
 
 /* Public functions ---------------------------------------------------------*/
 bool     CircBuff_Init(CircBuffT *cbuff, uint32_t size, uint8_t *bufptr );
+void     CircBuff_SetEmpty(CircBuffT *b);
 bool     CircBuff_Put(CircBuffT *b, uint8_t ch );
 bool     CircBuff_Get(CircBuffT *b, uint8_t *ch );
 bool     CircBuff_Put2(CircBuffT *b, uint16_t w );
@@ -92,6 +93,7 @@ bool     CircBuff_Peek2(CircBuffT *b, uint16_t *w );
 uint32_t CircBuff_SkipWhitespace(CircBuffT *b);
 int32_t  CircBuff_PeekWhitespace(CircBuffT *b);
 uint32_t CircBuff_GetStr( CircBuffT *b, char *retbuf, uint32_t len);
+bool     CircBuff_PeekToken(CircBuffT *b);
 uint32_t CircBuff_GetToken(CircBuffT *b, char *retbuf, uint32_t maxretlen);
 bool     CircBuff_Get_Indexed(CircBuffT *b, uint32_t idx, uint8_t *ch );
 void     CircBuff_GetlinearReadBuffer(CircBuffT *b, uint8_t **readbuf, uint32_t *size );

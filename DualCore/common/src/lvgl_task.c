@@ -32,9 +32,10 @@ int __putchar(int c, __printf_tag_ptr u) {
 
 
 static uint32_t cnt;
-
+#include "../../lvgl/lvgl.h"
 #include "../../lvgl/lv_conf.h"
 #include "../../lvgl/src/display/lv_display.h"
+#include "../../lvgl/src/display/lv_display_private.h"
 #include "../../lvgl/src/drivers/lv_drivers.h" 
 #include "../../lvgl/src/drivers/display/gc9a01/lv_gc9a01.h"
 #include "system/util.h"
@@ -44,7 +45,6 @@ static uint32_t cnt;
 
 
 
-#include "../../lvgl/lvgl.h"
 /* style with no border an 0 radius */
 lv_style_t my_style;
 repeating_timer_t lvgl_update_timer;
@@ -56,9 +56,8 @@ bool task_init_lvgl1(void)
     GC9A01_hard_reset();
     lv_init();
     lv_tick_set_cb(get_ms_since_start);
-    lv_display_t * disp = lv_gc9a01_create(240, 240,LV_LCD_FLAG_BGR | LV_LCD_FLAG_MIRROR_Y );
-    lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_180);
-
+    lv_display_t *lvgl_display = lv_gc9a01_create(240, 240,LV_LCD_FLAG_BGR | LV_LCD_FLAG_MIRROR_Y );
+    lv_display_set_rotation(lvgl_display, LV_DISPLAY_ROTATION_180);
     /* Set BG color to black */
     // lv_disp_set_bg_color( disp, lv_color_hex(0x000000) );
     
@@ -108,7 +107,7 @@ void task_handle_lvgl1( uint32_t arg )
    *---------------------------------------------------------------------------*/
   static bool lvgl_wait_cb(repeating_timer_t *rt) 
   {
-    DEBUG_PRINTF("Querying Fontinfo...\n");
+    DEBUG_PRINTF("Querying image and font info...\n");
     GUI_Init_Ops_Core0();
     return false; // cancel timer in any case
   }
@@ -116,7 +115,7 @@ void task_handle_lvgl1( uint32_t arg )
   void task_handle_lvgl0( uint32_t arg )
   {
     UNUSED(arg);
-    add_repeating_timer_ms(1000,lvgl_wait_cb,NULL, &wait_timer );
+    add_repeating_timer_ms(1500,lvgl_wait_cb,NULL, &wait_timer );
   }   
 #endif
  

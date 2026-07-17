@@ -34,8 +34,9 @@ const  GUI_Edit_T edit_screen = {
     { SCREEN_BGGRADDIR,    "bggraddir",   GUI_UINT8,  offsetof(GUI_Screen_T, bggraddir) }, 
     { SCREEN_BGMAINSTOP,   "bgmainstop",  GUI_UINT8,  offsetof(GUI_Screen_T, bgmainstop) }, 
     { SCREEN_BGGRADSTOP,   "bggradstop",  GUI_UINT8,  offsetof(GUI_Screen_T, bggradstop) }, 
-    { SCREEN_NAME,          "name",       GUI_STRING, offsetof(GUI_Screen_T, name) }, 
+    { SCREEN_RESET,        "reset",       GUI_UINT8,  offsetof(GUI_Screen_T, resetoninit) }, 
 /*11*/
+    { SCREEN_NAME,          "name",       GUI_STRING, offsetof(GUI_Screen_T, name) }, 
   },
 };
 
@@ -171,15 +172,16 @@ const  GUI_Edit_T edit_image = {
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .receipe   = { 
 /* 01 */
-    { IMAGE_IMAGE,        "rawimage",       GUI_RAWIMG,  offsetof(GUI_Image_T, image) }, 
-    { IMAGE_XOFS,         "x",              GUI_INT16, offsetof(GUI_Image_T, xofs) }, 
-    { IMAGE_YOFS,         "y",              GUI_INT16, offsetof(GUI_Image_T, yofs) }, 
+    { IMAGE_IMAGE,        "rawimage",       GUI_RAWIMG, offsetof(GUI_Image_T, image) }, 
+    { IMAGE_IMAGE,        "style",          GUI_STYLE,  offsetof(GUI_Image_T, style) }, 
+    { IMAGE_XOFS,         "xofs",           GUI_INT16,  offsetof(GUI_Image_T, xofs) }, 
+    { IMAGE_YOFS,         "yofs",           GUI_INT16,  offsetof(GUI_Image_T, yofs) }, 
     { IMAGE_ALIGN,        "align",          GUI_UINT8,  offsetof(GUI_Image_T, align) }, 
     { IMAGE_ROTATE,       "rotation",       GUI_INT16,  offsetof(GUI_Image_T, rot_angle) }, 
 /* 06 */
     { IMAGE_SCALE,        "scale",          GUI_UINT16, offsetof(GUI_Image_T, scale) }, 
-    { IMAGE_PIVOTX,       "pivotx",         GUI_INT16, offsetof(GUI_Image_T, pivotx) }, 
-    { IMAGE_PIVOTY,       "pivoty",         GUI_INT16, offsetof(GUI_Image_T, pivoty) }, 
+    { IMAGE_PIVOTX,       "pivotx",         GUI_INT16,  offsetof(GUI_Image_T, pivotx) }, 
+    { IMAGE_PIVOTY,       "pivoty",         GUI_INT16,  offsetof(GUI_Image_T, pivoty) }, 
     { IMAGE_NAME,         "name",           GUI_STRING, offsetof(GUI_Image_T, name) }, 
   },
 };

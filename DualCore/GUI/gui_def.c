@@ -23,7 +23,7 @@
 /* Define, how the default screen looks like
  ******************************************************************************/
 const GUI_Screen_T def_screen = 
-    { .used         = 0b1000000111,
+    { .used         = 0b10000000111,
       .rotation     = 180, 
       .bgopa        = 255, 
       .bgcolor      = {0xFF, 0x7f, 0x7f},
@@ -114,8 +114,9 @@ const GUI_Scale_T def_scale = {
 GUI_Scale_T cur_scale;         /* Init'ed by GUI_Init_Curr_Elems */
 
 const GUI_Image_T def_image = {
-    .used     = 0b111111110,
-    /* associated image is set at runtime by "GUI_Init_Curr_Elems" */
+    .used     = 0b1111111100,
+    /* associated image ais set at runtime by "GUI_Init_Curr_Elems" */
+    .style        = NULL,
     .xofs         = 0, 
     .yofs         = 0, 
     .align        = LV_ALIGN_CENTER,
@@ -226,21 +227,26 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
     }
    /******************************************************************************
      * @brief  Update the current screen settings from GUI_Screen_T variable. 
-     *         if style is NULL, new LVGL style will be created, if != NULL it is
-     *         regarded as a valid lvgl style object and updated accordingly  
-     * @param  act    - GUI description of LVGL style
-     * @param  style  - ptr to associated existing style object in LVGL or NULL
-     * @retval pointer to new or updated LVGL style
-     * @note   the lvgl style variable is dynamically allocated from heap
-     *         user is repsonsible for freeing if no longer needed
+     * @param  act    - GUI description of LVGL screen
+     * @param  scr    - ptr to associated screen variable
      *****************************************************************************/     
-    void GUI_update_screen ( GUI_Screen_T *act, lv_obj_t *scr )
+     static lv_obj_t *GUI_update_screen ( GUI_Screen_T *act, lv_obj_t *scr )
     { 
+     	/* Check, whether screen is already known to LVGL */
+    	/* if not, allocate space and init */
+        if ( !scr ) {
+          scr = lv_scr_act();
+        } 
+
+       /* handle reset first */
+        if ( SCREEN_HAS_PROP(act, SCREEN_RESET) && act->resetoninit ) {
+          GUI_Reset_GUI();
+        } 
     	/* set screen properties */
 /*  1 */
         if ( SCREEN_HAS_PROP(act, SCREEN_BGOPA))        lv_obj_set_style_bg_opa       (scr, act->bgopa,       LV_PART_MAIN);
         if ( SCREEN_HAS_PROP(act, SCREEN_BGCOLOR))      lv_obj_set_style_bg_color     (scr, act->bgcolor,     LV_PART_MAIN);
-        if ( SCREEN_HAS_PROP(act, SCREEN_ROTATE))       GUI_display_set_rotation      ( act->rotation);
+        if ( SCREEN_HAS_PROP(act, SCREEN_ROTATE))       GUI_display_set_rotation      (act->rotation);
 
         if ( SCREEN_HAS_PROP(act, SCREEN_BGMAINOPA))    lv_obj_set_style_bg_main_opa  (scr, act->bgmainopa,   LV_PART_MAIN); 
         if ( SCREEN_HAS_PROP(act, SCREEN_BGGRDCOLOR))   lv_obj_set_style_bg_grad_color(scr, act->bggradcolor, LV_PART_MAIN);
@@ -270,8 +276,7 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
         if ( !style ) {
           if ( !(style = GUI_Allocate( style, sizeof(lv_style_t))) ) return NULL;
           lv_style_init(style);
-        } else {
-        }
+        } 
 
     	/* assign _All_ style properties */
 /*  1 */
@@ -469,8 +474,15 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
         }
         /* 1 */
         if ( IMAGE_HAS_PROP(act, IMAGE_IMAGE))          lv_image_set_src(img, act->image);
+        if ( IMAGE_HAS_PROP(act, IMAGE_STYLE))          lv_obj_add_style(img, act->style, LV_PART_MAIN );
+
         if ( IMAGE_HAS_PROP(act, IMAGE_XOFS))           lv_image_set_offset_x(img, act->xofs);
         if ( IMAGE_HAS_PROP(act, IMAGE_YOFS))           lv_image_set_offset_y(img, act->yofs); 
+
+/*
+        if ( IMAGE_HAS_PROP(act, IMAGE_XOFS))           lv_obj_set_x(img, act->xofs);
+        if ( IMAGE_HAS_PROP(act, IMAGE_YOFS))           lv_obj_set_y(img, act->yofs); 
+*/
         if ( IMAGE_HAS_PROP(act, IMAGE_ALIGN))          lv_image_set_inner_align(img, act->align);
         if ( IMAGE_HAS_PROP(act, IMAGE_ROTATE))         lv_image_set_rotation(img, act->rot_angle);
         /* 6 */
@@ -499,7 +511,6 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
       for ( uint32_t i = 0; i < AllImagesNum1; i++ ) {
          img = LL_New_Element(GUI_ELEM_RAWIMG,  (void *)AllImages1[i].image, AllImages1[i].imagename, &AllImages1[i], 0);
          LL_append(&GUI_item_list, img);
-         i++;
       }
       printf("%d images loaded from 0x%p\n", AllImagesNum1,AllImages1);
     }
@@ -517,7 +528,6 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
       for ( uint32_t i = 0; i < AllFontNum1; i++ ) {
          font = LL_New_Element(GUI_ELEM_FONT,  (void *)AllFonts1[i].font, AllFonts1[i].fontname, &AllFonts1[i], AllFonts1[i].fontsize);
          LL_append(&GUI_item_list, font);
-         i++;
       }
       printf("%d fonts loaded from 0x%p\n", AllFontNum1,AllFonts1);
     }
@@ -550,6 +560,9 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
             break;
           case GUI_ELEM_IMAGE:
             return  GUI_new_or_update_image ( (GUI_Image_T *)data, (lv_obj_t *)lvgl_obj );
+            break;
+          case GUI_ELEM_SCREEN:
+            return  GUI_update_screen ( (GUI_Screen_T *)data, (lv_obj_t *)lvgl_obj );
             break;
           default:
             printf("Err: No LVGL Update handler for LVGL %s\n", EditNames[editdata->gui_elem_type]);
@@ -636,7 +649,9 @@ static bool IPC_Pack_Translate_Objs(IPC_GUI_Xfer_Buff_T *txbuf,  const GUI_Edit_
                 *(((uint16_t*)elembin)++)   = found->ll_additional;
                 *(elembin)                  = (uint8_t)tr_counter;
                 */
-                DEBUG_PRINTF("Translated %s %s: (%d, %d)\n",editdata->receipe[i].elem_name, found->ll_name, ptr->tr_idx, ptr->additional );
+                #if DEBUG_GUIEDIT > 1
+                    DEBUG_PRINTF("Translated %s %s: (%d, %d)\n",editdata->receipe[i].elem_name, found->ll_name, ptr->tr_idx, ptr->additional );
+                #endif
                 tr_counter++;
             }
         }
@@ -652,7 +667,7 @@ bool IPC_Pack_Transferbuf( IPC_GUI_Xfer_Buff_T *txbuf, uint8_t *data, const GUI_
     /* We do not need to handle each type individually, the following switch/case */
     /* is jut to ensure, you check all entities when adding new GUI element types */
     if (     editdata->gui_elem_type != GUI_ELEM_STYLE && editdata->gui_elem_type != GUI_ELEM_LABEL && editdata->gui_elem_type != GUI_ELEM_ARC 
-          && editdata->gui_elem_type != GUI_ELEM_SCALE && editdata->gui_elem_type != GUI_ELEM_IMAGE 
+          && editdata->gui_elem_type != GUI_ELEM_SCALE && editdata->gui_elem_type != GUI_ELEM_IMAGE && editdata->gui_elem_type != GUI_ELEM_SCREEN
        ) 
     { 
         printf("Err: No Transfer handler for LVGL %s\n", EditNames[editdata->gui_elem_type]);
@@ -669,7 +684,7 @@ bool IPC_Pack_Transferbuf( IPC_GUI_Xfer_Buff_T *txbuf, uint8_t *data, const GUI_
     if ( !IPC_Pack_Translate_Objs( txbuf, editdata) ) {
         return false;
     }
-
+    // DEBUG_PRINTF("Packdel=%d\n",txbuf->bDelete);
     return true;
 }
 
@@ -707,7 +722,9 @@ static bool IPC_Unpack_Translate_Objs(IPC_GUI_Xfer_Buff_T *rxbuf,  const GUI_Edi
                 }
                 /* copy name to translation table */
                 *(void **)(data+editdata->receipe[i].elem_offset) = found->ll_lvgl_obj;
-                DEBUG_PRINTF("Translated %d, %d -> %s %s\n",tr_idx, additional, editdata->receipe[i].elem_name, found->ll_name );
+                #if DEBUG_GUIEDIT > 1
+                      DEBUG_PRINTF("Translated %d, %d -> %s %s\n",tr_idx, additional, editdata->receipe[i].elem_name, found->ll_name );
+                #endif
             }
         }
     }
@@ -726,7 +743,8 @@ bool IPC_Unpack_Transferbuf( IPC_GUI_Xfer_Buff_T *rxbuf, uint8_t *data, uint16_t
 
     const GUI_Edit_T *editdata = Find_EditInfoByType( rxbuf->elem_type );  
     if ( !IPC_Unpack_Translate_Objs( rxbuf, editdata ) ) return false;
-      
+    // DEBUG_PRINTF("unpackdel=%d\n",rxbuf->bDelete);
+  
     return true;
 }
 
@@ -856,7 +874,7 @@ static IPC_GUI_Xfer_Buff_T recvbuf;
     }
 
 
-#endif /* defined(RP2040_M0_0) */
+#endif /* RP2040_M0_1 || defined(CORE1_SIM) */
 
 
 
@@ -874,7 +892,7 @@ static void GUI_update_entry(List_Elem_T *ll_elem, uint8_t *data, const GUI_Edit
     memcpy_fast(dest, data, editdata->total_size);
 
     /* Update associated LVGL obj */
-    #if defined(RP2040_M0_1) || defined(CORE1_SIM) 
+    #if defined(RP2040_M0_1) // RHB check || defined(CORE1_SIM) 
         ll_elem->ll_lvgl_obj = GUI_Create_or_update_LVGL_Core1( data, editdata, ll_elem->ll_lvgl_obj );
     #endif
     #if defined(RP2040_M0_0)

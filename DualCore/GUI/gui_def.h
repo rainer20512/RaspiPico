@@ -41,7 +41,7 @@ typedef enum {
 } GUI_Edit_Enum;
 
 /* Corresponding user friendly names of these of GUI elements */
-#define GUI_EDITNAMES   {"NoType", "Image", "Font", "Screen", "Style", "Label", "Arc", "Scale", "Image", "<Undef>" }
+#define GUI_EDITNAMES   {"NoType", "RawImg", "Font", "Screen", "Style", "Label", "Arc", "Scale", "Image", "<Undef>" }
 extern const char *EditNames[];
 
 /* - How we describe an image ( mostly stored in flash memory -------------- */
@@ -73,8 +73,9 @@ typedef enum {
   SCREEN_BGGRADDIR    = 6, 
   SCREEN_BGMAINSTOP   = 7, 
   SCREEN_BGGRADSTOP   = 8,
-  SCREEN_NAME         = 9,
-  SCREEN_EDIT_MAX     = 10,                  /* mandatory last entry  */
+  SCREEN_RESET        = 9,
+  SCREEN_NAME         = 10,
+  SCREEN_EDIT_MAX     = 11,                  /* mandatory last entry  */
 } Screen_Used_T;
 
 #define SCREEN_HAS_PROP(scr, id) ( (scr)->used &  (  1 << (id) ) )
@@ -93,6 +94,7 @@ typedef struct {
   uint8_t         bggraddir;                /* Gradient direction: 0=None; 1=vertical; 2=horizontal */
   uint8_t         bgmainstop;               /* start point of gradient main color 0=immediate, 128 = middle, 255=none */
   uint8_t         bggradstop;               /* stop point of gradient grad color; 255=end, 128 = middle, 0=none */
+  uint8_t         resetoninit;              /* Reset screen on init */
   char            name[GUI_MAX_NAMELEN];    /* User friendly name */      
 } GUI_Screen_T;
 
@@ -277,15 +279,16 @@ typedef struct {
 /* Order has to be the same as in corresponding Edit receipe !!! */
 typedef enum {
   IMAGE_IMAGE         = 0,
-  IMAGE_XOFS          = 1,
-  IMAGE_YOFS          = 2, 
-  IMAGE_ALIGN         = 3,
-  IMAGE_ROTATE        = 4,
-  IMAGE_SCALE         = 5,
-  IMAGE_PIVOTX        = 6,
-  IMAGE_PIVOTY        = 7, 
-  IMAGE_NAME          = 8,
-  IMAGE_EDIT_MAX      = 9,                    /* mandatory last entry  */
+  IMAGE_STYLE         = 1,
+  IMAGE_XOFS          = 2,
+  IMAGE_YOFS          = 3, 
+  IMAGE_ALIGN         = 4,
+  IMAGE_ROTATE        = 5,
+  IMAGE_SCALE         = 6,
+  IMAGE_PIVOTX        = 7,
+  IMAGE_PIVOTY        = 8, 
+  IMAGE_NAME          = 9,
+  IMAGE_EDIT_MAX      = 10,                    /* mandatory last entry  */
 } IMAGE_Used_T;
 
 #define IMAGE_HAS_PROP(img, id) ( (img)->used &  (  1 << (id) ) )
@@ -297,7 +300,8 @@ typedef enum {
 typedef struct {
   uint32_t      used;                       /* bitfield of used properties */
   lv_img_dsc_t  *image;                     /* associated image */
-  int16_t      xofs, yofs;                 /* reference position */
+  lv_style_t 	*style;                     /* associated style */	
+  int16_t       xofs, yofs;                 /* reference position */
   int16_t       rot_angle;                  /* rotation angel of the original image in 0.1deg; pos=cw, neg=ccw  */
   uint16_t      scale;                      /* 256 = original size, 128= half size, 512 = double size, ...      */	
   int16_t      pivotx, pivoty;             /* center of rotation */
@@ -312,7 +316,7 @@ void GUI_Init_Fonts_Core0 (bool);
 void GUI_Init_Images_Core1(void);
 void GUI_Init_Images_Core0(bool);
 
-void GUI_update_screen    (GUI_Screen_T *act, lv_obj_t *scr );
+// void GUI_update_screen    (GUI_Screen_T *act, lv_obj_t *scr );
 struct List_Elem;
 struct List_Elem *GUI_new_or_update_entry (uint8_t *data, GUI_Edit_Enum gui_elem );
 void              GUI_delete_entry        (uint8_t *data, GUI_Edit_Enum gui_elem );

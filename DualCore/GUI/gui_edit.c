@@ -304,13 +304,13 @@ static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset
           /* Specified by number: convert to num and search for nth entry, LL_find_nth counts from 1 ... ! */
           ll_elem = LL_find_nth ( GUI_item_list,  search_elem, CMD_to_number(V_tempval.font.fontname.text, V_tempval.font.fontname.len ) + 1 );
         } else {
-          if ( editelem->elem_type == GUI_STYLE ) {
-            /* Specified by name: Get String copy from inbuf*/
+          if ( editelem->elem_type != GUI_FONT ) {
+            /* Specified by name only: Get String copy from inbuf*/
             V_to_cstr(tempstr, &V_tempval, GUI_MAX_NAMELEN);
             /* find Style by name */
             ll_elem = LL_find_by_type_n_name(GUI_item_list, search_elem, tempstr);
           } else {
-            /* Specified by <name><sep><size>: Copy from inbuf to variant */
+            /* Font: Specified by <name><sep><size>: Copy from inbuf to variant */
             if ( !V_Str_to_Font(&V_tempval) ) return false; 
             /* Copy back NULL terminated Fontname as search parameter */
             V_to_cstr(tempstr, &V_tempval, GUI_MAX_NAMELEN);

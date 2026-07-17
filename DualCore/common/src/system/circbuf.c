@@ -36,6 +36,14 @@ bool CircBuff_Init(CircBuffT *cbuff, uint32_t size, uint8_t *bufptr )
     return true;
 }
 
+/*********************************************************************************
+  * Set circular buffer to <empty>
+  ********************************************************************************/
+void CircBuff_SetEmpty(CircBuffT *b)
+{
+   b->wrptr = b->rdptr = 0;
+}
+
 bool CircBuff_Put(CircBuffT *b, uint8_t ch )
 {
   if ( CHECK_CBUF_FREE(*b, 1) ) {    
@@ -201,6 +209,38 @@ int32_t CircBuff_PeekWhitespace(CircBuffT *b)
 
   return copylen;
 }
+
+/******************************************************************************
+ * Peek next token, ie next char sequence delimited by whitespace 
+ *
+ * returns true, if there is another token or false if no more token in buffer
+ * NOTE: in either case trailing whitespace is removed
+ * NOTE: text within quotation marks will not be touched
+ * NOTE also the final token _must_ be followed by at least one ws character
+ *      this is due to a token could be truncated by buffer size limit
+ *      in that case there will be no ws behind partial loken
+ *****************************************************************************/
+bool CircBuff_PeekToken(CircBuffT *b)
+{
+  /* counter for quotation marks */
+  uint32_t qm_counter = 0;
+  /* output write position */
+  uint32_t wrptr      = 0; 
+  int32_t  tokensize;
+  uint8_t c;
+  #define OUTSIDE_QM()    (( qm_counter & 1 ) == 0 )
+
+
+  if ( CBUF_EMPTY(*b) ) return 0;
+
+  /* Skip trailing whitespace in any case*/
+  CircBuff_SkipWhitespace(b);
+
+  /* find next whitespace character out of quotes, */
+  tokensize = CircBuff_PeekWhitespace(b);
+
+  return tokensize > 0;
+  } 
 
 /******************************************************************************
  * Get next token, ie next char sequence delimited by whitespace 
