@@ -468,14 +468,16 @@ bool CMD_is_numeric( char *word, size_t wordlen )
  * @note   conversion stops, if a non numeric char is found
  * @retval numeric value
  ********************************************************************************/
-uint32_t CMD_to_number ( char *word, size_t wordlen ) 
+int32_t CMD_to_number ( char *word, size_t wordlen ) 
 { uint8_t base = 10;
   uint32_t p=0;
   uint32_t ret = 0;
   uint32_t digit;
+  int32_t  sign = 1;
   char c;
-  bool bHex = wordlen > 2 && *word == '0' && UCASE(*(word+1))=='X';
-
+  bool bHex     = wordlen > 2 && *word == '0' && UCASE(*(word+1))=='X';
+  bool bHasSign = wordlen > 1 && ( *word == '-' || *word=='+');
+   
 /*local*/bool CMD_GetDecimal(char digit, uint32_t *retval )
         {
             if ( digit < '0' || digit > '9' ) return false;
@@ -501,6 +503,11 @@ uint32_t CMD_to_number ( char *word, size_t wordlen )
         base = 16;
         word += 2;
         wordlen -=2;
+    } else if ( bHasSign ) {
+        // examine sign and skip sign
+        if (*word == '-' ) sign = -1;
+        word++;
+        wordlen--;
     }
 
     while ( p < wordlen ) {
@@ -509,7 +516,7 @@ uint32_t CMD_to_number ( char *word, size_t wordlen )
         ret = ret * base + digit;
         p++; word++;
     }
-    return ret;
+    return sign * (int32_t)ret;
 }
 
 /********************************************************************************

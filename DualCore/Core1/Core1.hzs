@@ -78,14 +78,14 @@
   <SessionOpenFile windowGroup="DockEditLeft" x="49" y="67" useTextEdit="1" path="../common/src/lvgl_task.c" left="0" top="26" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="28" useTextEdit="1" path="../GUI/gui_def.h" left="0" top="28" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="8" y="281" useTextEdit="1" path="../GUI/gui_def.c" left="0" top="244" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="92" useTextEdit="1" path="../common/src/system/ipc_fsm.c" left="0" top="20" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="92" useTextEdit="1" path="../common/src/system/ipc_fsm.c" left="0" top="22" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../lvgl/lv_conf.h" left="0" top="594" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="6" y="26" useTextEdit="1" folds0="26" path="../GUI/gui_ops.h" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="5" y="32" useTextEdit="1" path="C:/Users/bimse/AppData/Local/Rowley Associates Limited/CrossWorks for ARM/v5/packages/libraries/pico-sdk/src/rp2_common/pico_multicore/multicore.c" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../common/include/system/ipc_fsm.h" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="10" y="7" useTextEdit="1" path="../GUI/gui_edit.h" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="21" y="1" useTextEdit="1" path="../GUI/gui_lists.c" left="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="607" useTextEdit="1" path="../GUI/gui_edit.c" left="0" top="537" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="607" useTextEdit="1" path="../GUI/gui_edit.c" left="0" top="539" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../common/include/debug/debug_helper.h" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="55" useTextEdit="1" path="../GUI/gui_ops.c" left="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="15" useTextEdit="1" path="RP2040_M1_1_MemoryMap.xml" left="0" top="0" codecName="Default"/>

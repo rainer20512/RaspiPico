@@ -24,6 +24,12 @@ OnExitFn         OnExitEdit;  /* Callback on Exit of Editing */
 
 const GUI_Edit_TypeSpec_T GUI_TypeSpec[GUI_MAXELEM] = GUI_TYPE_SPECS;
 
+/* in CORE_1_SIM mode, only Core0 objects are accessible to interactive edit ! */
+#if  RP2040_M0_0
+    #define ITEM_LIST     GUI_item_list_0
+#elif  RP2040_M0_1
+    #define ITEM_LIST     GUI_item_list_1
+#endif
 
 
 // ---- Forward declaration of user input handler in GI edit mode -------------
@@ -77,7 +83,7 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const Edit_Receipe_T *editelem, 
              default:
                search_elem = GUI_ELEM_FONT;
            }
-           ll_elem = LL_find_by_type_n_obj( GUI_item_list, search_elem, *(void **)(bytes+editelem->elem_offset) );
+           ll_elem = LL_find_by_type_n_obj( ITEM_LIST, search_elem, *(void **)(bytes+editelem->elem_offset) );
            V_tempval.font.fontname.text = (char *)ll_elem->ll_name;
            printf("%s", V_tempval.font.fontname.text );
            /* In case of Fonts,also get the fontsize */
@@ -302,20 +308,20 @@ static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset
         }
         if ( CMD_is_numeric (V_tempval.str.text, V_tempval.str.len )) {
           /* Specified by number: convert to num and search for nth entry, LL_find_nth counts from 1 ... ! */
-          ll_elem = LL_find_nth ( GUI_item_list,  search_elem, CMD_to_number(V_tempval.font.fontname.text, V_tempval.font.fontname.len ) + 1 );
+          ll_elem = LL_find_nth ( ITEM_LIST,  search_elem, CMD_to_number(V_tempval.font.fontname.text, V_tempval.font.fontname.len ) + 1 );
         } else {
           if ( editelem->elem_type != GUI_FONT ) {
             /* Specified by name only: Get String copy from inbuf*/
             V_to_cstr(tempstr, &V_tempval, GUI_MAX_NAMELEN);
             /* find Style by name */
-            ll_elem = LL_find_by_type_n_name(GUI_item_list, search_elem, tempstr);
+            ll_elem = LL_find_by_type_n_name(ITEM_LIST, search_elem, tempstr);
           } else {
             /* Font: Specified by <name><sep><size>: Copy from inbuf to variant */
             if ( !V_Str_to_Font(&V_tempval) ) return false; 
             /* Copy back NULL terminated Fontname as search parameter */
             V_to_cstr(tempstr, &V_tempval, GUI_MAX_NAMELEN);
             /* find font by name and fontsize */
-            ll_elem = LL_find_by_type_name_additional(GUI_item_list, search_elem, tempstr, V_tempval.font.fontsize);
+            ll_elem = LL_find_by_type_name_additional(ITEM_LIST, search_elem, tempstr, V_tempval.font.fontsize);
           }
         }
         /* if found, copy lvgl obj ptr to structure, otherwise reset "used" bit */
@@ -354,7 +360,7 @@ static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset
  ******************************************************************************/
 void GUI_list_entries(const GUI_Edit_Enum elemtype )
 {
-  List_Elem_T* ptr = GUI_item_list;
+  List_Elem_T* ptr = ITEM_LIST;
   uint32_t i=0;
 
   printf("All Elements of type %s in global list\n", EditNames[elemtype] );
@@ -378,7 +384,7 @@ static void GUI_load_entry( char *word, size_t wordlen, const GUI_Edit_T *edit )
    V_Set_Str(&V_tempval, word, wordlen);
    V_to_cstr(tempstr, &V_tempval, GUI_MAX_NAMELEN);
 
-  List_Elem_T *ll_elem = LL_find_by_type_n_name ( GUI_item_list, edit->gui_elem_type, tempstr );
+  List_Elem_T *ll_elem = LL_find_by_type_n_name ( ITEM_LIST, edit->gui_elem_type, tempstr );
   if ( !ll_elem ) {
     printf("Err: %s %s not in item list\n",EditNames[edit->gui_elem_type],tempstr);
   } else {
@@ -593,7 +599,11 @@ static void GUI_handle_word( char *word, size_t wordlen )
    /* handle save command */
    if ( GUI_is_saveword( word, wordlen ) ) {
       putchar('\n');
-      GUI_new_or_update_entry(act_edit->workspace, act_edit->gui_elem_type );
+      #if  RP2040_M0_0
+                GUI_new_or_update_entry_Core0(act_edit->workspace, act_edit->gui_elem_type );
+      #elif  RP2040_M0_1
+                GUI_new_or_update_entry_Core1(act_edit->workspace, act_edit->gui_elem_type );
+      #endif
       GUI_list_entries(act_edit->gui_elem_type);
       return;
    }

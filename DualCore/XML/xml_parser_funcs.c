@@ -17,6 +17,7 @@
 #include "xml_parser_main.h"
 #include "xml_feeder.h"
 #include "../../GUI/gui_edit.h"
+#include "../../GUI/gui_ops.h"
 
 
 #if 0
@@ -108,18 +109,30 @@ void AttrUpdate( const GUI_Edit_T *edit )
 
     int32_t idx = GetReceipeIdxByName( edit, act_attr->name, act_attr->namelen);
     if ( idx < 0 ) {
-        DEBUG_PRINTF("Unknown Property Name: >");
-        DumpToken(act_attr->name, act_attr->namelen);
-        DEBUG_PUTC('<');DEBUG_PUTC('\n');
+        output_puts("Unknown Property Name: >");
+        output_putsl(act_attr->name, act_attr->namelen);
+        output_putch('<');output_putch('\n');
+        #if DEBUG_PARSER > 0
+            DEBUG_PRINTF("Unknown Property Name: >");
+            DumpToken(act_attr->name, act_attr->namelen);
+            DEBUG_PUTC('<');DEBUG_PUTC('\n');
+        #endif
         return;
     }
 
     if( !GUI_Edit_SetItem(act_attr->value, act_attr->valuelen, edit, (uint32_t)idx ) ) {
-        DEBUG_PRINTF("Invalid value >");
-        DumpToken(act_attr->value, act_attr->valuelen);
-        DEBUG_PRINTF("< for property >");
-        DumpToken(act_attr->name, act_attr->namelen);
-        DEBUG_PUTC('<');DEBUG_PUTC('\n');
+        #if DEBUG_PARSER > 0
+            DEBUG_PRINTF("Invalid value >");
+            DumpToken(act_attr->value, act_attr->valuelen);
+            DEBUG_PRINTF("< for property >");
+            DumpToken(act_attr->name, act_attr->namelen);
+            DEBUG_PUTC('<');DEBUG_PUTC('\n');
+        #endif
+        output_puts("Invalid value >");
+        output_putsl(act_attr->value, act_attr->valuelen);
+        output_puts("< for property >");
+        output_putsl(act_attr->name, act_attr->namelen);
+        output_putch('<');output_putch('\n');
     }
 }
 
@@ -280,7 +293,7 @@ void exit_screen ( Parser_Item_T *toPop)
   } else {
       GUI_edit_dump_all(edit, true );
       // RHB ToDo 
-     GUI_new_or_update_entry(edit->workspace,  edit->gui_elem_type );
+     GUI_new_or_update_entry_Core0(edit->workspace,  edit->gui_elem_type );
   }
 }
 
@@ -302,7 +315,7 @@ void exit_lvgl_elem ( Parser_Item_T *toPop)
       #endif
   } else {
       // GUI_edit_dump_all(edit, true );
-      GUI_new_or_update_entry(edit->workspace, edit->gui_elem_type );
+      GUI_new_or_update_entry_Core0(edit->workspace, edit->gui_elem_type );
 
   }
 }
@@ -397,11 +410,9 @@ bool parse_screen ( char *token, uint32_t tokenlength, uint32_t state )
     uint32_t idx = CheckWord(token+1, reducedlength, xml_component, &last_exitword);
     if ( !idx ) {
         /* not found */
-        #if DEBUG_PARSER > 0
-                DEBUG_PRINTF("component: unhandeled subitem: ");
-                DumpToken(token+1, reducedlength);
-                DEBUG_PUTC('\n');
-        #endif 
+        output_puts("screen: unhandeled subitem: ");
+        output_putsl(token+1, reducedlength);
+        output_putch('\n');
         return true;
     }
 
@@ -473,11 +484,15 @@ bool parse_root ( char *token, uint32_t tokenlength, uint32_t state )
         SET_ACTUAL(parse_screen, 0, NULL, last_exitword, "prolog" );
         xml_parse(token, tokenlength);
         break;
-#if DEBUG_PARSER > 0
       default:
-        DEBUG_PRINTF("parse_root: found unhandeled subitem: ");
+        output_puts("found unhandeled item >");
+        output_putsl(token+1, reducedlength);
+        output_putch('<');output_putch('\n');
+#if DEBUG_PARSER > 0
+        DEBUG_PRINTF("found unhandeled item >");
         DumpToken(token+1, reducedlength);
-        DEBUG_PUTC('\n');
+        DEBUG_PUTC('<');DEBUG_PUTC('\n');
+
 #endif 
    } /* case */
    return true; 
@@ -595,7 +610,15 @@ bool parse_attributes ( char *token, uint32_t tokenlength, uint32_t state )
 } 
 
 
-/*  
+/******************************************************************************
+ * @brief Return XML parser version str
+ *****************************************************************************/
+const char *xml_parser_version(void)
+{
+  return XML_PARSER_VERSION;
+}
+
+
 /******************************************************************************
  * @brief Setup/initialize parser to parse optional prolog root element
  *****************************************************************************/
@@ -609,9 +632,9 @@ void xml_parser_init(void)
    /* setup to parse root element */
    SET_ACTUAL(parse_root, 0, NULL, NULL, "Root" );
    i2c_feeder_init();
+   output_printf("XML-Parser V%s on LVGL V%s\n",xml_parser_version(), LVGL_VersinfoStr0);
 }
 
-/*  
 /******************************************************************************
  * @brief Setup/initialize parser to parse optional prolog root element
  *****************************************************************************/
@@ -620,7 +643,8 @@ void xml_parser_deinit(void)
    /* clear stack from previous parse runs */
    while(!XML_STACK_EMPTY() ) xml_parser_pop(NULL, NULL);
   
-   if ( act_attr ) my_free(act_attr);
+   if ( act_attr ) { my_free(act_attr); act_attr=NULL; }
+   
 
    /* setup to parse root element */
    SET_ACTUAL(parse_root, 0, NULL, NULL, "Root" );

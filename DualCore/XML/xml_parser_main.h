@@ -48,7 +48,6 @@ Parser_Stack_T *xml_parser_push ( Parser_Item_T *src );
 bool            xml_parser_pop  (Parser_Item_T *current,  Parser_Item_T *dest );
 #define XML_STACK_EMPTY() (xml_parser_tos==NULL)
 
-void xml_parser_init  (void);
 void xml_parse        ( char *token, uint32_t tokenlength );
 void xml_set_actual   ( ParserFunc f, uint32_t st, const GUI_Edit_T *edit, const char *ew, const char *n );
 #if DEBUG_PARSER > 0

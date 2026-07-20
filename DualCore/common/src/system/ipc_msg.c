@@ -106,6 +106,11 @@ typedef struct {
         AllFontNum0 = fntbuff->fontnum;
         DEBUG_PRINTF("Core0 font info: %d fonts\n",AllFontNum0);
         break;        
+      case IPC_MSG_0TO1_QRY_VERSNINFO:
+        /* We got LVGL Version String ptr from Core1 */
+        LVGL_VersinfoStr0 = *(const char **) buf1to0.buff;
+        DEBUG_PRINTF("LVGL Version: %s\n",LVGL_VersinfoStr0);
+        break;
       default:
         DEBUG_PRINTF("No handler for IPC msg #%d\n", msgID);
     } /* switch */
@@ -197,6 +202,24 @@ typedef struct {
   }
 
   /******************************************************************************
+   * IPC Query LVGL Version Str from Core1 to Core 0
+   *****************************************************************************/
+  static bool Core0_Qry_VersioninfoInternal ( void* userdata, IPC_ResultCB pfAck )
+  { 
+    /* No payload */
+    buf0to1.uSize = 0;
+    /* Send */
+    IPC_SignalCore0to1 (IPC_MSG_0TO1_QRY_VERSNINFO, false, pfAck );
+    return true;
+  }
+
+  bool Core0_Qry_Versioninfo ( void* arg, IPC_ResultCB onCompletion )
+  {
+    FSM_Init(&ipcfsm, arg, Core0_Qry_VersioninfoInternal, FSM_Ipc );
+    if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
+    FSM_Start(&ipcfsm);
+  }
+  /******************************************************************************
    * IPC Query Imageinfo from Core1 to Core 0
    *****************************************************************************/
   static bool Core0_Qry_ImageinfoInternal ( void* userdata, IPC_ResultCB pfAck )
@@ -214,6 +237,7 @@ typedef struct {
     if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
     FSM_Start(&ipcfsm);
   }
+
   /******************************************************************************
    * IPC Query fontinfo from Core1 to Core 0
    *****************************************************************************/
@@ -376,6 +400,13 @@ typedef struct {
         fntbuff->fontinfo = AllFonts1;
         fntbuff->fontnum =  AllFontNum1;
         pbuf1to0->uSize = sizeof(IPC_Fontinfo_T);
+        /* We generated new payload, so return true */
+        ret = true;
+        break;
+      case IPC_MSG_0TO1_QRY_VERSNINFO:
+        /* Return LVGL Version Str ptr from Core1 to Core0 */
+        *((const char **)pbuf1to0->buff) = LVGL_VersinfoStr1;
+        pbuf1to0->uSize = sizeof(const char *);
         /* We generated new payload, so return true */
         ret = true;
         break;

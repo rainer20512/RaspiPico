@@ -102,33 +102,37 @@ typedef struct {
 /* Enumeration of all properties of a GUI_Style_T */
 /* Order has to be the same as in corresponding Edit receipe !!! */
 typedef enum {
-  STYLE_DEFWIDTH     = 0,
-  STYLE_DEFHEIGHT    = 1,
-  STYLE_OBJALIGN     = 2,
-  STYLE_BGOPA        = 3,
-  STYLE_BGCOLOR      = 4,
-  STYLE_BGMAINOPA    = 5, 
-  STYLE_BGGRDCOLOR   = 6, 
-  STYLE_BGGRADOPA    = 7, 
-  STYLE_BGGRADDIR    = 8, 
-  STYLE_BGMAINSTOP   = 9, 
-  STYLE_BGGRADSTOP   = 10,
-  STYLE_BORDERWIDTH  = 11,
-  STYLE_BORDERRADIUS = 12,
-  STYLE_BORDERCOLOR  = 13,
-  STYLE_SHADOWWIDTH  = 14,
-  STYLE_SHADOWOPA    = 15,
-  STYLE_SHADOWXREF   = 16,
-  STYLE_SHADOWYREF   = 17,
-  STYLE_SHADOWCOLOR  = 18,
-  STYLE_TEXTALIGN    = 19,
-  STYLE_TEXTCOLOR    = 20,
-  STYLE_TEXTFONT     = 21,
-  STYLE_ARCWIDTH     = 22,
-  STYLE_ARCOPA       = 23,
-  STYLE_ARCCOLOR     = 24,
-  STYLE_NAME         = 25, 
-  STYLE_EDIT_MAX     = 26,                /* mandatory last entry  */
+  STYLE_WIDTH        = 0,
+  STYLE_HEIGHT       = 1,
+  STYLE_LENGTH       = 2, 
+  STYLE_OBJALIGN     = 3, 
+  STYLE_BGOPA        = 4, 
+  STYLE_BGCOLOR      = 5, 
+  STYLE_BGMAINOPA    = 6, 
+  STYLE_BGGRDCOLOR   = 7, 
+  STYLE_BGGRADOPA    = 8, 
+  STYLE_BGGRADDIR    = 9, 
+  STYLE_BGMAINSTOP   = 10,
+  STYLE_BGGRADSTOP   = 11,
+  STYLE_BORDERWIDTH  = 12,
+  STYLE_BORDERRADIUS = 13,
+  STYLE_BORDERCOLOR  = 14,
+  STYLE_SHADOWWIDTH  = 15,
+  STYLE_SHADOWOPA    = 16,
+  STYLE_SHADOWXREF   = 17,
+  STYLE_SHADOWYREF   = 18,
+  STYLE_SHADOWCOLOR  = 19,
+  STYLE_TEXTALIGN    = 20,
+  STYLE_TEXTCOLOR    = 21,
+  STYLE_TEXTFONT     = 22,
+  STYLE_ARCWIDTH     = 23,
+  STYLE_ARCOPA       = 24,
+  STYLE_ARCCOLOR     = 25,
+  STYLE_LINEWIDTH    = 26,
+  STYLE_LINECOLOR    = 27,
+  STYLE_LINEOPA      = 28,
+  STYLE_NAME         = 29, 
+  STYLE_EDIT_MAX     = 30,                /* mandatory last entry  */
 } Style_Used_T;
 
 #define STYLE_HAS_PROP(style, id) ( (style)->used &  (  1 << (id) ) )
@@ -141,10 +145,11 @@ typedef enum {
 typedef struct {
   uint32_t        used;                     /* bitfield of used properties */
   uint16_t        def_width, def_height;	/* default width and height in px */
+  uint16_t        def_length;               /* default length in px (for lines) */
   uint8_t         objalign;                 /* Alignment of obj wihin parent obj*/
+
   uint8_t         bgopa;					/* BG opacity 0=full transparent, 255=full cover */	
   lv_color_t      bgcolor;                  /* Background color */
-
   uint8_t         bgmainopa;				/* BG main gradient color opacity */	
   lv_color_t      bggradcolor;              /* Background gradient color */
   uint8_t         bggradopa;				/* BG gradient color opacity */	
@@ -155,16 +160,24 @@ typedef struct {
   uint8_t         borderwidth;
   uint8_t         borderradius;
   lv_color_t      bordercolor;			
+
   uint8_t         shadow_opa;				/* Shadows opacity */
   uint8_t         shadow_width;     		/* Width of shadow */
   uint8_t         sh_x, sh_y;				/* Shadows x and y offset */
   lv_color_t      shadowcolor;              /* Shadow color */
+
   uint8_t         textalign;				/* Text Alignment within obj*/
   lv_color_t      textcolor;		        /* Text color */
   const lv_font_t *textfont;                /* Textfont */
+
   uint8_t         arcwidth;                 /* witdh of arc */
   uint8_t         arcopa;                   /* opaqueness of arc */
   lv_color_t      arccolor;		            /* Arc color */
+
+  uint8_t         linewidth;                /* line width */
+  uint8_t         lineopa;                  /* opaqueness of line */
+  lv_color_t      linecolor;	            /* line color */
+
   char            name[GUI_MAX_NAMELEN];    /* User friendly name */      
 } GUI_Style_T;
 
@@ -318,7 +331,9 @@ void GUI_Init_Images_Core0(bool);
 
 // void GUI_update_screen    (GUI_Screen_T *act, lv_obj_t *scr );
 struct List_Elem;
-struct List_Elem *GUI_new_or_update_entry (uint8_t *data, GUI_Edit_Enum gui_elem );
-void              GUI_delete_entry        (uint8_t *data, GUI_Edit_Enum gui_elem );
+struct List_Elem *GUI_new_or_update_entry_Core0 (uint8_t *data, GUI_Edit_Enum gui_elem );
+struct List_Elem *GUI_new_or_update_entry_Core1 (uint8_t *data, GUI_Edit_Enum gui_elem );
+void              GUI_delete_entry_Core0        (uint8_t *data, GUI_Edit_Enum gui_elem );
+void              GUI_delete_entry_Core1        (uint8_t *data, GUI_Edit_Enum gui_elem );
 #endif /*  USE_GUI_INTERFACE */
 #endif /* _GUIDEF_H_ */

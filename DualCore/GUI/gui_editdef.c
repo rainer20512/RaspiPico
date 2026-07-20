@@ -55,36 +55,40 @@ const  GUI_Edit_T edit_style = {
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .receipe   = {  
 /*01*/
-    { STYLE_DEFWIDTH,     "width",        GUI_UINT16, offsetof(GUI_Style_T, def_width) },
-    { STYLE_DEFHEIGHT,    "height",       GUI_UINT16, offsetof(GUI_Style_T, def_height) }, 
+    { STYLE_WIDTH,        "width",        GUI_UINT16, offsetof(GUI_Style_T, def_width) },
+    { STYLE_HEIGHT,       "height",       GUI_UINT16, offsetof(GUI_Style_T, def_height) }, 
+    { STYLE_LENGTH,       "length",       GUI_UINT16, offsetof(GUI_Style_T, def_length) }, 
     { STYLE_OBJALIGN,     "objectalign",  GUI_UINT8,  offsetof(GUI_Style_T, objalign) }, 
     { STYLE_BGOPA,        "bgopaqe",      GUI_UINT8,  offsetof(GUI_Style_T, bgopa) }, 
-    { STYLE_BGCOLOR,      "bgcolor",      GUI_RGB888, offsetof(GUI_Style_T, bgcolor) }, 
 /*06*/
+    { STYLE_BGCOLOR,      "bgcolor",      GUI_RGB888, offsetof(GUI_Style_T, bgcolor) }, 
     { STYLE_BGMAINOPA,    "bgmainopa",    GUI_UINT8,  offsetof(GUI_Style_T, bgmainopa) }, 
     { STYLE_BGGRDCOLOR,   "bggradcolor",  GUI_RGB888, offsetof(GUI_Style_T, bggradcolor) }, 
     { STYLE_BGGRADOPA,    "bggradopa",    GUI_UINT8,  offsetof(GUI_Style_T, bggradopa) }, 
     { STYLE_BGGRADDIR,    "bggraddir",    GUI_UINT8,  offsetof(GUI_Style_T, bggraddir) }, 
-    { STYLE_BGMAINSTOP,   "bgmainstop",   GUI_UINT8,  offsetof(GUI_Style_T, bgmainstop) }, 
 /*11*/
+    { STYLE_BGMAINSTOP,   "bgmainstop",   GUI_UINT8,  offsetof(GUI_Style_T, bgmainstop) }, 
     { STYLE_BGGRADSTOP,   "bggradstop",   GUI_UINT8,  offsetof(GUI_Style_T, bggradstop) }, 
     { STYLE_BORDERWIDTH,  "borderwidth",  GUI_UINT8,  offsetof(GUI_Style_T, borderwidth) }, 
     { STYLE_BORDERRADIUS, "borderradius", GUI_UINT8,  offsetof(GUI_Style_T, borderradius) }, 
     { STYLE_BORDERCOLOR,  "bordercolor",  GUI_RGB888, offsetof(GUI_Style_T, bordercolor) }, 
-    { STYLE_SHADOWWIDTH,  "shadowwidth",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_width) }, 
 /*16*/
+    { STYLE_SHADOWWIDTH,  "shadowwidth",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_width) }, 
     { STYLE_SHADOWOPA,    "shadowopaqe",  GUI_UINT8,  offsetof(GUI_Style_T, shadow_opa) }, 
     { STYLE_SHADOWXREF,   "shadowxref",   GUI_UINT8,  offsetof(GUI_Style_T, sh_x) }, 
     { STYLE_SHADOWYREF,   "shadowyref",   GUI_UINT8,  offsetof(GUI_Style_T, sh_y) }, 
     { STYLE_SHADOWCOLOR,  "shadowColor",  GUI_RGB888, offsetof(GUI_Style_T, shadowcolor) }, 
-    { STYLE_TEXTALIGN,    "textalign",    GUI_UINT8,  offsetof(GUI_Style_T, textalign) }, 
 /*21*/
+    { STYLE_TEXTALIGN,    "textalign",    GUI_UINT8,  offsetof(GUI_Style_T, textalign) }, 
     { STYLE_TEXTCOLOR,    "textcolor",    GUI_RGB888, offsetof(GUI_Style_T, textcolor) }, 
     { STYLE_TEXTFONT,     "textfont",     GUI_FONT,   offsetof(GUI_Style_T, textfont) }, 
     { STYLE_ARCWIDTH,     "arcwidth",     GUI_UINT8,  offsetof(GUI_Style_T, arcwidth) }, 
     { STYLE_ARCOPA,       "arcopaque",    GUI_UINT8,  offsetof(GUI_Style_T, arcopa) }, 
-    { STYLE_ARCCOLOR,     "arccolor",     GUI_RGB888, offsetof(GUI_Style_T, arccolor) }, 
 /*26*/
+    { STYLE_ARCCOLOR,     "arccolor",     GUI_RGB888, offsetof(GUI_Style_T, arccolor) }, 
+    { STYLE_LINEWIDTH,    "linewidth",    GUI_UINT8,  offsetof(GUI_Style_T, linewidth) },     
+    { STYLE_LINECOLOR,    "linecolor",    GUI_RGB888, offsetof(GUI_Style_T, linecolor) },     
+    { STYLE_LINEWIDTH,    "lineopaque",   GUI_UINT8,  offsetof(GUI_Style_T, lineopa) },     
     { STYLE_NAME,         "name",         GUI_STRING, offsetof(GUI_Style_T, name) }, 
   },
 };

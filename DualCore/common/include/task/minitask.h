@@ -32,18 +32,14 @@
 #define TASK_TMR              0
 #define TASK_IPC0             1
 #define TASK_IPC1             2
-#define TASK_COM              3
 #define TASK_RTC              4
-#define TASK_LOG              5
-#define TASK_FSM              6
-#define TASK_PERIODIC         7
-#define TASK_ADC              9
-#define TASK_STDIN            10
-#define TASK_XML              11
-#define TASK_LVGL0            12
-#define TASK_LVGL1            13
-
-#define TASK_THP              30
+#define TASK_FSM              5
+#define TASK_PERIODIC         6
+#define TASK_XML              7
+#define TASK_LVGL0            8
+#define TASK_LVGL1            9
+#define TASK_COM              10
+#define TASK_LOG              11
 
 /* functtion prototypes of Init and Run functions of task */
 /* both will be passed the task number as parameter       */

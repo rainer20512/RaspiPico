@@ -21,7 +21,12 @@ typedef struct List_Elem{
 } List_Elem_T;
 
 /* linked list of all GUI elements, initially empty */
-extern List_Elem_T* GUI_item_list;
+#if  RP2040_M0_1 || defined(CORE1_SIM)
+  extern List_Elem_T* GUI_item_list_1;
+#endif
+#if  RP2040_M0_0
+  extern List_Elem_T* GUI_item_list_0;
+#endif
 
 List_Elem_T *LL_New_Element( GUI_Edit_Enum type, void *lvgl_obj, char *name, void *entry, uint16_t additional );
 List_Elem_T *LL_append( List_Elem_T **llist, List_Elem_T *newentry );

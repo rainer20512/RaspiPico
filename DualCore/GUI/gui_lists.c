@@ -7,7 +7,12 @@
 #include "system/util.h"
 
 /* linked list of all GUI elements, initially empty */
-List_Elem_T * GUI_item_list = NULL;
+#if  RP2040_M0_1 || defined(CORE1_SIM)
+    List_Elem_T * GUI_item_list_1 = NULL;
+#endif
+#if  RP2040_M0_0
+    List_Elem_T * GUI_item_list_0 = NULL;
+#endif
 
 /*-----------------------------------------------------------------------------
  * @brief Create a new List entry from heap and initialize all fields, 

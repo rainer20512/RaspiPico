@@ -22,6 +22,7 @@ void GUI_Init_Curr_Elems(void);
 void GUI_Reset_GUI( void );
 
 #if defined(RP2040_M0_1) || defined(CORE1_SIM)
+    extern const char     LVGL_VersinfoStr1[];   /* ptr to LVGL version info str    */
     extern GUI_RawImage_T *AllImages1;
     extern uint8_t         AllImagesNum1;        /* number of defined fonts Core1   */
     extern GUI_Font_T     *AllFonts1;
@@ -29,10 +30,11 @@ void GUI_Reset_GUI( void );
     void      GUI_Init_Ops_Core1(void);
 #endif
 #if defined(RP2040_M0_0)
+    extern const char     *LVGL_VersinfoStr0;     /* ptr to LVGL version info str    */
     extern GUI_RawImage_T *AllImages0;
     extern uint8_t         AllImagesNum0;        /* number of defined fonts Core1   */
     extern GUI_Font_T     *AllFonts0;
-    extern uint8_t        AllFontNum0;          /* number of defined fonts Core0   */
+    extern uint8_t        AllFontNum0;           /* number of defined fonts Core0   */
     void      GUI_Init_Ops_Core0(void);
 #endif
 

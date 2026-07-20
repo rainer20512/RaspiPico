@@ -920,7 +920,14 @@ static lv_obj_t * obj=NULL;
 #if DEBUG_GUIEDIT > 0
         #include "../../GUI/gui_lists.h"
         case 97: 
-            LL_Dump(GUI_item_list);
+            #if  RP2040_M0_0
+               puts("Core0: All Item List");
+               LL_Dump(GUI_item_list_1);
+            #endif
+            #if  RP2040_M0_1 || defined(CORE1_SIM)
+                puts("Core1: All Item List");
+                LL_Dump(GUI_item_list_1);
+            #endif
             break;
 #endif
 #ifdef RP2040_M0_0

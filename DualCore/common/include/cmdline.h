@@ -87,7 +87,7 @@ void CMD_Handler_Pop ( void );
 bool CMD_Init ( void );
 bool CMD_get_one_word ( char **start, size_t *len );
 uint16_t CMD_argc ( void );
-uint32_t CMD_to_number ( char *word, size_t wordlen );
+int32_t CMD_to_number ( char *word, size_t wordlen );
 
 void task_handle_com(uint32_t);
 

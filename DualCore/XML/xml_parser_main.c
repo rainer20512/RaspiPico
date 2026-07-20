@@ -16,7 +16,7 @@
 #include "dev/i2cx.h"
 #include "parser_specs.h"
 #include "xml_feeder.h"
-#include "xml_parser_main.h"
+#include "xml_parser_funcs.h"
 
 /* size of Parser input circualr buffer, must be power of 2 */
 #define PARSER_CIRCBUF_SIZE         256

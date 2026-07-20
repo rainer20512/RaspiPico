@@ -22,7 +22,8 @@
 #define IPC_MSG_1TO0_ECHO          3         /* Core0 Simply echoes a msg from core1 (for test purposes)      */
 #define IPC_MSG_0TO1_QRY_FONTINFO  4         /* Core0 queries fontinfo an number of loaded fonts from Core1   */
 #define IPC_MSG_0TO1_QRY_IMAGEINFO 5         /* Core0 queries imageinfo an number of loaded images from Core1 */
-#define IPC_MSG_0TO1_GUIELEM       6         /* Core0 sends GUI Element data to Core 1                        */
+#define IPC_MSG_0TO1_QRY_VERSNINFO 6         /* Core0 queries LVGL Version from Core1                         */
+#define IPC_MSG_0TO1_GUIELEM       7         /* Core0 sends GUI Element data to Core 1                        */
 
 bool Core0_Handle_Msg           (uint8_t msgID);
 void task_handle_ipc0           ( uint32_t arg );
@@ -34,6 +35,7 @@ bool Core0_Init_IPC_Comm        ( void*, IPC_ResultCB );   /* Setup essential IP
 bool Core0_SendEcho             ( void* arg, IPC_ResultCB onCompletion );  /* for testing */
 bool Core0_Qry_Imageinfo        ( void* arg, IPC_ResultCB onCompletion );
 bool Core0_Qry_Fontinfo         ( void* arg, IPC_ResultCB onCompletion );
+bool Core0_Qry_Versioninfo      ( void* arg, IPC_ResultCB onCompletion );
 bool Core0_Send_Gui_Elem        ( void* arg, IPC_ResultCB onCompletion );  /* Transfer one GUI element */
 
 bool Core1_SendEcho             ( void* arg, IPC_ResultCB onCompletion );  /* for testing */
