@@ -33,7 +33,9 @@ typedef enum {
   GUI_STYLE   = 8,
   GUI_RAWIMG  = 9,
   GUI_FONT    = 10,
-  GUI_MAXELEM = 11,
+  GUI_IMAGE   = 11,
+  GUI_LABEL   = 12,
+  GUI_MAXELEM = 13,
 } GUI_E_Datatype_Enum;
 
 

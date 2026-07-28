@@ -19,6 +19,12 @@
 #define ESCAPESLASH           '/'
 
 /****************************************************************************** 
+ * Separator to split attribute value and data point name
+ *****************************************************************************/ 
+#define STRESCAPECHAR         '\\'
+#define DPSEPARATOR           ':'
+
+/****************************************************************************** 
  * the follwoing names are used to identify valid gui elements in XML parser,
  * in edit-receipes and GUI edit. as XML contains LC only, these IDs have to
  * be LC, too. Be sure to only use this constants onyl when referring to GUI
@@ -41,7 +47,7 @@
 
 /* Root may contain component(s) plus optional prolog, NULL terminated array */
 extern const char *xml_root[];
-#define XML_ROOT_SET          {"screen", "?xml", NULL }
+#define XML_ROOT_SET          {"screen", "datapoints", "?xml", NULL }
 
 /* Component may contain styles, labels, arcs, NULL terminated array */
 extern const char *xml_component[];

@@ -72,6 +72,8 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const Edit_Receipe_T *editelem, 
       case GUI_STYLE:
       case GUI_RAWIMG:
       case GUI_FONT:
+      case GUI_IMAGE:
+      case GUI_LABEL:
            /* In case of Style, Image or Font find it in GUI item list and store the name*/
            switch(editelem->elem_type) {
              case GUI_STYLE:
@@ -79,6 +81,12 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const Edit_Receipe_T *editelem, 
                break;
              case GUI_RAWIMG:
                search_elem = GUI_ELEM_RAWIMG;
+               break;
+             case GUI_IMAGE:
+               search_elem = GUI_ELEM_IMAGE;
+               break;
+             case GUI_LABEL:
+               search_elem = GUI_ELEM_LABEL;
                break;
              default:
                search_elem = GUI_ELEM_FONT;
@@ -241,30 +249,37 @@ void GUI_Handler_Pop ( void )
 }
 
 #if 0
-#define min(a,b)    ((a)<(b)?a:b)
 /*********************************************************************************
- * @brief  copy the string tempval ( by char array/length ) to Null terminated
- *         destination
- *         destination _must_ be of minimal length GUI_MAX_NAMELEN
- * @param  dest - buffer of minimal length GUI_MAX_NAMELEN
+ * @brief  update the datapoint of the "idx"th element of actual data element
+ * @param  bIsNull   - true, if datapoint is <Unset> 
+ * @param  edit      - edit receipe list 
+ * @param  idx       - number of referred receipe index
+ * @param  dpstr     - name of datapoint or NULL if unset
+ * @param  dplen     - length of datapoint name, maybe 0, which also means "unset"
+
+ *                     has to be STR initially in any case!
  ********************************************************************************/
-static char *GUI_tempval_to_str(char *dest)
+static bool GUI_Edit_Update_Datapoint( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset, char *dpstr, size_t dplen )
 {
-      /* copy string into data structure */
-      size_t len = min(GUI_MAX_NAMELEN-1, V_tempval.strfont.len);
-      strncpy(dest, V_tempval.strfont.text, len);
-      /* incoming string is (vector, length) type so append \0 in any case */
-      *(dest+len)='\0';
-      return dest;
+    /* combine all cases of "unset" */
+    if ( !bIsUnset ) bIsUnset = ( dpstr==NULL || dplen==0 );
+    
+
 }
 #endif
+
 /*********************************************************************************
  * @brief  update the "idx"th element of actual data element
  *         new value is stored in V_tempval union
- * @param  bIsNull - true, if new value is <Unset> 
+ * @param  bIsNull   - true, if new value is <Unset> 
+ * @param  edit      - edit receipe list 
+ * @param  idx       - number of referred receipe index
+ * @param  V_tempval - global variable, that holds the new element data, type
+ *                     has to be STR initially in any case!
  ********************************************************************************/
 static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset )
 {
+    size_t dpofs;
 
     /* get reference to "used" bits */
     uint32_t *used = (uint32_t *)(edit->workspace + edit->used_ofs);
@@ -276,6 +291,22 @@ static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset
     } else {
        *used |= ( 1 << idx );
     }
+
+#if 0
+    /* Check for Datapoint definition next */
+    dpofs =V_Str_chr_pos( &V_tempval, DPSEPARATOR );
+    if ( dpofs >= 0 )
+      /* check for escaped DPSEPARATOR */
+      if ( dpofs > 0 && V_tempval.str.text[dpofs-1] == STRESCAPECHAR ) {
+          /* is escaped: remove escape char and handle as normal string */
+          V_Str_rm_char(&V_tempval, dpofs-1);
+      } else {
+          GUI_Edit_Update_Datapoint(edit, idx, bIsUnset, V_tempval.str.text+dpofs+1, V_tempval.str.len-dpofs-1  )
+          /* Remove the Datapoint part from variant str */
+          V_tempval.str.len = dpofs;
+      }
+    }
+#endif
 
     /* get the referenced edit element */
     const Edit_Receipe_T *editelem = &edit->receipe[idx];
@@ -295,13 +326,21 @@ static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset
       case GUI_STYLE:
       case GUI_RAWIMG:
       case GUI_FONT:
-        /* Fonts and styles may be secified in two ways: by name and size  or position in list ( starting with 1 ) */
+      case GUI_IMAGE:
+      case GUI_LABEL:
+        /* Fonts, styles, images and label references may be secified in two ways: by name and size  or position in list ( starting with 1 ) */
         switch(editelem->elem_type) {
           case GUI_STYLE:
             search_elem = GUI_ELEM_STYLE;
             break;
           case GUI_RAWIMG:
             search_elem = GUI_ELEM_RAWIMG;
+            break;
+          case GUI_IMAGE:
+            search_elem = GUI_ELEM_IMAGE;
+            break;
+          case GUI_LABEL:
+            search_elem = GUI_ELEM_LABEL;
             break;
           default:
             search_elem = GUI_ELEM_FONT;
@@ -332,7 +371,7 @@ static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset
            *used &= ~( 1 << idx );
            return false;
         }
-        break;
+        break; /* case GUI_STYLE, GUI_RAWIMG, GUI_FONT, GUI_IMAGE, GUI_LABEL */
       case GUI_UINT8:
       case GUI_UINT16:
       case GUI_RGB888:
@@ -340,12 +379,9 @@ static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset
       case GUI_INT8:
       case GUI_INT16:
       case GUI_INT32:
-        /* All Number formats: copy required number of bytes to data element */
+        /* All Number formats: convert string to number and copy required number of bytes to data element */
+        V_Str_to_I32(& V_tempval);
         memmove(datapos, V_tempval.u8, GET_GUI_ELEM_LEN(editelem->elem_type) );
-        /* Reverse byte order in RGB value */
-        /* if ( editelem->elem_type == GUI_RGB888 ) {
-          uint8_t c = *datapos; *datapos = *(datapos+2); *(datapos+2)=c;
-        } */
         break;
       default:
         printf("No Update receipe for data type %d\n",editelem->elem_type );
@@ -381,16 +417,23 @@ void GUI_list_entries(const GUI_Edit_Enum elemtype )
  ********************************************************************************/
 static void GUI_load_entry( char *word, size_t wordlen, const GUI_Edit_T *edit )
 {
+   List_Elem_T *ll_elem;
+
    V_Set_Str(&V_tempval, word, wordlen);
    V_to_cstr(tempstr, &V_tempval, GUI_MAX_NAMELEN);
 
-  List_Elem_T *ll_elem = LL_find_by_type_n_name ( ITEM_LIST, edit->gui_elem_type, tempstr );
+   if ( V_Str_is_numeric(&V_tempval) ) {
+     ll_elem = LL_find_nth ( ITEM_LIST, edit->gui_elem_type, V_Str_get_int32(&V_tempval)+1 );
+   } else {
+     ll_elem = LL_find_by_type_n_name ( ITEM_LIST, edit->gui_elem_type, tempstr );
+  }
+
   if ( !ll_elem ) {
     printf("Err: %s %s not in item list\n",EditNames[edit->gui_elem_type],tempstr);
   } else {
     /* copy element data to current obj data */
     memcpy_fast(edit->workspace, ll_elem->ll_entry, edit->total_size);
-    printf("%s %s loaded\n",EditNames[edit->gui_elem_type],tempstr);
+    printf("%s %s loaded\n",EditNames[edit->gui_elem_type],(char *)(edit->workspace + edit->name_ofs));
   }
 
 }
@@ -504,7 +547,9 @@ bool GUI_Edit_SetItem(char *arg, size_t argsize, const GUI_Edit_T *edit, uint32_
     const Edit_Receipe_T *editelem = &edit->receipe[idx];
 
    /* Thereafter check for number or string*/
-    if ( editelem->elem_type == GUI_STRING || editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_RAWIMG || editelem->elem_type == GUI_FONT) {
+    if ( editelem->elem_type == GUI_STRING || editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_RAWIMG || editelem->elem_type == GUI_FONT ||
+         editelem->elem_type == GUI_LABEL  || editelem->elem_type == GUI_IMAGE )
+    {
         /* Strings, Fonts and Styles require a separate handling: pass reference to the string 
          * to Updater, updater will handle string accordingly
          */
@@ -541,8 +586,8 @@ static bool GUI_Edit_execute_interactive ( char *word, size_t wordlen, uint32_t 
     CMD_get_one_word( &word, &wordlen );
     
     /* Check, whether a list of all options is required */
-    if ( editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_RAWIMG || editelem->elem_type == GUI_FONT ) {
-        /* in Case of Styles/Fonts: if Parameter is '?', list all styles/fonts */
+    if ( editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_RAWIMG || editelem->elem_type == GUI_FONT || editelem->elem_type == GUI_LABEL  || editelem->elem_type == GUI_IMAGE) {
+        /* in Case of Styles,Fonts, Images, Labels: if Parameter is '?', list all styles/fonts */
         if ( wordlen == 1 && *word =='?' ) {
         GUI_Edit_Enum search_elem; 
         switch(editelem->elem_type) {
@@ -551,6 +596,12 @@ static bool GUI_Edit_execute_interactive ( char *word, size_t wordlen, uint32_t 
              break;
           case GUI_RAWIMG:
              search_elem = GUI_ELEM_RAWIMG;
+             break;
+          case GUI_IMAGE:
+             search_elem = GUI_ELEM_IMAGE;
+             break;
+          case GUI_LABEL:
+             search_elem = GUI_ELEM_LABEL;
              break;
           default:
              search_elem = GUI_ELEM_FONT;
@@ -573,6 +624,8 @@ static bool GUI_Edit_execute_interactive ( char *word, size_t wordlen, uint32_t 
  ********************************************************************************/
 static void GUI_handle_word( char *word, size_t wordlen )
 {
+   uint32_t idx;
+ 
    /* first convert given word to UC */
    CMD_word_to_uc( word, wordlen );
 
@@ -629,7 +682,7 @@ static void GUI_handle_word( char *word, size_t wordlen )
 
    /* handle numeric command */
    if ( CMD_is_numeric( word, wordlen ) ) {
-      uint32_t idx = CMD_to_number( word, wordlen );
+      idx = CMD_to_number( word, wordlen );
       GUI_Edit_execute_interactive(word, wordlen, idx );
       putchar('\n');
       return;

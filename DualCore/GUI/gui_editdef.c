@@ -107,6 +107,9 @@ const  GUI_Edit_T edit_label = {
     { LABEL_X0,           "x",            GUI_UINT16, offsetof(GUI_Label_T, x0) }, 
     { LABEL_Y0,           "y",            GUI_UINT16, offsetof(GUI_Label_T, y0) }, 
     { LABEL_CAPTION,      "caption",      GUI_STRING, offsetof(GUI_Label_T, caption) }, 
+    { LABEL_CURVAL,       "curval",       GUI_INT32,  offsetof(GUI_Label_T, ind_value) }, 
+    { LABEL_SCALEFACTOR,  "scaler",       GUI_INT8,   offsetof(GUI_Label_T, ind_scalefactor) }, 
+    { LABEL_FORMATSTR,    "formatstr",    GUI_STRING, offsetof(GUI_Label_T, ind_formatstr) }, 
     { LABEL_NAME,         "name",         GUI_STRING, offsetof(GUI_Label_T, name) }, 
   },
 };
@@ -157,11 +160,15 @@ const  GUI_Edit_T edit_scale = {
     { SCALE_SHOWLABEL,    "showlabel",      GUI_UINT8,  offsetof(GUI_Scale_T, bLabelShow) },
     { SCALE_MINVAL,       "minval",         GUI_INT16,  offsetof(GUI_Scale_T, minval) }, 
     { SCALE_MAXVAL,       "maxval",         GUI_INT16,  offsetof(GUI_Scale_T, maxval) }, 
-    { SCALE_ANGLE_RANGE,  "anglerange",     GUI_UINT16, offsetof(GUI_Scale_T, angle_range) },
+    { SCALE_CURVAL,       "curval",         GUI_INT16,  offsetof(GUI_Scale_T, curval) }, 
 /* 11 */
+    { SCALE_ANGLE_RANGE,  "anglerange",     GUI_UINT16, offsetof(GUI_Scale_T, angle_range) },
     { SCALE_ROTATE,       "rotation",       GUI_UINT16, offsetof(GUI_Scale_T, rotation) }, 
     { SCALE_X0,           "x",              GUI_UINT16, offsetof(GUI_Scale_T, x0) }, 
     { SCALE_Y0,           "y",              GUI_UINT16, offsetof(GUI_Scale_T, y0) }, 
+    { SCALE_MYIMAGE,      "myimage",        GUI_IMAGE,  offsetof(GUI_Scale_T, myimage) }, 
+/* 16 */
+    { SCALE_MYLABEL,      "mylabel",        GUI_LABEL,  offsetof(GUI_Scale_T, mylabel) }, 
     { SCALE_NAME,         "name",           GUI_STRING, offsetof(GUI_Scale_T, name) }, 
   },
 };

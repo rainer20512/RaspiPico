@@ -44,7 +44,7 @@ void Core1_Read_BootInfo        ( void );   /* read/store bootinfo from core */
 /******************************************************************************** 
  * Data structure for IPC communication, we need one for each direction
  *******************************************************************************/
-#define IPC_BUFSIZE          128
+#define IPC_BUFSIZE          192
 typedef struct {
   uint8_t   buff[IPC_BUFSIZE]; /* buffer for IPC data    */
   uint16_t  uSize;             /* actual number of bytes */

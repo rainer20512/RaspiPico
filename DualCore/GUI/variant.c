@@ -73,4 +73,64 @@ bool  V_Str_to_Font(Variant_T *v )
     return true;
 }
 
+/******************************************************************************
+ * @brief converts the number representation in Variant string to 
+ *        variant I32 representation. 
+ * @retval - true, if initial variant type is STR, false, if not
+ * @note  The conversion is done in place within variant !
+ *****************************************************************************/
+bool V_Str_to_I32(Variant_T *v)
+{
+    bool ret = v->type == VAR_STRING;
+    if (ret) V_Set_I32(v, CMD_to_number( v->str.text, v->str.len ));
+    return ret;
+}
 
+/******************************************************************************
+ * @brief returns true, if Variant is of type string and is numeric, ie optional 
+ *        sign, optional hex prefix "0x" followed by digits only
+ * @retval       - true, if numeric, false if not 
+ *****************************************************************************/
+bool V_Str_is_numeric (Variant_T *v)
+{
+    return v->type == VAR_STRING && CMD_is_numeric(v->str.text, v->str.len);
+}
+
+/******************************************************************************
+ * @brief  if variant string is numeric, the numerical value will be returned
+ *         numbers have an optional sign, followed by and optional hex prefix,
+ *         followed by digits only
+ *         sign, optional hex prefix "0x" followed by digits only
+ * @retval numerical value of variant string or 0 if not a number
+ * @note   use "V_Str_is_numeric" to check, whether variant string is nzmeric
+ * @note   maximum range is int32_t range !
+ * @note   variant type and string is not changed!
+ *****************************************************************************/
+uint32_t V_Str_get_int32 (Variant_T *v)
+{
+    if ( V_Str_is_numeric(v) ) 
+      return CMD_to_number(v->str.text, v->str.len);
+    else
+      return 0;
+}
+
+/******************************************************************************
+ * @brief  if variant is of type string, search for char "sep" in string and
+ *         return its offset withing strind (range 0 .. len(str)-1)
+ * @retval offset of "sep" within "str" 
+ *         or -1, if V is not of type string or if sep is not found
+ * @note   variant type and string is not changed!
+ *****************************************************************************/
+size_t V_Str_chr_pos(Variant_T *v, const char sep)
+{
+    if ( v->type != VAR_STRING )  return -1;
+
+    /* Search for sep within str vector */
+    char *idx = strnchr(v->str.text, v->str.len, sep);    
+    if ( idx ) {
+        return idx - v->str.text;
+    } else {
+        /* Not found */
+        return -1;
+    }
+}

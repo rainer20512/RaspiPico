@@ -190,8 +190,11 @@ typedef enum {
   LABEL_X0           = 2,
   LABEL_Y0           = 3,
   LABEL_CAPTION      = 4,
-  LABEL_NAME         = 5,
-  LABEL_EDIT_MAX     = 6,                  /* mandatory last entry  */
+  LABEL_CURVAL       = 5,
+  LABEL_SCALEFACTOR  = 6,
+  LABEL_FORMATSTR    = 7,
+  LABEL_NAME         = 8,
+  LABEL_EDIT_MAX     = 9,                  /* mandatory last entry  */
 } Label_Used_T;
 
 #define LABEL_HAS_PROP(lbl, id) ( (lbl)->used &  (  1 << (id) ) )
@@ -202,11 +205,16 @@ typedef enum {
 /* Properties that define a label, not all LVGL properties supported */
 typedef struct {
   uint32_t      used;
-  lv_style_t 	*style;                     /* style to be used, must be initialized */	
-  lv_align_t 	align;                      /* Alignment */
-  uint16_t 		x0, y0;                     /* reference position */
-  char          caption[GUI_MAX_NAMELEN];   /* User friendly name */      
-  char          name[GUI_MAX_NAMELEN];      /* User friendly name */      
+  lv_style_t 	*style;                         /* style to be used, must be initialized */	
+  lv_align_t 	align;                          /* Alignment */
+  uint16_t 		x0, y0;                         /* reference position */
+  char          caption[GUI_MAX_NAMELEN];       /* caption, directly set, only used as long as "ind_formatstr" is NULL */
+  int32_t       ind_value;                      /* value to be used as caption, fomatted */       
+  int8_t        ind_scalefactor;                /* scale factor, ie value is multiplied by 10^scalefactor */
+  char          ind_formatstr[GUI_MAX_NAMELEN]; /* printf-like format str, to be applied to value*10^factor */
+                                                /* whenever set, caption is computed by the previous three, */
+                                                /* caption is ignored */
+  char          name[GUI_MAX_NAMELEN];          /* User friendly name */      
 } GUI_Label_T;
 
 
@@ -257,12 +265,15 @@ typedef enum {
   SCALE_SHOWLABEL     = 6,
   SCALE_MINVAL        = 7,
   SCALE_MAXVAL        = 8,
-  SCALE_ANGLE_RANGE   = 9,
-  SCALE_ROTATE        = 10,
-  SCALE_X0            = 11,
-  SCALE_Y0            = 12, 
-  SCALE_NAME          = 13,
-  SCALE_EDIT_MAX      = 14,                    /* mandatory last entry  */
+  SCALE_CURVAL        = 9,
+  SCALE_ANGLE_RANGE   = 10,
+  SCALE_ROTATE        = 11,
+  SCALE_X0            = 12,
+  SCALE_Y0            = 13,
+  SCALE_MYIMAGE       = 14,
+  SCALE_MYLABEL       = 15,
+  SCALE_NAME          = 16,
+  SCALE_EDIT_MAX      = 17,                    /* mandatory last entry  */
 } SCALE_Used_T;
 
 #define SCALE_HAS_PROP(scale, id) ( (scale)->used &  (  1 << (id) ) )
@@ -281,9 +292,12 @@ typedef struct {
   uint16_t      tickdistance;               /* number of ticks betw major ticks     */
   uint8_t       bLabelShow;                 /* boolean for "ShowLabels"             */ 
   int16_t       minval, maxval;             /* minimum and maximum values for scale */ 
+  int16_t       curval;                     /* current value                        */
   uint16_t      angle_range;                /* set the angel the round scale uses   */
   uint16_t      rotation;                   /* clockwise angular offset (in degrees) from the 3-o'clock position of the low end of the scale */
   uint16_t      x0, y0;                     /* refernece position */
+  lv_obj_t      *myimage;                   /* associated image ( arrow eg )        */
+  lv_obj_t      *mylabel;                   /* associated label                     */
   char          name[GUI_MAX_NAMELEN];      /* User friendly name */      
 } GUI_Scale_T;
 
@@ -317,7 +331,7 @@ typedef struct {
   int16_t       xofs, yofs;                 /* reference position */
   int16_t       rot_angle;                  /* rotation angel of the original image in 0.1deg; pos=cw, neg=ccw  */
   uint16_t      scale;                      /* 256 = original size, 128= half size, 512 = double size, ...      */	
-  int16_t      pivotx, pivoty;             /* center of rotation */
+  int16_t       pivotx, pivoty;             /* center of rotation */
   uint8_t       align;                      /* alignment as deined in lv_align_t */	
   char          name[GUI_MAX_NAMELEN];      /* User friendly name */      
 } GUI_Image_T;

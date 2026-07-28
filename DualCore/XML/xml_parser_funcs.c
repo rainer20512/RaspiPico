@@ -31,12 +31,18 @@
 #define ATTR_MAXVALUELEN        64
 
 
-/* Helper structure to store one name/value pair when parsing attribute lists */
+/* Helper structure to store one name/value/datpoint name triple when parsing attribute lists */
 typedef struct {
   char name [ID_MAXNAMELEN];
   char value[ATTR_MAXVALUELEN];
+#if 0
+  char dpname[ID_MAXNAMELEN];
+#endif
   uint8_t namelen;
   uint8_t valuelen;
+#if 0
+  uint8_t dpnamelen;
+#endif
 } Parser_Attr_T;
 
 /* global variable for one /name/value pair, will be allocated by xml_parser_init */
@@ -63,29 +69,74 @@ void DumpToken(const char* token, uint32_t tokenlength)
 }
 
 
+/******************************************************************************
+ * @brief copy attribute name into act_attr
+ * src, srclen : source vector and length
+ *****************************************************************************/
+ void AttrCopyName(uint8_t *src, uint32_t srclen )
+ {
+
+    uint32_t copylen = MIN(srclen, ID_MAXNAMELEN);
+    if ( copylen < srclen ) {
+        #if DEBUG_PARSER > 0
+            DEBUG_PUTS("AttrCopy: Name truncated");
+        #endif 
+    }
+  
+    memmove( act_attr->name, src, copylen );
+    act_attr->namelen = copylen;
+}
 
 /******************************************************************************
- * @brief copy either name or value field into act_attr
+ * @brief copy value field into act_attr
  * src, srclen : source vector and length
  * option      : 1 = copy to name field; 2= copy to value field
  * @retval token
  *****************************************************************************/
- void AttrCopy(uint8_t *src, uint32_t srclen, uint32_t option )
+ void AttrCopyValue(uint8_t *src, uint32_t srclen)
  {
-    uint32_t  copylen = MIN(srclen, option==1 ? ID_MAXNAMELEN : ATTR_MAXVALUELEN);
-    uint8_t *lenptr = ( option == 1 ? &act_attr->namelen : &act_attr->valuelen );
+    size_t copylen;
+
+ #if 0
+    uint8_t *dppos;     
+    size_t valuelen;
+
+    /* if value is passed: Check for data point assignment within value */
+    if ((dppos = strnchr(src, srclen, DPSEPARATOR)) != NULL ) {
+      /* temporarily store new length of value and set dpname string */
+      valuelen = dppos-src;
+      act_attr->dpnamelen = srclen - valuelen - 1;
+      srclen = valuelen;
+      dppos++; /* Skip Separator and copy DP name*/
+      copylen = MIN(act_attr->dpnamelen, ID_MAXNAMELEN);
+      if ( copylen < act_attr->dpnamelen ) {
+          #if DEBUG_PARSER > 0
+              DEBUG_PUTS("AttrCopy: DP name truncated");
+          #endif 
+      }
+      memmove(act_attr->dpname, dppos, copylen); 
+      act_attr->dpnamelen = copylen;
+    } else {
+        /* No datapoint assigned */
+        act_attr->dpnamelen =0;
+    }
+#endif
+
+    /* Now copy value string */
+    copylen = MIN(srclen, ATTR_MAXVALUELEN);
     if ( copylen < srclen ) {
         #if DEBUG_PARSER > 0
-            DEBUG_PRINTF("AttrCopy: %s truncated\n", option==1 ? "Name" : "Value" );
+            DEBUG_PUTS("AttrCopy: Value truncated");
         #endif 
     }
   
-    memmove( ( option == 1 ? act_attr->name : act_attr->value ), src, copylen );
-    *lenptr = copylen;
+    memmove( act_attr->value, src, copylen );
+    act_attr->valuelen = copylen;
     #if DEBUG_PARSER > 1
-        if ( option == 2 )
         DEBUG_PRINTF("AttrCopy:"); DumpToken(act_attr->name, act_attr->namelen);
         DEBUG_PUTC('='); DumpToken(act_attr->value, act_attr->valuelen);
+        if ( act_attr->dpnamelen > 0 ) {
+        }
         DEBUG_PUTC('\n'); 
     #endif 
 
@@ -134,6 +185,17 @@ void AttrUpdate( const GUI_Edit_T *edit )
         output_putsl(act_attr->name, act_attr->namelen);
         output_putch('<');output_putch('\n');
     }
+#if 0
+    if ( act_attr->dpnamelen > 0 ) {
+        #if DEBUG_PARSER > 0
+            DEBUG_PRINTF("Datapoint >");
+            DumpToken(act_attr->dpname, act_attr->dpnamelen);
+            DEBUG_PRINTF("< for property >");
+            DumpToken(act_attr->name, act_attr->namelen);
+            DEBUG_PUTC('<');DEBUG_PUTC('\n');
+        #endif
+    }
+#endif
 }
 
 /******************************************************************************
@@ -366,6 +428,16 @@ bool parse_lvgl_elem ( char *token, uint32_t tokenlength, uint32_t state )
 } 
 
 /******************************************************************************
+ * @brief parse datapoints
+ * @param  token       - actual input token
+ * @param  tokenlength - length of token
+ * @retval 
+ *****************************************************************************/
+bool parse_datapoints ( char *token, uint32_t tokenlength, uint32_t state )
+{
+  return true;
+}
+/******************************************************************************
  * @brief parse component
  * @param  token       - actual input token
  * @param  tokenlength - length of token
@@ -476,6 +548,15 @@ bool parse_root ( char *token, uint32_t tokenlength, uint32_t state )
         xml_parse(token, tokenlength);
         break;
       case 2:
+        /* Datapoints */
+         /* reset state to initial, push actual state 
+         /* then store exit word and start parsing datapoints */
+        actual.state = 0;
+        xml_parser_push(&actual);
+        SET_ACTUAL(parse_datapoints, 0, NULL, last_exitword, "datapoints" );
+        xml_parse(token, tokenlength);
+        break;
+      case 3:
         /* XML prolog */
          /* reset state to initial, push actual state 
          /* then store exit word and start parsing component */
@@ -574,7 +655,7 @@ bool parse_attributes ( char *token, uint32_t tokenlength, uint32_t state )
       case 0:
         /* handle attribute name */
         TokenToLower(token, tokenlength);
-        AttrCopy(token, tokenlength, 1 );
+        AttrCopyName(token, tokenlength);
         actual.state++;
         break;
       case 1:
@@ -592,7 +673,7 @@ bool parse_attributes ( char *token, uint32_t tokenlength, uint32_t state )
             int32_t qmpos = FindInToken(token+1, tokenlength-1, '"',1 ,true);
             if ( qmpos >= 0 ) {
               /* Copy attribute value */
-              AttrCopy(token+1, qmpos, 2);
+              AttrCopyValue(token+1, qmpos);
               /* And set(update attribute value */
               AttrUpdate(actual.edit);
             }

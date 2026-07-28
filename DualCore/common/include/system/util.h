@@ -19,6 +19,7 @@ void *   my_free(void *ptr);
 uint32_t My_Delay(uint32_t waittime );
 uint32_t get_ms_since_start(void);
 uint32_t pico_get_coreID(void);
+int      ipow(int base, unsigned int exp);
 
 void Error_Handler(char *file, int line);
 void Error_Handler_XX(int32_t code, char *file, int line);

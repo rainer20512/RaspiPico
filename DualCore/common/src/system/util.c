@@ -97,6 +97,21 @@ void *my_free(void *ptr)
     free(ptr);
 }
 
+/******************************************************************************
+ * Integer version of pow
+ *****************************************************************************/
+int ipow(int base, unsigned int exp)
+{
+    int result = 1;
+    for (;;) {
+        if (exp & 1) result *= base;
+        exp >>= 1;
+        if (!exp) break;
+        base *= base;
+    }
+
+    return result;
+}
 
 #ifdef  USE_FULL_ASSERT
 

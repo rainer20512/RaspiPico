@@ -93,7 +93,10 @@ static inline String_T V_Set_Str   ( Variant_T* v, char *text, size_t len) { v->
 static inline void     V_Set_Font  ( Variant_T* v, String_T fontname, uint8_t fontsize ) { v->type=VAR_FONT; v->font.fontname = fontname; v->font.fontsize = fontsize; };
 
 /* Get copy of String data ( VAR_STRING, VAR_FONT */
-char *V_to_cstr    (char *dest, Variant_T *v, size_t maxlen);
-bool  V_Str_to_Font(Variant_T *v); 
-
+char     *V_to_cstr       (char *dest, Variant_T *v, size_t maxlen);
+bool      V_Str_to_Font   (Variant_T *v); 
+bool      V_Str_to_I32    (Variant_T *v); 
+bool      V_Str_is_numeric(Variant_T *v);
+uint32_t  V_Str_get_int32 (Variant_T *v);
+size_t    V_Str_chr_pos   (Variant_T *v, const char sep);
 #endif /* _VARIANT_H_ */

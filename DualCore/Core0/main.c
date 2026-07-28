@@ -130,7 +130,6 @@ bool rx_chars_available(void);
     spi_init_all();
 
     GC9A01_hard_reset();
-    // exception_set_exclusive_handler(HARDFAULT_EXCEPTION, HardFault_Handler);
 
     ProfilerInitTo(JOB_TASK_INIT);
 

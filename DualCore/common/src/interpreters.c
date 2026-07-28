@@ -922,7 +922,7 @@ static lv_obj_t * obj=NULL;
         case 97: 
             #if  RP2040_M0_0
                puts("Core0: All Item List");
-               LL_Dump(GUI_item_list_1);
+               LL_Dump(GUI_item_list_0);
             #endif
             #if  RP2040_M0_1 || defined(CORE1_SIM)
                 puts("Core1: All Item List");
