@@ -904,6 +904,8 @@ static lv_obj_t * obj=NULL;
     	case 5:
         	GUI_Edit(&edit_image, NULL);
             break;
+    	case 6:
+        	GUI_Edit(&edit_datapoint, NULL);
 #if USE_LVGL > 0
     	case 90:
             /*Change the active screen's background color*/
@@ -918,15 +920,26 @@ static lv_obj_t * obj=NULL;
             break;
 #endif
 #if DEBUG_GUIEDIT > 0
+        #include "../../GUI/dp_lists.h"
+        case 96: 
+            #if  RP2040_M0_0
+               puts("Core0: Datapoint List");
+               DP_Dump(*REF_Dp_list);
+            #elif  RP2040_M0_1 || defined(CORE1_SIM)
+                puts("Core1: Datapoint List");
+                DP_Dump(GUI_Dp_list);
+            #endif
+            break;
+#endif
+#if DEBUG_GUIEDIT > 0
         #include "../../GUI/gui_lists.h"
         case 97: 
             #if  RP2040_M0_0
                puts("Core0: All Item List");
-               LL_Dump(GUI_item_list_0);
-            #endif
-            #if  RP2040_M0_1 || defined(CORE1_SIM)
+               LL_Dump(REF_item_list);
+            #elif  RP2040_M0_1 || defined(CORE1_SIM)
                 puts("Core1: All Item List");
-                LL_Dump(GUI_item_list_1);
+                LL_Dump(GUI_item_list);
             #endif
             break;
 #endif
@@ -939,7 +952,14 @@ static lv_obj_t * obj=NULL;
             DBG_heap_useage();
             break;
     	case 100:
-            GUI_Reset_GUI();
+            #if  RP2040_M0_0
+               puts("Core0: Clear GUI item list");
+               GUI_Reset_GUI_Core0();
+            #elif  RP2040_M0_1 
+               puts("Core1: Clear GUI item list");
+               GUI_Reset_GUI_Core1();
+            #endif
+
             break;
     	default: 
         	puts("Unknown Test");
@@ -960,11 +980,13 @@ static lv_obj_t * obj=NULL;
         { "Arc Editor",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(3), "Edit Arc(s)" },
         { "Scale Editor",           ctype_fn, .exec.fn = GUI_Test_Menu,VOID(4), "Edit Scale(s)" },
         { "Image Editor",           ctype_fn, .exec.fn = GUI_Test_Menu,VOID(5), "Edit Image(s)" },
+        { "Datapoint Editor",       ctype_fn, .exec.fn = GUI_Test_Menu,VOID(6), "Edit a Datapoint" },
 
 #if USE_LVGL > 0
         { "Draw Label",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(90), "Draw a fixed Label" },
 #endif
 #if DEBUG_GUIEDIT > 0
+        { "Dump Datapoints",        ctype_fn, .exec.fn = GUI_Test_Menu,VOID(96), "Dump all Datapoints" },
         { "Dump GUI Elements",      ctype_fn, .exec.fn = GUI_Test_Menu,VOID(97), "Dump all GUI Elements" },
 #endif
 #ifdef RP2040_M0_0

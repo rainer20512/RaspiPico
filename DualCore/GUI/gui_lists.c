@@ -8,10 +8,11 @@
 
 /* linked list of all GUI elements, initially empty */
 #if  RP2040_M0_1 || defined(CORE1_SIM)
-    List_Elem_T * GUI_item_list_1 = NULL;
+    List_Elem_T * GUI_item_list = NULL;
 #endif
 #if  RP2040_M0_0
-    List_Elem_T * GUI_item_list_0 = NULL;
+    /* Copy if GUI_item_list in Core0, it is read only!! */
+    List_Elem_T * REF_item_list = NULL;
 #endif
 
 /*-----------------------------------------------------------------------------
@@ -203,7 +204,7 @@ void LL_delete ( List_Elem_T **llist, List_Elem_T *delptr )
   {
       uint32_t cnt=0;
        while ( llist) {
-         DEBUG_PRINTF("%2d: %15s %20s ", cnt, EditNames[llist->ll_type], llist->ll_name);
+         DEBUG_PRINTF("%2d: %15s %20s ", cnt, Editinfo[llist->ll_type].name, llist->ll_name);
          if ( llist->ll_type == GUI_ELEM_FONT )
             DEBUG_PRINTF("%5d",llist->ll_additional);
          else

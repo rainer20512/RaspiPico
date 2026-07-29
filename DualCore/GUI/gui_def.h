@@ -37,12 +37,24 @@ typedef enum {
   GUI_ELEM_ARC          = 6,
   GUI_ELEM_SCALE        = 7,
   GUI_ELEM_IMAGE        = 8,
-  GUI_ELEM_MAX          = 9,              /* Last element whose value is the number of prev entries */
+  GUI_ELEM_DATAPOINT    = 9,
+  GUI_ELEM_MAX          = 10,              /* Last element whose value is the number of prev entries */
 } GUI_Edit_Enum;
 
+/* Structure to describe the different GUI-Elements */
+typedef struct {
+    const char *name;                       /* User fiendly name og GUI-Element          */
+    uint8_t    bHasDatapoints;              /* != 0, if GUI element may have data points */
+} ElemInfo_T;
+
 /* Corresponding user friendly names of these of GUI elements */
-#define GUI_EDITNAMES   {"NoType", "RawImg", "Font", "Screen", "Style", "Label", "Arc", "Scale", "Image", "<Undef>" }
-extern const char *EditNames[];
+#define GUI_EDITINFO \
+    {\
+        {"NoType", 0, }, {"RawImg", 0, }, {"Font", 0, }, {"Screen", 1, }, {"Style", 1, }, {"Label", 1, }, {"Arc", 1, },\
+        {"Scale", 1, },  {"Image", 0, }, {"Datapoint", 0, }, {"<Undef>", 0, }, \
+    }
+
+extern const ElemInfo_T Editinfo[];
 
 /* - How we describe an image ( mostly stored in flash memory -------------- */
 typedef struct {
@@ -322,7 +334,6 @@ typedef enum {
 #define IMAGE_SET_PROP(img, id) ( (img)->used |=  ( 1 << (id) ) )
 #define IMAGE_CLR_PROP(img, id) ( (img)->used &= ~( 1 << (id) ) )
 
-
 /* Properties that define an image, not all LVGL properties supported */
 typedef struct {
   uint32_t      used;                       /* bitfield of used properties */
@@ -337,17 +348,40 @@ typedef struct {
 } GUI_Image_T;
 
 
+/* Enumeration of all properties of a GUI_Datapoint_T            */
+/* Not a real GUI element, just a pseudo element to use available*/
+/* parser functions to fill / handle datapoint info              */
+/* Order has to be the same as in corresponding Edit receipe !!! */
+typedef enum {
+  DP_NAME         = 0,
+  DP_GUIELEMNAME  = 1,
+  DP_PROPERTYNAME = 2,
+  DP_EDIT_MAX     = 3,                    /* mandatory last entry  */
+} Datapoint_Used_T;
+
+#define DP_HAS_PROP(dp, id) ( (dp)->used &  (  1 << (id) ) )
+#define DP_SET_PROP(dp, id) ( (dp)->used |=  ( 1 << (id) ) )
+#define DP_CLR_PROP(dp, id) ( (dp)->used &= ~( 1 << (id) ) )
+
+
+/* Properties that define an image, not all LVGL properties supported */
+typedef struct {
+  uint32_t  used;                           /* bitfield of used properties */
+  char      dpname[GUI_MAX_NAMELEN];        /* name of datapoint */      
+  char      guielemname[GUI_MAX_NAMELEN];   /* name of referenced GUI-Element */	
+  char      propertyname[GUI_MAX_NAMELEN];  /* name of property of that GUI element */	
+} GUI_Datapoint_T;
+
+
 void GUI_dump_coords      ( lv_obj_t * obj );
 void GUI_Init_Fonts_Core1 (void);
 void GUI_Init_Fonts_Core0 (bool);
 void GUI_Init_Images_Core1(void);
 void GUI_Init_Images_Core0(bool);
 
-// void GUI_update_screen    (GUI_Screen_T *act, lv_obj_t *scr );
-struct List_Elem;
-struct List_Elem *GUI_new_or_update_entry_Core0 (uint8_t *data, GUI_Edit_Enum gui_elem );
-struct List_Elem *GUI_new_or_update_entry_Core1 (uint8_t *data, GUI_Edit_Enum gui_elem );
-void              GUI_delete_entry_Core0        (uint8_t *data, GUI_Edit_Enum gui_elem );
-void              GUI_delete_entry_Core1        (uint8_t *data, GUI_Edit_Enum gui_elem );
+void GUI_new_or_update_entry_Core0 (uint8_t *data, GUI_Edit_Enum gui_elem );
+void GUI_new_or_update_entry_Core1 (uint8_t *data, GUI_Edit_Enum gui_elem );
+void GUI_delete_entry_Core0        (uint8_t *data, GUI_Edit_Enum gui_elem );
+void GUI_delete_entry_Core1        (uint8_t *data, GUI_Edit_Enum gui_elem );
 #endif /*  USE_GUI_INTERFACE */
 #endif /* _GUIDEF_H_ */

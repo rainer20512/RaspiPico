@@ -18,11 +18,13 @@
 #define ESCAPEPROLOG          '?'
 #define ESCAPESLASH           '/'
 
+#if 0
 /****************************************************************************** 
  * Separator to split attribute value and data point name
  *****************************************************************************/ 
 #define STRESCAPECHAR         '\\'
 #define DPSEPARATOR           ':'
+#endif
 
 /****************************************************************************** 
  * the follwoing names are used to identify valid gui elements in XML parser,
@@ -43,14 +45,20 @@
  *****************************************************************************/ 
 #define ID_MAXNAMELEN         16
 
-#define XML_PARSER_VERSION    "1.0.1"
+#define XML_PARSER_VERSION    "1.0.2"
 
 /* Root may contain component(s) plus optional prolog, NULL terminated array */
 extern const char *xml_root[];
-#define XML_ROOT_SET          {"screen", "datapoints", "?xml", NULL }
+#define XML_ROOT_SET          {"screen", "datapointlist", "?xml", NULL }
 
 /* Component may contain styles, labels, arcs, NULL terminated array */
 extern const char *xml_component[];
 #define XML_COMPONENT_SET  { STYLE_IDSTR, LABEL_IDSTR, ARC_IDSTR, SCALE_IDSTR, IMAGE_IDSTR, NULL }
+
+
+#define DATAPOINT_IDSTR           "datapoint"
+/* A datapoint list may only contain single datapoints */
+extern const char *xml_datapointlist[];
+#define XML_DATAPOINTLIST_SET {DATAPOINT_IDSTR, NULL }
 
 #endif /* _PARSER_SPECS_H_  */

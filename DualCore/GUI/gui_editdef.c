@@ -197,6 +197,22 @@ const  GUI_Edit_T edit_image = {
   },
 };
 
+const  GUI_Edit_T edit_datapoint = {
+  .count         = DP_EDIT_MAX,
+  .gui_elem_type = GUI_ELEM_DATAPOINT,
+  .used_ofs      = offsetof(GUI_Datapoint_T, used),
+  .name_ofs      = offsetof(GUI_Datapoint_T, dpname),
+  .total_size    = sizeof  (GUI_Datapoint_T),
+  .workspace     = (uint8_t*)&cur_dp,
+  /* Element Order has to be the same as in corresponding "used"-bit set !!! */
+  .receipe   = { 
+/* 01 */
+    { DP_NAME,            "name",           GUI_STRING, offsetof(GUI_Datapoint_T, dpname) }, 
+    { DP_GUIELEMNAME,     "ref",            GUI_STRING, offsetof(GUI_Datapoint_T, guielemname) }, 
+    { DP_PROPERTYNAME,    "property",       GUI_STRING, offsetof(GUI_Datapoint_T, propertyname) }, 
+  },
+};
+
 
 
 /* one triple of GUI_Edit_Enum or ElementName -> GUI_Edit_T  */
@@ -208,15 +224,16 @@ struct receipes_S {
 
 /* complete list of Gui_elem_t -> Gui_Edit_T */
 static const struct receipes_S gui_to_receipe[GUI_ELEM_MAX] = {
-    { GUI_ELEM_NOTYPE, NULL,          NULL },
-    { GUI_ELEM_RAWIMG,  NULL,          NULL},
-    { GUI_ELEM_FONT,   NULL,          NULL},
-    { GUI_ELEM_SCREEN, &edit_screen,  SCREEN_IDSTR },
-    { GUI_ELEM_STYLE,  &edit_style,   STYLE_IDSTR },
-    { GUI_ELEM_LABEL,  &edit_label,   LABEL_IDSTR },
-    { GUI_ELEM_ARC,    &edit_arc,     ARC_IDSTR,   },
-    { GUI_ELEM_SCALE,  &edit_scale,   SCALE_IDSTR,   },
-    { GUI_ELEM_IMAGE,  &edit_image,   IMAGE_IDSTR,   },
+    { GUI_ELEM_NOTYPE,    NULL,             NULL },
+    { GUI_ELEM_RAWIMG,    NULL,             NULL},
+    { GUI_ELEM_FONT,      NULL,             NULL},
+    { GUI_ELEM_SCREEN,    &edit_screen,     SCREEN_IDSTR },
+    { GUI_ELEM_STYLE,     &edit_style,      STYLE_IDSTR },
+    { GUI_ELEM_LABEL,     &edit_label,      LABEL_IDSTR },
+    { GUI_ELEM_ARC,       &edit_arc,        ARC_IDSTR,   },
+    { GUI_ELEM_SCALE,     &edit_scale,      SCALE_IDSTR,   },
+    { GUI_ELEM_IMAGE,     &edit_image,      IMAGE_IDSTR,   },
+    { GUI_ELEM_DATAPOINT, &edit_datapoint,  DATAPOINT_IDSTR, },
 };
 
 /******************************************************************************
@@ -230,7 +247,7 @@ const GUI_Edit_T *Find_EditInfoByType( GUI_Edit_Enum gui_type )
         if ( gui_to_receipe[i].gui_type == gui_type ) return gui_to_receipe[i].gui_edit;
     }
     #if DEBUG_GUIEDIT
-        DEBUG_PRINTF("ErrNo Receipe for GUI Element ""%s""\n",EditNames[gui_type]);
+        DEBUG_PRINTF("ErrNo Receipe for GUI Element ""%s""\n",Editinfo[gui_type].name);
     #endif
     return NULL;
 }
@@ -255,20 +272,6 @@ const GUI_Edit_T *FindEditInfoByName( const char *name, const size_t namelen)
     #endif
     return NULL;
 }
-
-#if 0
-/******************************************************************************
- * @brief simplified strcmp with length delimiter
- * @retval 1 if s1 and s2 are identical up to len
- *****************************************************************************/
-static uint32_t strncmp( const char *s1, const char *s2, size_t len )
-{
-    while ( len-- ) {
-        if ( *(s1++) != *(s2++) ) return 0;
-    }
-    return 1;
-}
-#endif
 
 /******************************************************************************
  * @brief  Find the  index for one property of an gui edit description 

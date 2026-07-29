@@ -7,6 +7,7 @@
 #include "cmdline.h"
 
 #include "../GUI/variant.h"
+#include "parser_specs.h"
 #include "../GUI/gui_def.h"
 #include "../GUI/gui_edit.h"
 #include "../GUI/gui_lists.h"
@@ -24,12 +25,6 @@ OnExitFn         OnExitEdit;  /* Callback on Exit of Editing */
 
 const GUI_Edit_TypeSpec_T GUI_TypeSpec[GUI_MAXELEM] = GUI_TYPE_SPECS;
 
-/* in CORE_1_SIM mode, only Core0 objects are accessible to interactive edit ! */
-#if  RP2040_M0_0
-    #define ITEM_LIST     GUI_item_list_0
-#elif  RP2040_M0_1
-    #define ITEM_LIST     GUI_item_list_1
-#endif
 
 
 // ---- Forward declaration of user input handler in GI edit mode -------------
@@ -91,7 +86,7 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const Edit_Receipe_T *editelem, 
              default:
                search_elem = GUI_ELEM_FONT;
            }
-           ll_elem = LL_find_by_type_n_obj( ITEM_LIST, search_elem, *(void **)(bytes+editelem->elem_offset) );
+           ll_elem = LL_find_by_type_n_obj( GUI_ITEM_LIST, search_elem, *(void **)(bytes+editelem->elem_offset) );
            V_tempval.font.fontname.text = (char *)ll_elem->ll_name;
            printf("%s", V_tempval.font.fontname.text );
            /* In case of Fonts,also get the fontsize */
@@ -198,7 +193,7 @@ void GUI_edit_dump_all(const GUI_Edit_T *editdata, bool padded )
  ******************************************************************************/
 void GUI_Edit_Prompt(void)
 {
-  printf("GUI Edit %s>",EditNames[act_edit->gui_elem_type]);
+  printf("GUI Edit %s>",Editinfo[act_edit->gui_elem_type].name);
 }
 
 
@@ -263,7 +258,26 @@ static bool GUI_Edit_Update_Datapoint( const GUI_Edit_T *edit, uint32_t idx, boo
 {
     /* combine all cases of "unset" */
     if ( !bIsUnset ) bIsUnset = ( dpstr==NULL || dplen==0 );
-    
+
+    /* get the referenced edit element */
+    const Edit_Receipe_T *editelem = &edit->receipe[idx];
+
+    /* fill datapoint info */
+    cur_dp.bDelete = bIsUnset;
+    /* when created inline, ownertype is type of actually parsed element */
+    /* when created in datapoints list, ownertype is GUI_ELEM_DATAPOINT  */
+    cur_dp.ownertype = edit->gui_elem_type;
+    size_t copylen = MIN(ID_MAXNAMELEN, dplen);
+    strncpy(cur_dp.dpname, dpstr, copylen);
+    strcpy(cur_dp.guielemname, &edit->workspace[edit->name_ofs]);
+
+    strcpy(cur_dp.propertyname, editelem->elem_name);
+
+    #if  RP2040_M0_0
+              GUI_new_or_update_entry_Core0((uint8_t*)&cur_dp, GUI_ELEM_DATAPOINT );
+    #elif  RP2040_M0_1
+              GUI_new_or_update_entry_Core1((uint8_t*)&cur_dp, GUI_ELEM_DATAPOINT );
+    #endif
 
 }
 #endif
@@ -279,7 +293,7 @@ static bool GUI_Edit_Update_Datapoint( const GUI_Edit_T *edit, uint32_t idx, boo
  ********************************************************************************/
 static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset )
 {
-    size_t dpofs;
+    int dpofs;
 
     /* get reference to "used" bits */
     uint32_t *used = (uint32_t *)(edit->workspace + edit->used_ofs);
@@ -292,21 +306,22 @@ static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset
        *used |= ( 1 << idx );
     }
 
-#if 0
+
+    #if 0
     /* Check for Datapoint definition next */
-    dpofs =V_Str_chr_pos( &V_tempval, DPSEPARATOR );
-    if ( dpofs >= 0 )
+    dpofs = V_Str_chr_pos( &V_tempval, DPSEPARATOR );
+    if ( dpofs >= 0 ) {
       /* check for escaped DPSEPARATOR */
       if ( dpofs > 0 && V_tempval.str.text[dpofs-1] == STRESCAPECHAR ) {
           /* is escaped: remove escape char and handle as normal string */
           V_Str_rm_char(&V_tempval, dpofs-1);
       } else {
-          GUI_Edit_Update_Datapoint(edit, idx, bIsUnset, V_tempval.str.text+dpofs+1, V_tempval.str.len-dpofs-1  )
+          GUI_Edit_Update_Datapoint(edit, idx, bIsUnset, V_tempval.str.text+dpofs+1, V_tempval.str.len-dpofs-1  );
           /* Remove the Datapoint part from variant str */
           V_tempval.str.len = dpofs;
       }
     }
-#endif
+    #endif
 
     /* get the referenced edit element */
     const Edit_Receipe_T *editelem = &edit->receipe[idx];
@@ -347,27 +362,27 @@ static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset
         }
         if ( CMD_is_numeric (V_tempval.str.text, V_tempval.str.len )) {
           /* Specified by number: convert to num and search for nth entry, LL_find_nth counts from 1 ... ! */
-          ll_elem = LL_find_nth ( ITEM_LIST,  search_elem, CMD_to_number(V_tempval.font.fontname.text, V_tempval.font.fontname.len ) + 1 );
+          ll_elem = LL_find_nth ( GUI_ITEM_LIST,  search_elem, CMD_to_number(V_tempval.font.fontname.text, V_tempval.font.fontname.len ) + 1 );
         } else {
           if ( editelem->elem_type != GUI_FONT ) {
             /* Specified by name only: Get String copy from inbuf*/
             V_to_cstr(tempstr, &V_tempval, GUI_MAX_NAMELEN);
             /* find Style by name */
-            ll_elem = LL_find_by_type_n_name(ITEM_LIST, search_elem, tempstr);
+            ll_elem = LL_find_by_type_n_name(GUI_ITEM_LIST, search_elem, tempstr);
           } else {
             /* Font: Specified by <name><sep><size>: Copy from inbuf to variant */
             if ( !V_Str_to_Font(&V_tempval) ) return false; 
             /* Copy back NULL terminated Fontname as search parameter */
             V_to_cstr(tempstr, &V_tempval, GUI_MAX_NAMELEN);
             /* find font by name and fontsize */
-            ll_elem = LL_find_by_type_name_additional(ITEM_LIST, search_elem, tempstr, V_tempval.font.fontsize);
+            ll_elem = LL_find_by_type_name_additional(GUI_ITEM_LIST, search_elem, tempstr, V_tempval.font.fontsize);
           }
         }
         /* if found, copy lvgl obj ptr to structure, otherwise reset "used" bit */
         if ( ll_elem ) {
            *(void **)datapos = ll_elem->ll_lvgl_obj;
         } else {
-           printf("%s %s not found\n",EditNames[search_elem],tempstr);
+           printf("%s %s not found\n",Editinfo[search_elem].name,tempstr);
            *used &= ~( 1 << idx );
            return false;
         }
@@ -396,10 +411,10 @@ static bool GUI_Edit_update( const GUI_Edit_T *edit, uint32_t idx, bool bIsUnset
  ******************************************************************************/
 void GUI_list_entries(const GUI_Edit_Enum elemtype )
 {
-  List_Elem_T* ptr = ITEM_LIST;
+  List_Elem_T* ptr = GUI_ITEM_LIST;
   uint32_t i=0;
 
-  printf("All Elements of type %s in global list\n", EditNames[elemtype] );
+  printf("All Elements of type %s in global list\n", Editinfo[elemtype].name );
 
   /* Iterate thr all elements of current edit type */
   while ( ptr = LL_iterate_by_type ( ptr, elemtype ) ) {
@@ -423,17 +438,17 @@ static void GUI_load_entry( char *word, size_t wordlen, const GUI_Edit_T *edit )
    V_to_cstr(tempstr, &V_tempval, GUI_MAX_NAMELEN);
 
    if ( V_Str_is_numeric(&V_tempval) ) {
-     ll_elem = LL_find_nth ( ITEM_LIST, edit->gui_elem_type, V_Str_get_int32(&V_tempval)+1 );
+     ll_elem = LL_find_nth ( GUI_ITEM_LIST, edit->gui_elem_type, V_Str_get_int32(&V_tempval)+1 );
    } else {
-     ll_elem = LL_find_by_type_n_name ( ITEM_LIST, edit->gui_elem_type, tempstr );
+     ll_elem = LL_find_by_type_n_name ( GUI_ITEM_LIST, edit->gui_elem_type, tempstr );
   }
 
   if ( !ll_elem ) {
-    printf("Err: %s %s not in item list\n",EditNames[edit->gui_elem_type],tempstr);
+    printf("Err: %s %s not in item list\n",Editinfo[edit->gui_elem_type].name,tempstr);
   } else {
     /* copy element data to current obj data */
     memcpy_fast(edit->workspace, ll_elem->ll_entry, edit->total_size);
-    printf("%s %s loaded\n",EditNames[edit->gui_elem_type],(char *)(edit->workspace + edit->name_ofs));
+    printf("%s %s loaded\n",Editinfo[edit->gui_elem_type].name,(char *)(edit->workspace + edit->name_ofs));
   }
 
 }
@@ -546,18 +561,9 @@ bool GUI_Edit_SetItem(char *arg, size_t argsize, const GUI_Edit_T *edit, uint32_
     /* get the referenced edit element */
     const Edit_Receipe_T *editelem = &edit->receipe[idx];
 
-   /* Thereafter check for number or string*/
-    if ( editelem->elem_type == GUI_STRING || editelem->elem_type == GUI_STYLE || editelem->elem_type == GUI_RAWIMG || editelem->elem_type == GUI_FONT ||
-         editelem->elem_type == GUI_LABEL  || editelem->elem_type == GUI_IMAGE )
-    {
-        /* Strings, Fonts and Styles require a separate handling: pass reference to the string 
-         * to Updater, updater will handle string accordingly
-         */
-         V_Set_Str(&V_tempval, arg, argsize);
-    } else {
-         V_Set_U32(&V_tempval, CMD_to_number( arg, argsize ));
-    }
-
+    /* all kinds of arguments are passed as String at this point */
+    V_Set_Str(&V_tempval, arg, argsize);
+    
     /* and update raw element data */
     return GUI_Edit_update(edit, idx, false);
 

@@ -16,6 +16,8 @@
 #include "debug/debug_helper.h"
 
 #include "../../GUI/gui_ops.h"
+#include "../../GUI/gui_lists.h"
+#include "../../GUI/dp_lists.h"
 
 
 static repeating_timer_t  wait_timer; /* timer for wait states in state machine */
@@ -92,24 +94,16 @@ typedef struct {
       case IPC_MSG_0TO1_ECHO:
         ret = Core0_Handle_Echo();
         break;
-      case IPC_MSG_0TO1_QRY_IMAGEINFO:
-        /* We got image info From Core1 */
-        IPC_Imageinfo_T *imgbuff = (IPC_Imageinfo_T *) buf1to0.buff;
-        AllImages0    = imgbuff->imageinfo;
-        AllImagesNum0 = imgbuff->imagenum;
-        DEBUG_PRINTF("Core0 image info: %d fonts\n",AllImagesNum0);
-        break;        
-      case IPC_MSG_0TO1_QRY_FONTINFO:
-        /* We got fontinfo From Core1 */
-        IPC_Fontinfo_T *fntbuff = (IPC_Fontinfo_T *) buf1to0.buff;
-        AllFonts0   = fntbuff->fontinfo;
-        AllFontNum0 = fntbuff->fontnum;
-        DEBUG_PRINTF("Core0 font info: %d fonts\n",AllFontNum0);
-        break;        
       case IPC_MSG_0TO1_QRY_VERSNINFO:
         /* We got LVGL Version String ptr from Core1 */
         LVGL_VersinfoStr0 = *(const char **) buf1to0.buff;
         DEBUG_PRINTF("LVGL Version: %s\n",LVGL_VersinfoStr0);
+        break;
+      case IPC_MSG_0TO1_QRY_GUIINFO:
+        /* We got ptr to GUI_Item_list and GUI_Dp_list from Core1 */
+        REF_item_list = *(List_Elem_T**)   buf1to0.buff;
+        REF_Dp_list   = *(DPList_Elem_T***) (buf1to0.buff+sizeof(List_Elem_T*));
+        DEBUG_PRINTF("REF_item_list and REF_Dp_list set...\n");
         break;
       default:
         DEBUG_PRINTF("No handler for IPC msg #%d\n", msgID);
@@ -219,44 +213,25 @@ typedef struct {
     if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
     FSM_Start(&ipcfsm);
   }
+ 
   /******************************************************************************
-   * IPC Query Imageinfo from Core1 to Core 0
+   * IPC Query GUI_item_list root ptr from Core1
    *****************************************************************************/
-  static bool Core0_Qry_ImageinfoInternal ( void* userdata, IPC_ResultCB pfAck )
+  static bool Core0_Qry_GUIinfoInternal ( void* userdata, IPC_ResultCB pfAck )
   { 
     /* No payload */
     buf0to1.uSize = 0;
     /* Send */
-    IPC_SignalCore0to1 (IPC_MSG_0TO1_QRY_IMAGEINFO, false, pfAck );
+    IPC_SignalCore0to1 (IPC_MSG_0TO1_QRY_GUIINFO, false, pfAck );
     return true;
   }
 
-  bool Core0_Qry_Imageinfo ( void* arg, IPC_ResultCB onCompletion )
+  bool Core0_Qry_GUIinfo ( void* arg, IPC_ResultCB onCompletion )
   {
-    FSM_Init(&ipcfsm, arg, Core0_Qry_ImageinfoInternal, FSM_Ipc );
+    FSM_Init(&ipcfsm, arg, Core0_Qry_GUIinfoInternal, FSM_Ipc );
     if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
     FSM_Start(&ipcfsm);
   }
-
-  /******************************************************************************
-   * IPC Query fontinfo from Core1 to Core 0
-   *****************************************************************************/
-  static bool Core0_Qry_FontinfoInternal ( void* userdata, IPC_ResultCB pfAck )
-  { 
-    /* No payload */
-    buf0to1.uSize = 0;
-    /* Send */
-    IPC_SignalCore0to1 (IPC_MSG_0TO1_QRY_FONTINFO, false, pfAck );
-    return true;
-  }
-
-  bool Core0_Qry_Fontinfo ( void* arg, IPC_ResultCB onCompletion )
-  {
-    FSM_Init(&ipcfsm, arg, Core0_Qry_FontinfoInternal, FSM_Ipc );
-    if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
-    FSM_Start(&ipcfsm);
-  }
-
 
   /******************************************************************************
    * IPC Core0 send GUI Element Data to Core 1
@@ -287,6 +262,26 @@ typedef struct {
     FSM_Start(&ipcfsm);
     return true;
   }
+
+  /******************************************************************************
+   * IPC Delete all GUI and LVGL elements in Core1
+   *****************************************************************************/
+  static bool Core0_Send_GUIresetInternal ( void* userdata, IPC_ResultCB pfAck )
+  { 
+    /* No payload */
+    buf0to1.uSize = 0;
+    /* Send */
+    IPC_SignalCore0to1 (IPC_MSG_0TO1_GUIRESET, false, pfAck );
+    return true;
+  }
+
+  bool Core0_Send_GUIreset ( void* arg, IPC_ResultCB onCompletion )
+  {
+    FSM_Init(&ipcfsm, arg, Core0_Send_GUIresetInternal, FSM_Ipc );
+    if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
+    FSM_Start(&ipcfsm);
+  }
+
 
 #endif
 
@@ -374,6 +369,7 @@ typedef struct {
   bool Core1_Handle_Msg(uint8_t msgID)
   {
     bool ret = false;
+    uint8_t work;
     #if DEBUG_IPC > 0
         DEBUG_PRINTF("Core1 received payload for msg #%d\n", msgID);
     #endif
@@ -385,24 +381,6 @@ typedef struct {
       case IPC_MSG_1TO0_ECHO:
         ret = Core1_Handle_Echo();
         break;
-      case IPC_MSG_0TO1_QRY_IMAGEINFO:
-        /* Return imageinfo from Core1 to Core0 */
-        IPC_Imageinfo_T *imgbuff = (IPC_Imageinfo_T *) pbuf1to0->buff;
-        imgbuff->imageinfo = AllImages1;
-        imgbuff->imagenum =  AllImagesNum1;
-        pbuf1to0->uSize = sizeof(IPC_Imageinfo_T);
-        /* We generated new payload, so return true */
-        ret = true;
-        break;
-      case IPC_MSG_0TO1_QRY_FONTINFO:
-        /* Return fontinfo from Core1 to Core0 */
-        IPC_Fontinfo_T *fntbuff = (IPC_Fontinfo_T *) pbuf1to0->buff;
-        fntbuff->fontinfo = AllFonts1;
-        fntbuff->fontnum =  AllFontNum1;
-        pbuf1to0->uSize = sizeof(IPC_Fontinfo_T);
-        /* We generated new payload, so return true */
-        ret = true;
-        break;
       case IPC_MSG_0TO1_QRY_VERSNINFO:
         /* Return LVGL Version Str ptr from Core1 to Core0 */
         *((const char **)pbuf1to0->buff) = LVGL_VersinfoStr1;
@@ -410,8 +388,23 @@ typedef struct {
         /* We generated new payload, so return true */
         ret = true;
         break;
+      case IPC_MSG_0TO1_QRY_GUIINFO:
+        /* Return GUI_item_list and GUI_Dp_list ptr from Core 1  */
+        *(( List_Elem_T**)pbuf1to0->buff) = GUI_item_list;
+        work = sizeof(List_Elem_T*);
+        *(( DPList_Elem_T***)(pbuf1to0->buff+work)) = &GUI_Dp_list;
+        work += sizeof(DPList_Elem_T*);
+        pbuf1to0->uSize = work;
+        /* We generated new payload, so return true */
+        ret = true;
+        break;
       case IPC_MSG_0TO1_GUIELEM:
         Core1_Receive_LVGL_obj(pbuf0to1->buff, pbuf0to1->uSize);
+        /* No new payload in ACK */
+        ret = false;
+        break;
+      case IPC_MSG_0TO1_GUIRESET:
+        GUI_Reset_GUI_Core1();
         /* No new payload in ACK */
         ret = false;
         break;

@@ -22,18 +22,18 @@
 
 #define MAX_DPNUM     10                 /* maximum number of datapoints we can handle */
 
-GUI_Datapoint_T Datapoints[MAX_DPNUM];   /* Array of datapoints                  */
+DP_Datapoint_T Datapoints[MAX_DPNUM];   /* Array of datapoints                  */
 static uint8_t  actdp = 0;               /* number of used array elements        */
 static uint8_t  dpidcnt = 0;             /* monotonic counter to generate DP-IDs */
 
-static GUI_Datapoint_T act;              /* working copy for datapoints, used by varous functions */
+static DP_Datapoint_T act;              /* working copy for datapoints, used by varous functions */
 
 /******************************************************************************
  * @brief  Create a new Datapoint and store its data in modul variable "act"
  * @param  all neccessary data to create datapoint
  * @retval ptr to new initiated variable "act"
  ******************************************************************************/
-GUI_Datapoint_T *DP_New( char *name,  GUI_Edit_Enum elemtype, uint8_t propidx, GUI_E_Datatype_Enum datatype ) 
+DP_Datapoint_T *DP_New( char *name,  GUI_Edit_Enum elemtype, uint8_t propidx, GUI_E_Datatype_Enum datatype ) 
 {
     /* store datapoint in modul variable "act" */
     strncpy(act.DP_name, name, ID_MAXNAMELEN);
@@ -50,7 +50,7 @@ GUI_Datapoint_T *DP_New( char *name,  GUI_Edit_Enum elemtype, uint8_t propidx, G
  * @param newdp - new datapoint to add
  * @retval ID of new datapoint or -1 in case of error
  ******************************************************************************/
-int8_t DP_Add( char *name,  GUI_Datapoint_T *newdp ) 
+int8_t DP_Add( char *name,  DP_Datapoint_T *newdp ) 
 {
     /* first, check for free space in Datapoints list */
     if ( actdp >= MAX_DPNUM ) { 
@@ -61,19 +61,19 @@ int8_t DP_Add( char *name,  GUI_Datapoint_T *newdp )
     }
 
     /* copy datapoint to array */
-    GUI_Datapoint_T *ptr = &Datapoints[actdp++];
+    DP_Datapoint_T *ptr = &Datapoints[actdp++];
 
-    memcpy_fast(ptr, newdp, sizeof(GUI_Datapoint_T));
+    memcpy_fast(ptr, newdp, sizeof(DP_Datapoint_T));
 
     /* return ID of new datapoint list element */
     return ptr->DP_Id;
 }
 
-void DP_Dump_one ( GUI_Datapoint_T *dp )
+void DP_Dump_one ( DP_Datapoint_T *dp )
 {
     const GUI_Edit_T     *edit  = Find_EditInfoByType( dp->DP_elem_type );
     const Edit_Receipe_T *rec   = FindReceipeByPropIdx( edit, dp->DP_propidx);
-    DEBUG_PRINTF("%3d %16s %8s %16s %2d",dp->DP_Id, dp->DP_name, EditNames[dp->DP_elem_type], rec->elem_name, dp->DP_datatype);
+    DEBUG_PRINTF("%3d %16s %8s %16s %2d",dp->DP_Id, dp->DP_name, Editinfo[dp->DP_elem_type].name, rec->elem_name, dp->DP_datatype);
 }
 
 void DP_Dump_list ( void )

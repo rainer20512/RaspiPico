@@ -20,9 +20,9 @@
 #define IPC_MSG_0TO1_INIT          1         /* Initialize Core1 with essential runtime data */
 #define IPC_MSG_0TO1_ECHO          2         /* Core1 Simply echoes a msg from core0 (for test purposes)      */
 #define IPC_MSG_1TO0_ECHO          3         /* Core0 Simply echoes a msg from core1 (for test purposes)      */
-#define IPC_MSG_0TO1_QRY_FONTINFO  4         /* Core0 queries fontinfo an number of loaded fonts from Core1   */
-#define IPC_MSG_0TO1_QRY_IMAGEINFO 5         /* Core0 queries imageinfo an number of loaded images from Core1 */
-#define IPC_MSG_0TO1_QRY_VERSNINFO 6         /* Core0 queries LVGL Version from Core1                         */
+#define IPC_MSG_0TO1_GUIRESET      4         /* Core0 commands Core1 to delete all GUI and LVGL elements      */
+#define IPC_MSG_0TO1_QRY_VERSNINFO 5         /* Core0 queries LVGL Version from Core1                         */
+#define IPC_MSG_0TO1_QRY_GUIINFO   6         /* Core0 queries GUI_item_list ptr from Core1                    */ 
 #define IPC_MSG_0TO1_GUIELEM       7         /* Core0 sends GUI Element data to Core 1                        */
 
 bool Core0_Handle_Msg           (uint8_t msgID);
@@ -33,10 +33,10 @@ void task_handle_ipc1           ( uint32_t arg );
 void Core0_Setup_Core1_BootInfo ( void );   /* Seup core1 boot info */
 bool Core0_Init_IPC_Comm        ( void*, IPC_ResultCB );   /* Setup essential IPC data in core 1 */ 
 bool Core0_SendEcho             ( void* arg, IPC_ResultCB onCompletion );  /* for testing */
-bool Core0_Qry_Imageinfo        ( void* arg, IPC_ResultCB onCompletion );
-bool Core0_Qry_Fontinfo         ( void* arg, IPC_ResultCB onCompletion );
 bool Core0_Qry_Versioninfo      ( void* arg, IPC_ResultCB onCompletion );
+bool Core0_Qry_GUIinfo          ( void* arg, IPC_ResultCB onCompletion );
 bool Core0_Send_Gui_Elem        ( void* arg, IPC_ResultCB onCompletion );  /* Transfer one GUI element */
+bool Core0_Send_GUIreset        ( void* arg, IPC_ResultCB onCompletion );
 
 bool Core1_SendEcho             ( void* arg, IPC_ResultCB onCompletion );  /* for testing */
 void Core1_Read_BootInfo        ( void );   /* read/store bootinfo from core */
@@ -44,7 +44,7 @@ void Core1_Read_BootInfo        ( void );   /* read/store bootinfo from core */
 /******************************************************************************** 
  * Data structure for IPC communication, we need one for each direction
  *******************************************************************************/
-#define IPC_BUFSIZE          192
+#define IPC_BUFSIZE          128
 typedef struct {
   uint8_t   buff[IPC_BUFSIZE]; /* buffer for IPC data    */
   uint16_t  uSize;             /* actual number of bytes */

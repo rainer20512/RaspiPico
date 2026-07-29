@@ -98,5 +98,6 @@ bool      V_Str_to_Font   (Variant_T *v);
 bool      V_Str_to_I32    (Variant_T *v); 
 bool      V_Str_is_numeric(Variant_T *v);
 uint32_t  V_Str_get_int32 (Variant_T *v);
-size_t    V_Str_chr_pos   (Variant_T *v, const char sep);
+int       V_Str_chr_pos   (Variant_T *v, const char sep);
+int       V_Str_rm_char   (Variant_T *v, size_t ofs);
 #endif /* _VARIANT_H_ */

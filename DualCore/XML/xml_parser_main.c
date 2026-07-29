@@ -36,10 +36,15 @@ Parser_Item_T actual;
 
 
 /* Root may contain component(s) plus optional prolog */
-const char *xml_root[]      = XML_ROOT_SET;
+const char *xml_root[]          = XML_ROOT_SET;
 
 /* Component may contain styles, labels, arcs, NULL terminated array */
-const char *xml_component[] = XML_COMPONENT_SET;
+const char *xml_component[]     = XML_COMPONENT_SET;
+
+/* A datapoint list may only contain single datapoints */
+const char *xml_datapointlist[] = XML_DATAPOINTLIST_SET;
+
+
 
 /******************************************************************************
  * @brief Push actual parser state to stack. Needed mem is allocated from heap

@@ -69,6 +69,9 @@ extern       GUI_Scale_T cur_scale;             /* actual scale settings  */
 extern const GUI_Image_T def_image;             /* default image settings */
 extern       GUI_Image_T cur_image;             /* actual image settings  */
 
+extern const GUI_Datapoint_T def_dp;            /* default image settings */
+extern       GUI_Datapoint_T cur_dp;            /* actual image settings  */
+
 
 typedef void (*OnExitFn) ( void );
 void      GUI_edit_dump_all    (const GUI_Edit_T *editdata, bool padded );
