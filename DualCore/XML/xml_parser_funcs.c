@@ -20,14 +20,6 @@
 #include "../../GUI/gui_ops.h"
 
 
-#if 0
-#define FLAG_CLOSEBRACKET       (1 <<  0)    /* Flag for "starttoken had '>'" at end */
-
-#define SET_FLAG(f)             actual.flags |= f;
-#define CLR_FLAG(f)             actual.flags &= ~(f)
-#define IS_FLAG_SET(f)          (actual.flags & f)
-#endif
-
 #define ATTR_MAXVALUELEN        64
 
 
@@ -35,14 +27,8 @@
 typedef struct {
   char name [ID_MAXNAMELEN];
   char value[ATTR_MAXVALUELEN];
-#if 0
-  char dpname[ID_MAXNAMELEN];
-#endif
   uint8_t namelen;
   uint8_t valuelen;
-#if 0
-  uint8_t dpnamelen;
-#endif
 } Parser_Attr_T;
 
 /* global variable for one /name/value pair, will be allocated by xml_parser_init */
@@ -428,14 +414,65 @@ bool parse_lvgl_elem ( char *token, uint32_t tokenlength, uint32_t state )
 } 
 
 /******************************************************************************
- * @brief parse datapoints
+ * @brief parse list of datapoints
  * @param  token       - actual input token
  * @param  tokenlength - length of token
  * @retval 
  *****************************************************************************/
-bool parse_datapoints ( char *token, uint32_t tokenlength, uint32_t state )
+bool parse_datapointlist ( char *token, uint32_t tokenlength, uint32_t state )
 {
-  return true;
+    const char *last_exitword;
+
+    /* need at least 2 chars */
+    if ( tokenlength < 1 ) return true;
+
+    TokenToLower(token, tokenlength);
+    /* Must have an opening bracket first */
+    if ( *token != OPENBRACKET ) return true;
+
+    /* In the following we assume, we have an '<' first */
+    uint32_t reducedlength = tokenlength-1; 
+    if (CheckCloseBracket(token+1, &reducedlength)) {
+        /* when a closing bracket is found, we check for exitword, if set */
+        if ( actual.exitword && CheckExitWord(token+1, reducedlength, actual.exitword, ESCAPESLASH ) )  {
+            return ExitLevel();
+        } else {
+          /* found a simple closing bracket, so we have found the initital element, continue parsing */
+          return true;
+        }
+    } else {
+        /* the datapointlist itself must not have any attributes */
+    }
+
+    /* finally check for all subitems */
+    uint32_t idx = CheckWord(token+1, reducedlength, xml_datapointlist, &last_exitword);
+    if ( !idx ) {
+        /* not found */
+        output_puts("datapointlist: unhandeled subitem: ");
+        output_putsl(token+1, reducedlength);
+        output_putch('\n');
+        return true;
+    }
+
+    /* only possible subitem is "datapoint" */
+    /* reset state to initial, push actual state 
+    /* then store exit word and start parsing item */
+    actual.state = 0;
+    xml_parser_push(&actual);
+    /* Get edit receipe, there should be one */
+    const GUI_Edit_T *edit = FindEditInfoByName( token+1, reducedlength);
+    if (!edit) {
+        #if DEBUG_PARSER > 0
+                DEBUG_PRINTF("Subitem w/o Receipe: ");
+                DumpToken(token+1, reducedlength);
+                DEBUG_PUTC('\n');
+        #endif 
+    }
+    SET_ACTUAL(parse_lvgl_elem, 0, edit, last_exitword, xml_datapointlist[idx-1] );
+    /* Reset all data fields */
+    GUI_Edit_SetUsedBits(edit, 0, 0);
+    xml_parse(token, tokenlength);
+    return true; 
 }
 /******************************************************************************
  * @brief parse component
@@ -553,7 +590,7 @@ bool parse_root ( char *token, uint32_t tokenlength, uint32_t state )
          /* then store exit word and start parsing datapoints */
         actual.state = 0;
         xml_parser_push(&actual);
-        SET_ACTUAL(parse_datapoints, 0, NULL, last_exitword, "datapoints" );
+        SET_ACTUAL(parse_datapointlist, 0, NULL, last_exitword, "datapointlist" );
         xml_parse(token, tokenlength);
         break;
       case 3:

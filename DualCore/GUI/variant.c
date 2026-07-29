@@ -121,7 +121,7 @@ uint32_t V_Str_get_int32 (Variant_T *v)
  *         or -1, if V is not of type string or if sep is not found
  * @note   variant type and string is not changed!
  *****************************************************************************/
-size_t V_Str_chr_pos(Variant_T *v, const char sep)
+int V_Str_chr_pos(Variant_T *v, const char sep)
 {
     if ( v->type != VAR_STRING )  return -1;
 
@@ -133,4 +133,28 @@ size_t V_Str_chr_pos(Variant_T *v, const char sep)
         /* Not found */
         return -1;
     }
+}
+
+/******************************************************************************
+ * @brief  remove one character from within variant string
+ * @param  v   - variant variable
+ * @param  ofs - index of char to be removed  [0 .. len-1]
+ * @retval offset of "sep" within "str" 
+ *         or -1, if V is not of type string or if sep is not found
+ * @note   variant type and string is not changed!
+ *****************************************************************************/
+int  V_Str_rm_char(Variant_T *v, size_t ofs)
+{
+    /* Check type and validity oc char to remove */
+    if ( v->type != VAR_STRING )  return -1;
+    if ( ofs >= v->str.len )      return -1;  
+
+    /* special case: last char to be removed ? */
+    if ( ofs == v->str.len-1 )    return --v->str.len;
+
+    size_t copylen = v->str.len-1-ofs;
+    /* memmove will handle overlap correctly */
+    memmove(v->str.text+ofs, v->str.text+ofs+1, copylen);
+
+    return --v->str.len;  
 }

@@ -89,6 +89,8 @@
         <file file_name="../GUI/images/Idiot_Rund_240px.c" />
         <file file_name="../GUI/images/needles.c" />
       </folder>
+      <file file_name="../GUI/dp_lists.c" />
+      <file file_name="../GUI/dp_lists.h" />
       <file file_name="../GUI/gui_datapoint.c" />
       <file file_name="../GUI/gui_datapoint.h" />
       <file file_name="../GUI/gui_def.c" />

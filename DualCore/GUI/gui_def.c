@@ -5,7 +5,10 @@
 #include "../GUI/gui_def.h"
 #include "../GUI/gui_edit.h"
 #include "../GUI/gui_lists.h"
+#include "../GUI/dp_lists.h"
 #include "../GUI/gui_ops.h"
+#include "xml_feeder.h"
+
 #include "system/ipc_msg.h"
 #include "system/util.h"
 #include <stdlib.h>
@@ -138,8 +141,19 @@ const GUI_Image_T def_image = {
 GUI_Image_T cur_image;         /* Init'ed by GUI_Init_Curr_Elems */
 
 
+const GUI_Datapoint_T def_dp = {
+    .used         = 0b000,
+    .dpname       = "",
+    .guielemname  = "",
+    .propertyname = "",
+};
+
+
+GUI_Datapoint_T cur_dp;         /* Init'ed by GUI_Init_Curr_Elems */
+
+
 /* user friendly names of these of GUI elements */
-const char *EditNames[]  = GUI_EDITNAMES;
+const ElemInfo_T Editinfo[]  = GUI_EDITINFO;
 
 /* Maximum number of translations binary->name */
 #define MAX_X_NAMES     5
@@ -156,14 +170,14 @@ typedef struct {
   uint8_t       bDelete;   /* 1 = delete object, 0 = create or update object         */
   GUI_Edit_Enum elem_type; /* GUI element type in gui_elem                           */
   union {
-      GUI_Screen_T  gui_screen;
-      GUI_Style_T   gui_style;
-      GUI_Label_T   gui_label;
-      GUI_Arc_T     gui_arc;
-      GUI_Scale_T   gui_scale;
-      GUI_Image_T   gui_image;
+      GUI_Screen_T    gui_screen;
+      GUI_Style_T     gui_style;
+      GUI_Label_T     gui_label;
+      GUI_Arc_T       gui_arc;
+      GUI_Scale_T     gui_scale;
+      GUI_Image_T     gui_image;
+      GUI_Datapoint_T gui_datapoint;
   } gui_elem;
-  char x_names[MAX_X_NAMES][GUI_MAX_NAMELEN];
 } IPC_GUI_Xfer_Buff_T;
 
 /* make sure, the IPC transfer buf is capable of store any GUI element */
@@ -253,7 +267,7 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
 
        /* handle reset first */
         if ( SCREEN_HAS_PROP(act, SCREEN_RESET) && act->resetoninit ) {
-          GUI_Reset_GUI();
+          GUI_Reset_GUI_Core1();
         } 
     	/* set screen properties */
 /*  1 */
@@ -505,7 +519,7 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
         GUI_Label_T temp;
 
         /* Get the labels associated GUI-Element */ 
-        List_Elem_T *ll = LL_find_by_type_n_obj  ( GUI_item_list_1, GUI_ELEM_LABEL, lbl );
+        List_Elem_T *ll = LL_find_by_type_n_obj  ( GUI_item_list, GUI_ELEM_LABEL, lbl );
         if ( !ll ) {
             printf("Err: No associated label found!\n");
             return;
@@ -627,7 +641,7 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
       /* List of defined imgs _MUST BE_ terminated by NULL,NULL */
       for ( uint32_t i = 0; i < AllImagesNum1; i++ ) {
          img = LL_New_Element(GUI_ELEM_RAWIMG,  (void *)AllImages1[i].image, AllImages1[i].imagename, &AllImages1[i], 0);
-         LL_append(&GUI_item_list_1, img);
+         LL_append(&GUI_item_list, img);
       }
       printf("%d images loaded from 0x%p\n", AllImagesNum1,AllImages1);
     }
@@ -644,7 +658,7 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
       /* List of defined fonts _MUST BE_ terminated by NULL,NULL */
       for ( uint32_t i = 0; i < AllFontNum1; i++ ) {
          font = LL_New_Element(GUI_ELEM_FONT,  (void *)AllFonts1[i].font, AllFonts1[i].fontname, &AllFonts1[i], AllFonts1[i].fontsize);
-         LL_append(&GUI_item_list_1, font);
+         LL_append(&GUI_item_list, font);
       }
       printf("%d fonts loaded from 0x%p\n", AllFontNum1,AllFonts1);
     }
@@ -682,7 +696,7 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
             return  GUI_update_screen ( (GUI_Screen_T *)data, (lv_obj_t *)lvgl_obj );
             break;
           default:
-            printf("Err: No LVGL Update handler for LVGL %s\n", EditNames[editdata->gui_elem_type]);
+            printf("Err: No LVGL Update handler for LVGL %s\n", Editinfo[editdata->gui_elem_type].name);
         }
     }
 
@@ -708,7 +722,7 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
              GUI_delete_obj( (lv_obj_t *)lvgl_obj );
             break;
           default:
-            printf("Err: No LVGL Delete handler for LVGL %s\n", EditNames[editdata->gui_elem_type]);
+            printf("Err: No LVGL Delete handler for LVGL %s\n", Editinfo[editdata->gui_elem_type].name);
         } /* switch */
     }
 
@@ -722,61 +736,6 @@ struct TxInfoT {
 };
 
 #if  RP2040_M0_0
-    static bool IPC_Pack_Translate_Objs(IPC_GUI_Xfer_Buff_T *txbuf,  const GUI_Edit_T *editdata )
-    {
-        GUI_E_Datatype_Enum e;
-        List_Elem_T *found;
-
-        /* ptr to binary object */
-        uint8_t *elembin;
-
-        /* Get the GUI element data */
-        uint8_t *data = (uint8_t *)&txbuf->gui_elem;
-
-        /* Get the "used" bits  */
-        uint32_t used = *(uint32_t *)(data + editdata->used_ofs );
-
-        /* number of translated items */
-        uint32_t tr_counter = 0; 
-
-        for ( uint32_t i = 0; i < editdata->count; i++ ) {
-            if ( used & ( 1 << i ) ) {
-                /* store the type for later use */
-                e = editdata->receipe[i].elem_type;
-                if ( IS_GUI_ELEM_BIN(e)) {
-                    /* first check, whether there is space for another translation */
-                    if ( tr_counter >= MAX_X_NAMES ) {
-                        DEBUG_PRINTF("No more space to translate element %s!\n", editdata->receipe[i].elem_name);
-                        return false;
-                    }
-                    /* find object in global GUI item list */
-                    void *elembin = *(void **)(data+editdata->receipe[i].elem_offset);
-                    found = LL_find_by_type_n_obj  ( GUI_item_list_0, GET_GUI_ELEM_TYPE(e), elembin );
-                    if (!found ) {
-                        /* normally, we _must_ find it */
-                        DEBUG_PRINTF("Err: Binary Element %s not found!\n", editdata->receipe[i].elem_name);
-                        return false;
-                    }
-                    /* copy name to translation table */
-                    strcpy(txbuf->x_names[tr_counter], found->ll_name);
-                    /* store index and additional data in place of binary object and increment total numer of translations */
-                    struct TxInfoT *ptr = (struct TxInfoT *)(data+editdata->receipe[i].elem_offset);
-                    ptr->additional  = found->ll_additional;
-                    ptr->tr_idx      = (uint8_t)tr_counter;
-                    /*
-                    *(((uint16_t*)elembin)++)   = found->ll_additional;
-                    *(elembin)                  = (uint8_t)tr_counter;
-                    */
-                    #if DEBUG_GUIEDIT > 1
-                        DEBUG_PRINTF("Translated %s %s: (%d, %d)\n",editdata->receipe[i].elem_name, found->ll_name, ptr->tr_idx, ptr->additional );
-                    #endif
-                    tr_counter++;
-                }
-            }
-        }
-        return true;
-    }
-
     bool IPC_Pack_Transferbuf( IPC_GUI_Xfer_Buff_T *txbuf, uint8_t *data, const GUI_Edit_T *editdata, uint8_t bDelete )
     {
         /* Determine size of packet */
@@ -786,9 +745,10 @@ struct TxInfoT {
         /* is jut to ensure, you check all entities when adding new GUI element types */
         if (     editdata->gui_elem_type != GUI_ELEM_STYLE && editdata->gui_elem_type != GUI_ELEM_LABEL && editdata->gui_elem_type != GUI_ELEM_ARC 
               && editdata->gui_elem_type != GUI_ELEM_SCALE && editdata->gui_elem_type != GUI_ELEM_IMAGE && editdata->gui_elem_type != GUI_ELEM_SCREEN
+              && editdata->gui_elem_type != GUI_ELEM_DATAPOINT
            ) 
         { 
-            printf("Err: No Transfer handler for LVGL %s\n", EditNames[editdata->gui_elem_type]);
+            printf("Err: No Transfer handler for LVGL %s\n", Editinfo[editdata->gui_elem_type].name);
             return false;
         }
         txbuf->size      = sendsize;
@@ -798,67 +758,12 @@ struct TxInfoT {
         /* Copy GUI Element, length depending from type */
         memcpy_fast(&txbuf->gui_elem, data, editdata->total_size);
 
-        /* Replace binary objects by their name and additional data in transfer buffer */
-        if ( !IPC_Pack_Translate_Objs( txbuf, editdata) ) {
-            return false;
-        }
-        // DEBUG_PRINTF("Packdel=%d\n",txbuf->bDelete);
         return true;
     }
 
-    void GUI_InitOps_Fonts_Core0(bool b);
-
-    /******************************************************************************
-     * After having received the Image list from Core1, 
-     * @brief Load all known images _once_ into GUI elem list, 
-     * @note  Core0 implementation
-     *****************************************************************************/     
-    void GUI_Init_Images_Core0(bool b)
-    {
-      UNUSED(b);
-      List_Elem_T *img;
-
-      /* Iterate thru all defined images and insert them into global item list */
-      /* List of defined images _MUST BE_ terminated by NULL,NULL */
-      for ( uint32_t i = 0; i < AllImagesNum0; i++ ) {
-         img = LL_New_Element(GUI_ELEM_RAWIMG,  (void *)AllImages0[i].image, AllImages0[i].imagename, &AllImages0[i], 0);
-         LL_append(&GUI_item_list_0, img);
-      }
-      printf("%d images located at 0x%p\n", AllImagesNum0, AllImages0);
-
-      /* continue with querying font infos from core1 */
-      GUI_InitOps_Fonts_Core0(true);
-    }
-    /******************************************************************************
-     * After having received the fonts list from Core1, 
-     * @brief Load all known fonts _once_ into GUI elem list, 
-     * @note  Core0 implementation
-     *****************************************************************************/     
-
-    void GUI_Init_Fonts_Core0(bool b)
-    {
-      UNUSED(b);
-      List_Elem_T *font;
-
-      /* Iterate thru all defined fonts and insert them into global item list */
-      /* List of defined fonts _MUST BE_ terminated by NULL,NULL */
-      for ( uint32_t i = 0; i < AllFontNum0; i++ ) {
-         font = LL_New_Element(GUI_ELEM_FONT,  (void *)AllFonts0[i].font, AllFonts0[i].fontname, &AllFonts0[i], AllFonts0[i].fontsize);
-         LL_append(&GUI_item_list_0, font);
-      }
-      printf("%d fonts located at 0x%p\n", AllFontNum0, AllFonts0);
-
-      /* After images _and_ fonts have being loaded from Core 1, current elements may be modified with font info */
-      GUI_Init_Curr_Elems();
-    }
-
+ 
     /* Buffer to send one GUI element */
     static IPC_GUI_Xfer_Buff_T sendbuf;
-    /*
-     * In Core0, we don not have LVGL Objects. In order to identify objects by obj pointers
-     * we use Fake pointers instead, which are only unit32_t values in ascending order
-     */
-    static uint32_t *obj_FakeID = (uint32_t*)4; /* Don't start with 0 to avoid confusion with NULL */
 
     /******************************************************************************
      * @brief  Core0 Implementation of "GUI_Create_or_update_LVGL":
@@ -868,208 +773,29 @@ struct TxInfoT {
      * @param  editdata - edit receipe for raw data
      * @retval untyped ptr to updated or new created LVGL obj or NULL, if creation failed
      ******************************************************************************/
-    void *GUI_Create_or_update_LVGL_Core0(uint8_t *data, const GUI_Edit_T *editdata, void *lvgl_obj )
+    void GUI_Create_or_update_LVGL_Core0(uint8_t *data, const GUI_Edit_T *editdata)
     {
-        /* if no object is assigned so far, get a new unique FakeID */
-        if (!lvgl_obj ) {
-            lvgl_obj = (void *)obj_FakeID;
-            obj_FakeID ++;
-        }
         /* pack GUI Element and initiate transfer, which is done asynchronally */
         if ( IPC_Pack_Transferbuf(&sendbuf, data, editdata, 0 ) ) Core0_Send_Gui_Elem ( &sendbuf, NULL );
+   }
 
-        return lvgl_obj;
-    }
-
+ 
     /******************************************************************************
-     * @brief  Core0 Implementation of "GUI_Delete_LVGL":
-     *         just send the GUI_Item data via IPC to Core 1 with the "delete"-flag set
-     * @param  data     - raw GUI element data
-     * @param  editdata - edit receipe for raw data
-     ******************************************************************************/
-    void GUI_Delete_LVGL_Core0(uint8_t *data, const GUI_Edit_T *editdata, void *lvgl_obj )
-    {
-        UNUSED(lvgl_obj);
-        /* pack GUI Element and initiate transfer, which is done asynchronally */
-        if ( IPC_Pack_Transferbuf(&sendbuf, data, editdata, 1 ) ) Core0_Send_Gui_Elem ( &sendbuf, NULL );
-    }
-
-    /******************************************************************************
-     * @brief  update an existing GUI-Element in global GUI element list
-     *         and update the corresponging LVGL object
-     * @param  ll_elem  - ptr to exisiting GUI element list entry
-     * @param  data     - raw changed element data to be updated
-     * @param  editdata - edit receipe for raw data
-     ******************************************************************************/
-    static void GUI_update_entry_Core0(List_Elem_T *ll_elem, uint8_t *data, const GUI_Edit_T *editdata )
-    {
-        /* overwrite the complete GUI element data structure */
-        uint8_t *dest = ll_elem->ll_entry;
-        memcpy_fast(dest, data, editdata->total_size);
-
-        /* Update associated LVGL obj */
-        ll_elem->ll_lvgl_obj = GUI_Create_or_update_LVGL_Core0( data, editdata, ll_elem->ll_lvgl_obj );
-        printf("Core0: %s %s updated\n",EditNames[editdata->gui_elem_type],ll_elem->ll_name);
-    }
-
-    /******************************************************************************
-     * @brief  Store a completely new GUI-Element into global GUI element list
-     *         and create the corresponding LVGL object
-     * @param  data     - raw element data
-     * @param  editdata - edit receipe for raw data
-     ******************************************************************************/
-    static void GUI_create_entry_Core0(uint8_t *data, const GUI_Edit_T *editdata )
-    {
-        /* create a full copy of actual data structure */
-        uint8_t *copy = my_malloc(editdata->total_size);
-        if ( !copy ) return;
-    
-        memcpy_fast(copy, data, editdata->total_size);
-
-        /* Create associated LVGL obj */
-        void *lvgl_obj=NULL;
-        lvgl_obj = GUI_Create_or_update_LVGL_Core0( data, editdata, lvgl_obj );
-
-        List_Elem_T *new;
-        /* find position of "name" field in raw data */
-        char *name = (char *)(copy + editdata->name_ofs);
-        /* In case of fonts: also get the fontsize and store as additional item */
-        uint32_t additional = ( editdata->gui_elem_type == GUI_ELEM_FONT ? ((GUI_Font_T*)data)->fontsize: 0); 
-    
-        new = LL_New_Element( editdata->gui_elem_type, lvgl_obj, name, copy, additional );
-        LL_append(&GUI_item_list_0, new );
-
-        printf("Core0: %s %s created\n",EditNames[editdata->gui_elem_type],name);
-    }
-
-    /******************************************************************************
-     * @brief  Delete am GUI element in LVGL and from global list
-     *         Styles cannot be deleted, only reset to empty
-     *         Fonts are statically linked and cannot be deleted
-     *         and create the corresponding LVGL object
-     * @param  data     - raw element data
-     * @param  editdata - edit receipe for raw data
-     ******************************************************************************/
-    void GUI_delete_entry_Core0(uint8_t *data, GUI_Edit_Enum gui_elem )
-    {
-       /* Find the edit receipe */
-       const GUI_Edit_T *editdata = Find_EditInfoByType( gui_elem );
-       if ( !editdata )NULL;
-   
-       if (editdata->gui_elem_type == GUI_ELEM_FONT || editdata->gui_elem_type == GUI_ELEM_RAWIMG) {
-            #if DEBUG_GUIDEF > 0
-                DEBUG_PRINTF("Err: Attempt to delete Image or Font!\n");
-            #endif
-            return;
-        }
-    
-        /* find position of "name" field in raw data */
-        char *name = (char *)(data + editdata->name_ofs);
-        /* Fonts cannot be deleted, so we don't have to care about additional info here, just find by name and type */
-        List_Elem_T *del = LL_find_by_type_n_name ( GUI_item_list_0, editdata->gui_elem_type, name );
-        if  ( !del ) {
-            #if DEBUG_GUIDEF > 0
-                DEBUG_PRINTF("Err: %s %s not found when trying to delete !\n", EditNames[editdata->gui_elem_type], name);
-            #endif
-            return;
-        }
-
-        /* Delete associated LVGL obj */
-        void *lvgl_obj=NULL;
-        GUI_Delete_LVGL_Core0( data, editdata, del->ll_lvgl_obj);
-
-        /* Styles cannot be deleted, they have been reset by GUI_delete, so reset them in internal data, too */
-        if ( editdata->gui_elem_type == GUI_ELEM_STYLE ) {
-            GUI_Edit_SetUsedBits(editdata, 0,0 );
-            printf("%s %s reset\n",EditNames[editdata->gui_elem_type],name);
-        } else {
-            del->ll_lvgl_obj = NULL;
-            /* first delete internal edit data */
-            printf("%s %s deleted\n",EditNames[editdata->gui_elem_type],name);
-            my_free( del->ll_entry);
-            /* thereafter delete element in GUI item list */
-            LL_delete(&GUI_item_list_0, del);
-        }
-    }
-
-    /******************************************************************************
-     * @brief  Store a completely new GUI-Element into global GUI element list
-     *         _AND_ LVGL    -or-
-     *         Update an existing GUI-Element in Global GUI element list
-     *         _AND_ LVGL
-     *         When only using this function to store/update, it is guaranteed, that
-     *         both lists are consistent.
-     *         A GUI element is defined by type and name, or, in case of Fonts, by
-     *         type, name and fontsize
+     * @brief  Create a new or update an existing GUI element in Core0 
+     *         This is done b just sending the corresponding element data to core 1 
      * @param  data     - raw element data
      * @param  gui_elem - GUI element Type
      * @retval List_Elem_T ptr to the new or updated element or NULL in case of Error
      ******************************************************************************/
-    List_Elem_T *GUI_new_or_update_entry_Core0(uint8_t *data, GUI_Edit_Enum gui_elem )
+    void GUI_new_or_update_entry_Core0(uint8_t *data, GUI_Edit_Enum gui_elem )
     {
         /* Find the edit receipe */
         const GUI_Edit_T *edit = Find_EditInfoByType( gui_elem );
-        if ( !edit ) return NULL;
-
-        /* find position of "name" field in raw data */
-        char *name = (char *)(data + edit->name_ofs);
-
-        /* first try to find the element in list */
-        List_Elem_T *ll_elem = LL_find_by_type_n_name (GUI_item_list_0, edit->gui_elem_type, name );  
-  
-        if ( ll_elem ) {
-          /* Element already in list: Update GUI list entry and LVGL object*/
-          GUI_update_entry_Core0(ll_elem, data, edit);
-        } else {
-          /* Element not in list: Create GUI list entry and LVGL obj */
-          GUI_create_entry_Core0(data, edit);
-        }
+        GUI_Create_or_update_LVGL_Core0(data, edit);
     }
 #endif /* RP2040_M0_0 */
 
-#if RP2040_M0_1 || defined(CORE1_SIM)
-    static bool IPC_Unpack_Translate_Objs(IPC_GUI_Xfer_Buff_T *rxbuf,  const GUI_Edit_T *editdata )
-    {
-        GUI_E_Datatype_Enum e;
-        List_Elem_T *found;
-
-        /* ptr to binary object */
-        uint8_t *elembin;
-
-        /* Get the GUI element data */
-        uint8_t *data = (uint8_t *)&rxbuf->gui_elem;
-
-        /* Get the "used" bits  */
-        uint32_t used = *(uint32_t *)(data + editdata->used_ofs );
-
-        for ( uint32_t i = 0; i < editdata->count; i++ ) {
-            if ( used & ( 1 << i ) ) {
-                /* store the type for later use */
-                e = editdata->receipe[i].elem_type;
-                if ( IS_GUI_ELEM_BIN(e)) {
-                    /* locate translation data, the object ptr was replaced by additional data/translate index by sender */
-                    struct TxInfoT *ptr = (struct TxInfoT *)(data+editdata->receipe[i].elem_offset);
-
-                    uint16_t additional = ptr->additional;
-                    uint8_t tr_idx      = ptr->tr_idx;
-
-                    /* find object in global GUI item list */
-                    found = LL_find_by_type_name_additional ( GUI_item_list_1, GET_GUI_ELEM_TYPE(e), rxbuf->x_names[tr_idx], additional );
-                    if (!found ) {
-                        /* normally, we _must_ find it */
-                        DEBUG_PRINTF("Err: Binary Element %s not found!\n", editdata->receipe[i].elem_name);
-                        return false;
-                    }
-                    /* copy name to translation table */
-                    *(void **)(data+editdata->receipe[i].elem_offset) = found->ll_lvgl_obj;
-                    #if DEBUG_GUIEDIT > 1
-                          DEBUG_PRINTF("Translated %d, %d -> %s %s\n",tr_idx, additional, editdata->receipe[i].elem_name, found->ll_name );
-                    #endif
-                }
-            }
-        }
-        return true;
-    }
+#if RP2040_M0_1 || defined(CORE1_SIM) 
 
     bool IPC_Unpack_Transferbuf( IPC_GUI_Xfer_Buff_T *rxbuf, uint8_t *data, uint16_t datalen )
     {
@@ -1082,14 +808,10 @@ struct TxInfoT {
         /* copy to rxbuf */
         memcpy_fast(rxbuf, data, datalen); 
 
-        const GUI_Edit_T *editdata = Find_EditInfoByType( rxbuf->elem_type );  
-        if ( !IPC_Unpack_Translate_Objs( rxbuf, editdata ) ) return false;
-        // DEBUG_PRINTF("unpackdel=%d\n",rxbuf->bDelete);
-  
         return true;
     }
     /* forward declarations -----------------------------------------------------*/
-    List_Elem_T *GUI_new_or_update_entry_Core1(uint8_t *data, GUI_Edit_Enum gui_elem );
+    void GUI_new_or_update_entry_Core1(uint8_t *data, GUI_Edit_Enum gui_elem );
 
     /* Buffer to receive one GUI element */
     static IPC_GUI_Xfer_Buff_T recvbuf;
@@ -1111,7 +833,7 @@ struct TxInfoT {
 
       /* and create GUI-Element */
       #if DEBUG_GUIDEF > 0
-          DEBUG_PRINTF("Received GUI element of type %s\n", EditNames[ recvbuf.elem_type]);
+          DEBUG_PRINTF("Received GUI element of type %s\n", Editinfo[recvbuf.elem_type].name);
       #endif
 
       if ( recvbuf.bDelete ) 
@@ -1129,7 +851,7 @@ struct TxInfoT {
 
         /* Update associated LVGL obj */
         ll_elem->ll_lvgl_obj = GUI_Create_or_update_LVGL_Core1( data, editdata, ll_elem->ll_lvgl_obj );
-        printf("Core1: %s %s updated\n",EditNames[editdata->gui_elem_type],ll_elem->ll_name);
+        printf("Core1: %s %s updated\n",Editinfo[editdata->gui_elem_type].name,ll_elem->ll_name);
     }
 
     static void GUI_create_entry_Core1(uint8_t *data, const GUI_Edit_T *editdata )
@@ -1151,9 +873,9 @@ struct TxInfoT {
         uint32_t additional = ( editdata->gui_elem_type == GUI_ELEM_FONT ? ((GUI_Font_T*)data)->fontsize: 0); 
     
         new = LL_New_Element( editdata->gui_elem_type, lvgl_obj, name, copy, additional );
-        LL_append(&GUI_item_list_1, new );
+        LL_append(&GUI_item_list, new );
 
-        printf("Core1: %s %s created\n",EditNames[editdata->gui_elem_type],name);
+        printf("Core1: %s %s created\n",Editinfo[editdata->gui_elem_type].name,name);
     }
 
     void GUI_delete_entry_Core1(uint8_t *data, GUI_Edit_Enum gui_elem )
@@ -1172,10 +894,10 @@ struct TxInfoT {
         /* find position of "name" field in raw data */
         char *name = (char *)(data + editdata->name_ofs);
         /* Fonts cannot be deleted, so we don't have to care about additional info here, just find by name and type */
-        List_Elem_T *del = LL_find_by_type_n_name ( GUI_item_list_1, editdata->gui_elem_type, name );
+        List_Elem_T *del = LL_find_by_type_n_name ( GUI_item_list, editdata->gui_elem_type, name );
         if  ( !del ) {
             #if DEBUG_GUIDEF > 0
-                DEBUG_PRINTF("Err: %s %s not found when trying to delete !\n", EditNames[editdata->gui_elem_type], name);
+                DEBUG_PRINTF("Err: %s %s not found when trying to delete !\n", Editinfo[editdata->gui_elem_type].name, name);
             #endif
             return;
         }
@@ -1187,15 +909,46 @@ struct TxInfoT {
         /* Styles cannot be deleted, they have been reset by GUI_delete, so reset them in internal data, too */
         if ( editdata->gui_elem_type == GUI_ELEM_STYLE ) {
             GUI_Edit_SetUsedBits(editdata, 0,0 );
-            printf("%s %s reset\n",EditNames[editdata->gui_elem_type],name);
+            printf("%s %s reset\n",Editinfo[editdata->gui_elem_type].name,name);
         } else {
             del->ll_lvgl_obj = NULL;
             /* first delete internal edit data */
-            printf("%s %s deleted\n",EditNames[editdata->gui_elem_type],name);
+            printf("%s %s deleted\n",Editinfo[editdata->gui_elem_type].name,name);
             my_free( del->ll_entry);
             /* thereafter delete element in GUI item list */
-            LL_delete(&GUI_item_list_1, del);
+            LL_delete(&GUI_item_list, del);
         }
+    }
+
+    static void GUI_handle_datapoint_Core1(uint8_t *data, GUI_Edit_Enum gui_elem )
+    {
+        /* Ensure, that element type is allowed to have datapoints and has an edit receipe*/
+        const GUI_Edit_T *edit = Find_EditInfoByType( gui_elem );
+        if ( !edit ) return;
+
+        /* Get Datapoint string identifiers */
+        GUI_Datapoint_T *temp = (GUI_Datapoint_T *)data;
+
+        DEBUG_PRINTF("N=%s, G=%s, P=%s\n", temp->dpname, temp->guielemname, temp->propertyname);
+
+        DPList_Elem_T *ret = DP_Setup_ListElem(temp->dpname, temp->guielemname, temp->propertyname);
+        if ( !ret ) {
+            output_printf("Datapoint %s creation error\n", temp->dpname);
+            return;
+        }
+
+        if ( !Editinfo[ret->elemtype].bHasDatapoints ) {
+            output_printf("Datapoints not allowed for %s\n", Editinfo[ret->elemtype].name);
+            return;
+        }
+
+        if ( DP_Find(GUI_Dp_list) ) {
+            output_printf("Datapoint %s defined twice\n", temp->dpname);
+            return;
+        }
+        
+        DP_Append(&GUI_Dp_list);  
+
     }
 
     /******************************************************************************
@@ -1211,17 +964,22 @@ struct TxInfoT {
      * @param  gui_elem - GUI element Type
      * @retval List_Elem_T ptr to the new or updated element or NULL in case of Error
      ******************************************************************************/
-    List_Elem_T *GUI_new_or_update_entry_Core1(uint8_t *data, GUI_Edit_Enum gui_elem )
+    void GUI_new_or_update_entry_Core1(uint8_t *data, GUI_Edit_Enum gui_elem )
     {
+      /* First check for pseudo elements, like Datapoints */
+      if ( gui_elem == GUI_ELEM_DATAPOINT ) {
+        GUI_handle_datapoint_Core1(data, gui_elem );
+        return;
+      }
       /* Find the edit receipe */
       const GUI_Edit_T *edit = Find_EditInfoByType( gui_elem );
-      if ( !edit ) return NULL;
+      if ( !edit ) return;
 
       /* find position of "name" field in raw data */
       char *name = (char *)(data + edit->name_ofs);
 
       /* first try to find the element in list */
-      List_Elem_T *ll_elem = LL_find_by_type_n_name (GUI_item_list_1, edit->gui_elem_type, name );  
+      List_Elem_T *ll_elem = LL_find_by_type_n_name (GUI_item_list, edit->gui_elem_type, name );  
 
       if ( ll_elem ) {
         /* Element already in list: Update GUI list entry and LVGL object*/

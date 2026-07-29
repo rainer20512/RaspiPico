@@ -59,6 +59,7 @@
 
 #if defined(RP2040_M0_0)
   const char              *LVGL_VersinfoStr0;    /* Ptr to LVGL Version string    */
+  #if 0
   GUI_RawImage_T          *AllImages0;           /* Array of all Fonts Core0      */ 
   uint8_t                 AllImagesNum0;         /* number of defined fonts Core0 */
   GUI_Font_T              *AllFonts0;            /* Array of all Fonts Core0      */ 
@@ -67,6 +68,7 @@
   #define ALL_IMAGESNUM   AllImagesNum0 
   #define ALL_FONTS       AllFonts0
   #define ALL_FONTNUM     AllFontNum0 
+  #endif
 #else
   #define ALL_IMAGES      AllImages1
   #define ALL_IMAGESNUM   AllImagesNum1 
@@ -86,8 +88,10 @@
  *         def_label, def_arc, ...
  *         Only sense is to have a handy preset for manual editing
  ******************************************************************************/
-void GUI_Init_Curr_Elems(void)
+void GUI_Init_Curr_Elems(bool b)
 {
+    UNUSED(b);
+    List_Elem_T *ll;
     /* initialize all current elements with their static default setting */
     cur_screen  = def_screen;
     cur_style   = def_style;
@@ -95,19 +99,24 @@ void GUI_Init_Curr_Elems(void)
     cur_arc     = def_arc;
     cur_scale   = def_scale; 
     cur_image   = def_image;
+    cur_dp      = def_dp;
 
     /* Now the default setting may be enhanced */
 
     /* Set the textfont of the default style */
     /* First try to use DEFAULT_FONTNUM, if not exit FALLBACK_FONTNUM */
-    uint8_t fontidx = ALL_FONTNUM >= DEFAULT_FONTNUM ? DEFAULT_FONTNUM : FALLBACK_FONTNUM;
-    cur_style.textfont = ALL_FONTS[fontidx].font;
-    STYLE_SET_PROP(&cur_style, STYLE_TEXTFONT);
+    /* LL_find_nth: First element has search index 1 ! */
+    ll = LL_find_nth ( GUI_ITEM_LIST, GUI_ELEM_FONT, DEFAULT_FONTNUM+1 );
+    if ( !ll ) ll = LL_find_nth ( GUI_ITEM_LIST, GUI_ELEM_FONT, FALLBACK_FONTNUM+1 );
 
+    if ( ll ) {
+        cur_style.textfont = ll->ll_lvgl_obj;
+        STYLE_SET_PROP(&cur_style, STYLE_TEXTFONT);
+    }
     /* Set the image of the default image */
-    /* First try to use DEFAULT_IMAGENUM, if not exit FALLBACK_FONTNUM */
-    if ( ALL_IMAGESNUM >= DEFAULT_IMAGENUM ) {
-        cur_image.image = (lv_img_dsc_t  *)ALL_IMAGES[DEFAULT_IMAGENUM].image;
+    ll = LL_find_nth ( GUI_ITEM_LIST, GUI_ELEM_RAWIMG, DEFAULT_IMAGENUM+1 );
+    if ( ll ) {
+        cur_image.image = ll->ll_lvgl_obj;
         STYLE_SET_PROP(&cur_image, IMAGE_IMAGE);
     }
 }
@@ -132,27 +141,11 @@ void GUI_Init_Ops_Core1(void)
 
 
   /* Update curent elements with font settings */  
-  GUI_Init_Curr_Elems();
+  GUI_Init_Curr_Elems(true);
 }
 #endif
 #if defined(RP2040_M0_0)
   #include "system/ipc_msg.h"
-
-
-    /******************************************************************************
-     * @brief Initialize GUI, to be called after all other initialization steps 
-     *        Steps to be done
-     *        1) Init list of available Fonts, directly on Core1, by IPC on Core 0
-     *        2) store font info in global GUI element list of Core 0
-     * @note  Core0 implementation
-     *****************************************************************************/     
-    void GUI_InitOps_Fonts_Core0(bool b)
-    {
-      UNUSED(b);
-      Core0_Qry_Fontinfo(NULL, GUI_Init_Fonts_Core0);
-      /* The call of "GUI_Init_Curr_Elems()" is done asynchronically at the */
-      /* end of "GUI_Init_Fonts_Core0" !                                    */
-    }
 
     /******************************************************************************
      * @brief Get the image list from core1 and store in global item list of core0
@@ -160,10 +153,10 @@ void GUI_Init_Ops_Core1(void)
      * @note  The Callback function "GUI_Init_Images_Core0" has to call 
      *        "GUI_InitOps_Fonts_Core0" as last step!
      *****************************************************************************/     
-    void GUI_InitOps_Images_Core0(bool b)
+    void GUI_InitOps_GUIinfo_Core0(bool b)
     {
       UNUSED(b);
-      Core0_Qry_Imageinfo(NULL, GUI_Init_Images_Core0);
+      Core0_Qry_GUIinfo(NULL, GUI_Init_Curr_Elems);
     }
 
     /******************************************************************************
@@ -176,7 +169,7 @@ void GUI_Init_Ops_Core1(void)
     void GUI_InitOps_VInfo_Core0(bool b)
     {
       UNUSED(b);
-      Core0_Qry_Versioninfo(NULL, GUI_InitOps_Images_Core0);
+      Core0_Qry_Versioninfo(NULL, GUI_InitOps_GUIinfo_Core0);
       /* Do Image Info Initialisation when querying Version info is done    */
     }
 
@@ -196,55 +189,54 @@ void GUI_Init_Ops_Core1(void)
   {
       GUI_InitOps_VInfo_Core0(true);
   }
+
+  void GUI_Reset_GUI_Core0( void)
+  {
+      Core0_Send_GUIreset(NULL, NULL);
+  }
+
 #endif /* RP2040_M0_0 */
 
-typedef void (*GUI_DelFn)(uint8_t *, GUI_Edit_Enum );
-/******************************************************************************
- * @brief Delete all GUI elements / LVGL elements
- *****************************************************************************/     
-static void GUI_Reset_GUI_internal( List_Elem_T* list, GUI_DelFn DeleteFn)
-{
-    List_Elem_T* next;
-    List_Elem_T* ll;
-    
-    /* first run: delete all widgets */
-    ll = list;
-    while ( ll ) {
-        // ll will be deleted below, so save ptr to next elem 
-        next = LL_next(ll);  
-        if ( ll->ll_type != GUI_ELEM_FONT && ll->ll_type != GUI_ELEM_RAWIMG && ll->ll_type != GUI_ELEM_STYLE ) {
-            DeleteFn(ll->ll_entry, ll->ll_type );
-        }
-        ll = next;
-    }
+#if RP2040_M0_1 || defined(CORE1_SIM)
+    /******************************************************************************
+     * @brief Delete all GUI elements / LVGL elements
+     *****************************************************************************/     
+    void GUI_Reset_GUI_Core1( void)
+    {
+        List_Elem_T* next;
+        List_Elem_T* ll;
 
-    /* second run: reset all styles */
-    ll = list;
-    while ( ll ) {
-        // ll will be deleted below, so save ptr to next elem 
-        next = LL_next(ll);  
-        if ( ll->ll_type == GUI_ELEM_STYLE ) {
-            DeleteFn(ll->ll_entry, ll->ll_type ); 
-        }         
-        ll = next;
-    }
-}
-
-void GUI_Reset_GUI( void)
-{
-    #if RP2040_M0_0
-        DEBUG_PRINTF("Core0: GUI-Reset start ...\n"); 
-        GUI_Reset_GUI_internal( GUI_item_list_0, GUI_delete_entry_Core0);
-        DEBUG_PRINTF("Core0: GUI-Reset finished\n"); 
-    #endif
-    #if RP2040_M0_1 || defined(CORE1_SIM)
         DEBUG_PRINTF("Core1: GUI-Reset start ...\n"); 
-        GUI_Reset_GUI_internal( GUI_item_list_1, GUI_delete_entry_Core1);
+    
+        /* first run: delete all widgets */
+        ll = GUI_item_list;
+        while ( ll ) {
+            // ll will be deleted below, so save ptr to next elem 
+            next = LL_next(ll);  
+            if ( ll->ll_type != GUI_ELEM_FONT && ll->ll_type != GUI_ELEM_RAWIMG && ll->ll_type != GUI_ELEM_STYLE ) {
+                GUI_delete_entry_Core1(ll->ll_entry, ll->ll_type );
+            }
+            ll = next;
+        }
+
+        /* second run: reset all styles */
+        ll = GUI_item_list;
+        while ( ll ) {
+            // ll will be deleted below, so save ptr to next elem 
+            next = LL_next(ll);  
+            if ( ll->ll_type == GUI_ELEM_STYLE ) {
+                GUI_delete_entry_Core1(ll->ll_entry, ll->ll_type ); 
+            }         
+            ll = next;
+        }
+
         /* finaylly clear screen */
         lv_obj_clean(lv_scr_act());
+
         DEBUG_PRINTF("Core1: GUI-Reset finished\n"); 
-    #endif
-}
+    }
+#endif
+
 
 
 #endif /*  USE_GUI_INTERFACE > 0 */ 

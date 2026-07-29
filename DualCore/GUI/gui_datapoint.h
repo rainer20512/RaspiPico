@@ -24,13 +24,13 @@ typedef struct {
   GUI_Edit_Enum       DP_elem_type;             /* Addressed GUI element             */
   uint8_t             DP_propidx;               /* Property index for that element   */
   GUI_E_Datatype_Enum DP_datatype;              /* Datatype of Datapoint             */
-} GUI_Datapoint_T;
+} DP_Datapoint_T;
 
 
 
 
-GUI_Datapoint_T  *DP_New( char *name,  GUI_Edit_Enum elemtype, uint8_t propidx, GUI_E_Datatype_Enum datatype );
-int8_t            DP_Add( char *name,  GUI_Datapoint_T *newdp );
+DP_Datapoint_T   *DP_New( char *name,  GUI_Edit_Enum elemtype, uint8_t propidx, GUI_E_Datatype_Enum datatype );
+int8_t            DP_Add( char *name,  DP_Datapoint_T *newdp );
 
 #endif /* USE_GUI_INTERFACE > 0 */
 #endif /* _GUI_DATAPOINT_H_ */

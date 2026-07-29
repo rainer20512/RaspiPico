@@ -8,9 +8,6 @@
 
 #include "../GUI/gui_def.h"
 
-
-#define LL_MAX_NAMELEN 20
-
 typedef struct List_Elem{
   GUI_Edit_Enum    ll_type;        /* type of list entry */
   char             *ll_name;       /* ptr to friendly name of entr, may be a part of data entry */
@@ -22,11 +19,19 @@ typedef struct List_Elem{
 
 /* linked list of all GUI elements, initially empty */
 #if  RP2040_M0_1 || defined(CORE1_SIM)
-  extern List_Elem_T* GUI_item_list_1;
+  extern List_Elem_T* GUI_item_list;    /* Original GUI item List, hosted in Core1 RAM only */
 #endif
 #if  RP2040_M0_0
-  extern List_Elem_T* GUI_item_list_0;
+  extern List_Elem_T* REF_item_list;    /* Ptr to GUI_item_list in Core1 RAM, used r/o by Core0 */
 #endif
+
+/* in CORE_1_SIM mode, GUI objects are accessible via REF_item_list */
+#if  RP2040_M0_0
+    #define GUI_ITEM_LIST     REF_item_list
+#elif  RP2040_M0_1
+    #define GUI_ITEM_LIST     GUI_item_list
+#endif
+
 
 List_Elem_T *LL_New_Element( GUI_Edit_Enum type, void *lvgl_obj, char *name, void *entry, uint16_t additional );
 List_Elem_T *LL_append( List_Elem_T **llist, List_Elem_T *newentry );
