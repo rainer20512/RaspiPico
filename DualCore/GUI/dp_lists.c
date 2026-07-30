@@ -6,6 +6,8 @@
 
 #include "system/util.h"
 #include "../GUI/gui_lists.h"
+#include "../GUI/lvgl_update.h"
+
 
 
 /* linked list of all datapoints, initially empty */
@@ -127,6 +129,42 @@ DPList_Elem_T *DP_Append( DPList_Elem_T **list)
     return newentry;
 }
 
+/*-----------------------------------------------------------------------------
+ * @brief Searches for a datapoint whose ID matches the given ID
+ * @param list - Datapoint list to be searched
+ * @param id   - ID to search for 
+ * @retval - datapoint list element, if found, NULL if not
+ *---------------------------------------------------------------------------*/
+DPList_Elem_T *DP_Find_ID(DPList_Elem_T *list, uint8_t id)
+{
+    while (list) {
+      if ( list->dtID==id)  return list;
+      list = list->next;
+    }
+    return NULL;
+}
+
+/*-----------------------------------------------------------------------------
+ * @brief Update datapoint ID <id>
+ * @param list - Datapoint list to be searched
+ * @param id   - ID to search for 
+ * @param v    - new value for that datapoint
+ * @retval  true, if datapoint exists, false if not
+ *---------------------------------------------------------------------------*/
+bool DP_Update ( uint8_t id, Variant_T *v )
+{
+    DPList_Elem_T *list;
+#if  RP2040_M0_0
+    list = *REF_Dp_list;
+#endif
+#if  RP2040_M0_1 || defined(CORE1_SIM)
+    list = GUI_Dp_list;
+#endif
+    DPList_Elem_T *dp = DP_Find_ID(list, id);
+    if ( !dp ) return false;
+
+    LVGL_update(dp->lvglobj, dp->propidx, v, dp->elemtype );  
+}
 #if 0
 
 /*-----------------------------------------------------------------------------

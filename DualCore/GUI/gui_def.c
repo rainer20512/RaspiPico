@@ -7,6 +7,8 @@
 #include "../GUI/gui_lists.h"
 #include "../GUI/dp_lists.h"
 #include "../GUI/gui_ops.h"
+#include "../GUI/variant.h"
+#include "../GUI/lvgl_update.h"
 #include "xml_feeder.h"
 
 #include "system/ipc_msg.h"
@@ -225,40 +227,13 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
     }
 
    /******************************************************************************
-     * @brief  translate the allowed display rotation angles 0,90,180,270
-     *         to corresponding LVGL constants
-     * @retval true,if o, false if any other value than 0,90,180,270 is passed
-     *****************************************************************************/     
-    bool GUI_display_set_rotation ( uint16_t rotation )
-    {
-        lv_display_rotation_t rot;
-        switch(rotation) {
-          case   0: rot = LV_DISPLAY_ROTATION_0;   break;
-          case  90: rot = LV_DISPLAY_ROTATION_90;  break;
-          case 180: rot = LV_DISPLAY_ROTATION_180; break;
-          case 270: rot = LV_DISPLAY_ROTATION_270; break;
-          default:
-            #if DEBUG_GUIEDIT > 0
-                DEBUG_PRINTF("Err: _set_rotation: Illegal value %d\n", rotation);
-            #endif
-            return false;
-        }
-
-        lv_display_set_rotation       (NULL, rot);
-        return true;
-    }
-
-    void GUI_Update_Screen( lv_obj_t *scr, Screen_Used_T element, void *rawdataptr ) 
-    {
-       
-    }
-   /******************************************************************************
      * @brief  Update the current screen settings from GUI_Screen_T variable. 
      * @param  act    - GUI description of LVGL screen
      * @param  scr    - ptr to associated screen variable
      *****************************************************************************/     
      static lv_obj_t *GUI_update_screen ( GUI_Screen_T *act, lv_obj_t *scr )
     { 
+        Variant_T v;
      	/* Check, whether screen is already known to LVGL */
     	/* if not, allocate space and init */
         if ( !scr ) {
@@ -269,19 +244,21 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
         if ( SCREEN_HAS_PROP(act, SCREEN_RESET) && act->resetoninit ) {
           GUI_Reset_GUI_Core1();
         } 
+
     	/* set screen properties */
 /*  1 */
-        if ( SCREEN_HAS_PROP(act, SCREEN_BGOPA))        lv_obj_set_style_bg_opa       (scr, act->bgopa,       LV_PART_MAIN);
-        if ( SCREEN_HAS_PROP(act, SCREEN_BGCOLOR))      lv_obj_set_style_bg_color     (scr, act->bgcolor,     LV_PART_MAIN);
-        if ( SCREEN_HAS_PROP(act, SCREEN_ROTATE))       GUI_display_set_rotation      (act->rotation);
-
-        if ( SCREEN_HAS_PROP(act, SCREEN_BGMAINOPA))    lv_obj_set_style_bg_main_opa  (scr, act->bgmainopa,   LV_PART_MAIN); 
-        if ( SCREEN_HAS_PROP(act, SCREEN_BGGRDCOLOR))   lv_obj_set_style_bg_grad_color(scr, act->bggradcolor, LV_PART_MAIN);
+        if ( SCREEN_HAS_PROP(act, SCREEN_ROTATE))       { V_Set_U16(&v, act->rotation);     LVGL_update_screen (scr, SCREEN_ROTATE, &v);      }
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGOPA))        { V_Set_U8(&v, act->bgopa);         LVGL_update_screen (scr, SCREEN_BGOPA, &v);       }
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGCOLOR))      { V_Set_Rgb(&v, act->bgcolor);      LVGL_update_screen (scr, SCREEN_BGCOLOR, &v);     }
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGMAINOPA))    { V_Set_U8(&v, act->bgmainopa);     LVGL_update_screen (scr, SCREEN_BGMAINOPA, &v);   }
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGGRDCOLOR))   { V_Set_Rgb(&v, act->bggradcolor);  LVGL_update_screen (scr, SCREEN_BGGRDCOLOR, &v);  }
 /*  6 */        
-        if ( SCREEN_HAS_PROP(act, SCREEN_BGGRADOPA))    lv_obj_set_style_bg_main_opa  (scr, act->bggradopa,   LV_PART_MAIN);
-        if ( SCREEN_HAS_PROP(act, SCREEN_BGGRADDIR))    lv_obj_set_style_bg_grad_dir  (scr, act->bggraddir,   LV_PART_MAIN);
-        if ( SCREEN_HAS_PROP(act, SCREEN_BGMAINSTOP))   lv_obj_set_style_bg_main_stop (scr, act->bgmainstop,  LV_PART_MAIN);
-        if ( SCREEN_HAS_PROP(act, SCREEN_BGGRADSTOP))   lv_obj_set_style_bg_grad_stop (scr, act->bggradstop,  LV_PART_MAIN);
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGGRADOPA))    { V_Set_U8(&v, act->bggradopa);     LVGL_update_screen (scr, SCREEN_BGGRADOPA, &v);   }
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGGRADDIR))    { V_Set_U8(&v, act->bggraddir);     LVGL_update_screen (scr, SCREEN_BGGRADDIR, &v);   }
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGMAINSTOP))   { V_Set_U8(&v, act->bgmainstop);    LVGL_update_screen (scr, SCREEN_BGMAINSTOP, &v);  }
+        if ( SCREEN_HAS_PROP(act, SCREEN_BGGRADSTOP))   { V_Set_U8(&v, act->bggradstop);    LVGL_update_screen (scr, SCREEN_BGGRADSTOP, &v);  }
+
+        return scr;
     }
 
  
@@ -298,6 +275,7 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
      *****************************************************************************/     
     static lv_style_t * GUI_new_or_update_style ( GUI_Style_T *act, lv_style_t *style )
     { 
+
     	/* Check, whether style is already known to LVGL */
     	/* if not, allocate space and init */
         if ( !style ) {
@@ -306,44 +284,43 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
         } 
 
     	/* assign _All_ style properties */
+        Variant_T v;
 /*  1 */
-    	if ( STYLE_HAS_PROP(act, STYLE_WIDTH))        lv_style_set_width            (style, act->def_width);    else lv_style_remove_prop(style, LV_STYLE_WIDTH);
-    	if ( STYLE_HAS_PROP(act, STYLE_HEIGHT))       lv_style_set_height           (style, act->def_height);   else lv_style_remove_prop(style, LV_STYLE_HEIGHT);
-    	if ( STYLE_HAS_PROP(act, STYLE_LENGTH))       lv_style_set_length           (style, act->def_length);   else lv_style_remove_prop(style, LV_STYLE_LENGTH);
-        if ( STYLE_HAS_PROP(act, STYLE_OBJALIGN))     lv_style_set_align	        (style, act->objalign);     else lv_style_remove_prop(style, LV_STYLE_ALIGN);
-        if ( STYLE_HAS_PROP(act, STYLE_BGOPA))        lv_style_set_bg_opa           (style, act->bgopa);        else lv_style_remove_prop(style, LV_STYLE_BG_OPA);
+    	LVGL_update_style(style, STYLE_WIDTH,       STYLE_HAS_PROP(act, STYLE_WIDTH)        ? V_Set_U16(&v,act->def_width),&v   : NULL );   
+    	LVGL_update_style(style, STYLE_HEIGHT,      STYLE_HAS_PROP(act, STYLE_HEIGHT)       ? V_Set_U16(&v,act->def_height),&v  : NULL );  
+    	LVGL_update_style(style, STYLE_LENGTH,      STYLE_HAS_PROP(act, STYLE_LENGTH)       ? V_Set_U16(&v,act->def_length),&v  : NULL );  
+        LVGL_update_style(style, STYLE_OBJALIGN,    STYLE_HAS_PROP(act, STYLE_OBJALIGN)     ? V_Set_U8(&v,act->objalign),&v     : NULL );     
+        LVGL_update_style(style, STYLE_BGOPA,       STYLE_HAS_PROP(act, STYLE_BGOPA)        ? V_Set_U8(&v,act->bgopa),&v        : NULL );        
 /*  6 */
-        if ( STYLE_HAS_PROP(act, STYLE_BGCOLOR))      lv_style_set_bg_color         (style, act->bgcolor);      else lv_style_remove_prop(style, LV_STYLE_BG_COLOR);
-        if ( STYLE_HAS_PROP(act, STYLE_BGMAINOPA))    lv_style_set_bg_main_opa      (style, act->bgmainopa);    else lv_style_remove_prop(style, LV_STYLE_BG_MAIN_OPA);
-        if ( STYLE_HAS_PROP(act, STYLE_BGGRDCOLOR))   lv_style_set_bg_grad_color    (style, act->bggradcolor);  else lv_style_remove_prop(style, LV_STYLE_BG_GRAD_COLOR);
-        if ( STYLE_HAS_PROP(act, STYLE_BGGRADOPA))    lv_style_set_bg_main_opa      (style, act->bggradopa);    else lv_style_remove_prop(style, LV_STYLE_BG_GRAD_OPA);
-        if ( STYLE_HAS_PROP(act, STYLE_BGGRADDIR))    lv_style_set_bg_grad_dir      (style, act->bggraddir);    else lv_style_remove_prop(style, LV_STYLE_BG_GRAD_DIR);
+        LVGL_update_style(style, STYLE_BGCOLOR,     STYLE_HAS_PROP(act, STYLE_BGCOLOR)      ? V_Set_Rgb(&v,act->bgcolor),&v     : NULL );     
+        LVGL_update_style(style, STYLE_BGMAINOPA,   STYLE_HAS_PROP(act, STYLE_BGMAINOPA)    ? V_Set_U8(&v,act->bgmainopa),&v    : NULL );    
+        LVGL_update_style(style, STYLE_BGGRDCOLOR,  STYLE_HAS_PROP(act, STYLE_BGGRDCOLOR)   ? V_Set_Rgb(&v,act->bggradcolor),&v : NULL ); 
+        LVGL_update_style(style, STYLE_BGGRADOPA,   STYLE_HAS_PROP(act, STYLE_BGGRADOPA)    ? V_Set_U8(&v,act->bggradopa),&v    : NULL );    
+        LVGL_update_style(style, STYLE_BGGRADDIR,  STYLE_HAS_PROP(act, STYLE_BGGRADDIR)    ? V_Set_U8(&v,act->bggraddir),&v    : NULL );    
 /* 11 */
-        if ( STYLE_HAS_PROP(act, STYLE_BGMAINSTOP))   lv_style_set_bg_main_stop     (style, act->bgmainstop);   else lv_style_remove_prop(style, LV_STYLE_BG_MAIN_STOP);
-        if ( STYLE_HAS_PROP(act, STYLE_BGGRADSTOP))   lv_style_set_bg_grad_stop     (style, act->bggradstop);   else lv_style_remove_prop(style, LV_STYLE_BG_GRAD_STOP);
-        if ( STYLE_HAS_PROP(act, STYLE_BORDERWIDTH))  lv_style_set_border_width     (style, act->borderwidth);  else lv_style_remove_prop(style, LV_STYLE_BG_COLOR);
-        if ( STYLE_HAS_PROP(act, STYLE_BORDERRADIUS)) lv_style_set_radius           (style, act->borderradius); else lv_style_remove_prop(style, LV_STYLE_RADIUS);
-        if ( STYLE_HAS_PROP(act, STYLE_BORDERCOLOR))  lv_style_set_border_color     (style, act->bordercolor);  else lv_style_remove_prop(style, LV_STYLE_BORDER_COLOR);
+        LVGL_update_style(style, STYLE_BGMAINSTOP,  STYLE_HAS_PROP(act, STYLE_BGMAINSTOP)   ? V_Set_U8(&v,act->bgmainstop),&v   : NULL );   
+        LVGL_update_style(style, STYLE_BGGRADSTOP,  STYLE_HAS_PROP(act, STYLE_BGGRADSTOP)   ? V_Set_U8(&v,act->bggradstop),&v   : NULL );   
+        LVGL_update_style(style, STYLE_BORDERWIDTH, STYLE_HAS_PROP(act, STYLE_BORDERWIDTH)  ? V_Set_U8(&v,act->borderwidth),&v  : NULL );  
+        LVGL_update_style(style, STYLE_BORDERRADIUS,STYLE_HAS_PROP(act, STYLE_BORDERRADIUS) ? V_Set_U8(&v,act->borderradius),&v : NULL ); 
+        LVGL_update_style(style, STYLE_BORDERCOLOR, STYLE_HAS_PROP(act, STYLE_BORDERCOLOR)  ? V_Set_Rgb(&v,act->bordercolor),&v : NULL ); 
 /* 16 */
-        if ( STYLE_HAS_PROP(act, STYLE_SHADOWXREF))   lv_style_set_shadow_offset_x  (style, act->sh_x);         else lv_style_remove_prop(style, LV_STYLE_SHADOW_OFS_X);
-        if ( STYLE_HAS_PROP(act, STYLE_SHADOWYREF))   lv_style_set_shadow_offset_y  (style, act->sh_y);         else lv_style_remove_prop(style, LV_STYLE_SHADOW_OFS_Y);
-        if ( STYLE_HAS_PROP(act, STYLE_SHADOWWIDTH))  lv_style_set_shadow_width     (style, act->shadow_width); else lv_style_remove_prop(style, LV_STYLE_SHADOW_WIDTH);
-        if ( STYLE_HAS_PROP(act, STYLE_SHADOWOPA))    lv_style_set_shadow_opa       (style, act->shadow_opa);   else lv_style_remove_prop(style, LV_STYLE_SHADOW_OPA);
-        if ( STYLE_HAS_PROP(act, STYLE_SHADOWCOLOR))  lv_style_set_shadow_color     (style, act->shadowcolor);  else lv_style_remove_prop(style, LV_STYLE_SHADOW_COLOR);
+        LVGL_update_style(style, STYLE_SHADOWXREF,  STYLE_HAS_PROP(act, STYLE_SHADOWXREF)   ? V_Set_U8(&v,act->sh_x),&v         : NULL );         
+        LVGL_update_style(style, STYLE_SHADOWYREF,  STYLE_HAS_PROP(act, STYLE_SHADOWYREF)   ? V_Set_U8(&v,act->sh_y),&v         : NULL );         
+        LVGL_update_style(style, STYLE_SHADOWWIDTH, STYLE_HAS_PROP(act, STYLE_SHADOWWIDTH)  ? V_Set_U8(&v,act->shadow_width),&v : NULL ); 
+        LVGL_update_style(style, STYLE_SHADOWOPA,   STYLE_HAS_PROP(act, STYLE_SHADOWOPA)    ? V_Set_U8(&v,act->shadow_opa),&v   : NULL );   
+        LVGL_update_style(style, STYLE_SHADOWCOLOR, STYLE_HAS_PROP(act, STYLE_SHADOWCOLOR)  ? V_Set_Rgb(&v,act->shadowcolor),&v : NULL ); 
 /* 21 */
-        if ( STYLE_HAS_PROP(act, STYLE_TEXTALIGN))    lv_style_set_text_align	    (style, act->textalign);    else lv_style_remove_prop(style, LV_STYLE_TEXT_ALIGN);
-        if ( STYLE_HAS_PROP(act, STYLE_TEXTCOLOR))    lv_style_set_text_color       (style, act->textcolor);    else lv_style_remove_prop(style, LV_STYLE_TEXT_COLOR);
-        if ( STYLE_HAS_PROP(act, STYLE_TEXTFONT))     lv_style_set_text_font        (style, act->textfont);     else lv_style_remove_prop(style, LV_STYLE_TEXT_FONT);
-        if ( STYLE_HAS_PROP(act, STYLE_ARCWIDTH))     lv_style_set_arc_width        (style, act->arcwidth);     else lv_style_remove_prop(style, LV_STYLE_ARC_WIDTH);
-        if ( STYLE_HAS_PROP(act, STYLE_ARCOPA))       lv_style_set_arc_opa          (style, act->arcopa);       else lv_style_remove_prop(style, LV_STYLE_ARC_OPA);
+        LVGL_update_style(style, STYLE_TEXTALIGN,   STYLE_HAS_PROP(act, STYLE_TEXTALIGN)    ? V_Set_U8(&v,act->textalign),&v    : NULL );    
+        LVGL_update_style(style, STYLE_TEXTCOLOR,   STYLE_HAS_PROP(act, STYLE_TEXTCOLOR)    ? V_Set_Rgb(&v,act->textcolor),&v   : NULL );   
+        LVGL_update_style(style, STYLE_TEXTFONT,    STYLE_HAS_PROP(act, STYLE_TEXTFONT)     ? V_Set_Ref(&v,act->textfont),&v    : NULL );    
+        LVGL_update_style(style, STYLE_ARCWIDTH,    STYLE_HAS_PROP(act, STYLE_ARCWIDTH)     ? V_Set_U8(&v,act->arcwidth),&v     : NULL );     
+        LVGL_update_style(style, STYLE_ARCOPA,      STYLE_HAS_PROP(act, STYLE_ARCOPA)       ? V_Set_U8(&v,act->arcopa),&v       : NULL );       
 /* 26 */
-        if ( STYLE_HAS_PROP(act, STYLE_ARCCOLOR))     lv_style_set_arc_color        (style, act->arccolor);     else lv_style_remove_prop(style, LV_STYLE_ARC_COLOR);
-        if ( STYLE_HAS_PROP(act, STYLE_LINEWIDTH))    lv_style_set_line_width       (style, act->linewidth);    else lv_style_remove_prop(style, LV_STYLE_LINE_WIDTH);
-        if ( STYLE_HAS_PROP(act, STYLE_LINECOLOR))    lv_style_set_line_color       (style, act->linecolor);    else lv_style_remove_prop(style, LV_STYLE_ARC_WIDTH);
-        if ( STYLE_HAS_PROP(act, STYLE_LINEOPA))      lv_style_set_line_opa         (style, act->lineopa);      else lv_style_remove_prop(style, LV_STYLE_ARC_OPA);
+        LVGL_update_style(style, STYLE_ARCCOLOR,    STYLE_HAS_PROP(act, STYLE_ARCCOLOR)     ? V_Set_Rgb(&v,act->arccolor),&v    : NULL );    
+        LVGL_update_style(style, STYLE_LINEWIDTH,   STYLE_HAS_PROP(act, STYLE_LINEWIDTH)    ? V_Set_U8(&v,act->linewidth),&v    : NULL );    
+        LVGL_update_style(style, STYLE_LINECOLOR,   STYLE_HAS_PROP(act, STYLE_LINECOLOR)    ? V_Set_Rgb(&v,act->linecolor),&v   : NULL );   
+        LVGL_update_style(style, STYLE_LINEOPA,     STYLE_HAS_PROP(act, STYLE_LINEOPA)      ? V_Set_U8(&v,act->lineopa),&v      : NULL );      
 
-        /* update using widgets about style change */
-        lv_obj_report_style_change(style);
     	return style;	
     }
 

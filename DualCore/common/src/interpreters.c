@@ -861,6 +861,8 @@ static lv_obj_t * obj=NULL;
     #include "../../GUI/gui_def.h"
     #include "../../GUI/gui_edit.h"
     #include "../../GUI/gui_ops.h"
+    #include "../../GUI/variant.h"
+    #include "../../GUI/dp_lists.h"
 
     #if USE_LVGL > 0
       #include "../../lvgl/lvgl.h"
@@ -886,6 +888,7 @@ static lv_obj_t * obj=NULL;
       size_t wordlen;
       uint8_t r,g,b;
       uint32_t temp;
+      Variant_T v;
       UNUSED(cmdline);UNUSED(len);
 
       switch((uint32_t)arg) {
@@ -906,6 +909,19 @@ static lv_obj_t * obj=NULL;
             break;
     	case 6:
         	GUI_Edit(&edit_datapoint, NULL);
+            break;
+    	case 7:
+            if ( CMD_argc() < 2 ) {
+              printf("Usage: 'Set data <dpnum> <data>\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            r = CMD_to_number ( word, wordlen );
+            CMD_get_one_word( &word, &wordlen );
+            temp = CMD_to_number ( word, wordlen );
+            V_Set_U32(&v, temp);
+            printf("DP update %s\n", DP_Update(r, &v ) ?  "ok" : "failed");
+            break;
 #if USE_LVGL > 0
     	case 90:
             /*Change the active screen's background color*/
@@ -981,6 +997,7 @@ static lv_obj_t * obj=NULL;
         { "Scale Editor",           ctype_fn, .exec.fn = GUI_Test_Menu,VOID(4), "Edit Scale(s)" },
         { "Image Editor",           ctype_fn, .exec.fn = GUI_Test_Menu,VOID(5), "Edit Image(s)" },
         { "Datapoint Editor",       ctype_fn, .exec.fn = GUI_Test_Menu,VOID(6), "Edit a Datapoint" },
+        { "Set datapoint",          ctype_fn, .exec.fn = GUI_Test_Menu,VOID(7), "Set datapoint data" },
 
 #if USE_LVGL > 0
         { "Draw Label",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(90), "Draw a fixed Label" },

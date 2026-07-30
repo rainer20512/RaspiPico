@@ -9,6 +9,7 @@
 #include "parser_specs.h"
 #include "../GUI/gui_def.h"
 #include "../GUI/gui_editdef.h"
+#include "../GUI/variant.h"
 
 
 typedef struct DPList_Elem{
@@ -38,7 +39,9 @@ typedef struct DPList_Elem{
 
 DPList_Elem_T *DP_Setup_ListElem (char *dpname, char *elemname, char *propname);
 DPList_Elem_T *DP_Find           (DPList_Elem_T *list);
+DPList_Elem_T *DP_Find_ID        (DPList_Elem_T *list, uint8_t id);
 DPList_Elem_T *DP_Append         ( DPList_Elem_T **list);
+bool          DP_Update          ( uint8_t id, Variant_T *v );
 
 #if 0
 DPList_Elem_T *LL_New_Element( GUI_Edit_Enum type, void *lvgl_obj, char *name, void *entry, uint16_t additional );

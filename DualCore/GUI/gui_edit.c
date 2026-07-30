@@ -113,7 +113,7 @@ static void GUI_edit_dump_one ( uint8_t *bytes, const Edit_Receipe_T *editelem, 
               printf("%u", V_Get_U16(&V_tempval) );
               break;
             case GUI_RGB888:
-              printf("0x%06x", V_Get_Rgb(&V_tempval)&0xFFFFFF );
+              printf("0x%06x", V_Get_U32(&V_tempval)&0xFFFFFF );
               break;
             case GUI_UINT32:
               printf("%u", V_Get_U32(&V_tempval) );
