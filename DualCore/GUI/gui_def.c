@@ -2,6 +2,7 @@
 
 #if USE_GUI_INTERFACE > 0
 
+#include "system/util.h"
 #include "../GUI/gui_def.h"
 #include "../GUI/gui_edit.h"
 #include "../GUI/gui_lists.h"
@@ -12,8 +13,6 @@
 #include "xml_feeder.h"
 
 #include "system/ipc_msg.h"
-#include "system/util.h"
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -286,40 +285,41 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
     	/* assign _All_ style properties */
         Variant_T v;
 /*  1 */
-    	LVGL_update_style(style, STYLE_WIDTH,       STYLE_HAS_PROP(act, STYLE_WIDTH)        ? V_Set_U16(&v,act->def_width),&v   : NULL );   
-    	LVGL_update_style(style, STYLE_HEIGHT,      STYLE_HAS_PROP(act, STYLE_HEIGHT)       ? V_Set_U16(&v,act->def_height),&v  : NULL );  
-    	LVGL_update_style(style, STYLE_LENGTH,      STYLE_HAS_PROP(act, STYLE_LENGTH)       ? V_Set_U16(&v,act->def_length),&v  : NULL );  
-        LVGL_update_style(style, STYLE_OBJALIGN,    STYLE_HAS_PROP(act, STYLE_OBJALIGN)     ? V_Set_U8(&v,act->objalign),&v     : NULL );     
-        LVGL_update_style(style, STYLE_BGOPA,       STYLE_HAS_PROP(act, STYLE_BGOPA)        ? V_Set_U8(&v,act->bgopa),&v        : NULL );        
+    	LVGL_update_style(style, STYLE_WIDTH,       STYLE_HAS_PROP(act, STYLE_WIDTH)        ? V_Set_U16(&v,act->def_width),&v         : NULL );   
+    	LVGL_update_style(style, STYLE_HEIGHT,      STYLE_HAS_PROP(act, STYLE_HEIGHT)       ? V_Set_U16(&v,act->def_height),&v        : NULL );  
+    	LVGL_update_style(style, STYLE_LENGTH,      STYLE_HAS_PROP(act, STYLE_LENGTH)       ? V_Set_U16(&v,act->def_length),&v        : NULL );  
+        LVGL_update_style(style, STYLE_OBJALIGN,    STYLE_HAS_PROP(act, STYLE_OBJALIGN)     ? V_Set_U8(&v,act->objalign),&v           : NULL );     
+        LVGL_update_style(style, STYLE_BGOPA,       STYLE_HAS_PROP(act, STYLE_BGOPA)        ? V_Set_U8(&v,act->bgopa),&v              : NULL );        
 /*  6 */
-        LVGL_update_style(style, STYLE_BGCOLOR,     STYLE_HAS_PROP(act, STYLE_BGCOLOR)      ? V_Set_Rgb(&v,act->bgcolor),&v     : NULL );     
-        LVGL_update_style(style, STYLE_BGMAINOPA,   STYLE_HAS_PROP(act, STYLE_BGMAINOPA)    ? V_Set_U8(&v,act->bgmainopa),&v    : NULL );    
-        LVGL_update_style(style, STYLE_BGGRDCOLOR,  STYLE_HAS_PROP(act, STYLE_BGGRDCOLOR)   ? V_Set_Rgb(&v,act->bggradcolor),&v : NULL ); 
-        LVGL_update_style(style, STYLE_BGGRADOPA,   STYLE_HAS_PROP(act, STYLE_BGGRADOPA)    ? V_Set_U8(&v,act->bggradopa),&v    : NULL );    
-        LVGL_update_style(style, STYLE_BGGRADDIR,  STYLE_HAS_PROP(act, STYLE_BGGRADDIR)    ? V_Set_U8(&v,act->bggraddir),&v    : NULL );    
+        LVGL_update_style(style, STYLE_BGCOLOR,     STYLE_HAS_PROP(act, STYLE_BGCOLOR)      ? V_Set_Rgb(&v,act->bgcolor),&v           : NULL );     
+        LVGL_update_style(style, STYLE_BGMAINOPA,   STYLE_HAS_PROP(act, STYLE_BGMAINOPA)    ? V_Set_U8(&v,act->bgmainopa),&v          : NULL );    
+        LVGL_update_style(style, STYLE_BGGRDCOLOR,  STYLE_HAS_PROP(act, STYLE_BGGRDCOLOR)   ? V_Set_Rgb(&v,act->bggradcolor),&v       : NULL ); 
+        LVGL_update_style(style, STYLE_BGGRADOPA,   STYLE_HAS_PROP(act, STYLE_BGGRADOPA)    ? V_Set_U8(&v,act->bggradopa),&v          : NULL );    
+        LVGL_update_style(style, STYLE_BGGRADDIR,  STYLE_HAS_PROP(act, STYLE_BGGRADDIR)    ? V_Set_U8(&v,act->bggraddir),&v           : NULL );    
 /* 11 */
-        LVGL_update_style(style, STYLE_BGMAINSTOP,  STYLE_HAS_PROP(act, STYLE_BGMAINSTOP)   ? V_Set_U8(&v,act->bgmainstop),&v   : NULL );   
-        LVGL_update_style(style, STYLE_BGGRADSTOP,  STYLE_HAS_PROP(act, STYLE_BGGRADSTOP)   ? V_Set_U8(&v,act->bggradstop),&v   : NULL );   
-        LVGL_update_style(style, STYLE_BORDERWIDTH, STYLE_HAS_PROP(act, STYLE_BORDERWIDTH)  ? V_Set_U8(&v,act->borderwidth),&v  : NULL );  
-        LVGL_update_style(style, STYLE_BORDERRADIUS,STYLE_HAS_PROP(act, STYLE_BORDERRADIUS) ? V_Set_U8(&v,act->borderradius),&v : NULL ); 
-        LVGL_update_style(style, STYLE_BORDERCOLOR, STYLE_HAS_PROP(act, STYLE_BORDERCOLOR)  ? V_Set_Rgb(&v,act->bordercolor),&v : NULL ); 
+        LVGL_update_style(style, STYLE_BGMAINSTOP,  STYLE_HAS_PROP(act, STYLE_BGMAINSTOP)   ? V_Set_U8(&v,act->bgmainstop),&v         : NULL );   
+        LVGL_update_style(style, STYLE_BGGRADSTOP,  STYLE_HAS_PROP(act, STYLE_BGGRADSTOP)   ? V_Set_U8(&v,act->bggradstop),&v         : NULL );   
+        LVGL_update_style(style, STYLE_BORDERWIDTH, STYLE_HAS_PROP(act, STYLE_BORDERWIDTH)  ? V_Set_U8(&v,act->borderwidth),&v        : NULL );  
+        LVGL_update_style(style, STYLE_BORDERRADIUS,STYLE_HAS_PROP(act, STYLE_BORDERRADIUS) ? V_Set_U8(&v,act->borderradius),&v       : NULL ); 
+        LVGL_update_style(style, STYLE_BORDERCOLOR, STYLE_HAS_PROP(act, STYLE_BORDERCOLOR)  ? V_Set_Rgb(&v,act->bordercolor),&v       : NULL ); 
 /* 16 */
-        LVGL_update_style(style, STYLE_SHADOWXREF,  STYLE_HAS_PROP(act, STYLE_SHADOWXREF)   ? V_Set_U8(&v,act->sh_x),&v         : NULL );         
-        LVGL_update_style(style, STYLE_SHADOWYREF,  STYLE_HAS_PROP(act, STYLE_SHADOWYREF)   ? V_Set_U8(&v,act->sh_y),&v         : NULL );         
-        LVGL_update_style(style, STYLE_SHADOWWIDTH, STYLE_HAS_PROP(act, STYLE_SHADOWWIDTH)  ? V_Set_U8(&v,act->shadow_width),&v : NULL ); 
-        LVGL_update_style(style, STYLE_SHADOWOPA,   STYLE_HAS_PROP(act, STYLE_SHADOWOPA)    ? V_Set_U8(&v,act->shadow_opa),&v   : NULL );   
-        LVGL_update_style(style, STYLE_SHADOWCOLOR, STYLE_HAS_PROP(act, STYLE_SHADOWCOLOR)  ? V_Set_Rgb(&v,act->shadowcolor),&v : NULL ); 
+        LVGL_update_style(style, STYLE_SHADOWXREF,  STYLE_HAS_PROP(act, STYLE_SHADOWXREF)   ? V_Set_U8(&v,act->sh_x),&v               : NULL );         
+        LVGL_update_style(style, STYLE_SHADOWYREF,  STYLE_HAS_PROP(act, STYLE_SHADOWYREF)   ? V_Set_U8(&v,act->sh_y),&v               : NULL );         
+        LVGL_update_style(style, STYLE_SHADOWWIDTH, STYLE_HAS_PROP(act, STYLE_SHADOWWIDTH)  ? V_Set_U8(&v,act->shadow_width),&v       : NULL ); 
+        LVGL_update_style(style, STYLE_SHADOWOPA,   STYLE_HAS_PROP(act, STYLE_SHADOWOPA)    ? V_Set_U8(&v,act->shadow_opa),&v         : NULL );   
+        LVGL_update_style(style, STYLE_SHADOWCOLOR, STYLE_HAS_PROP(act, STYLE_SHADOWCOLOR)  ? V_Set_Rgb(&v,act->shadowcolor),&v       : NULL ); 
 /* 21 */
-        LVGL_update_style(style, STYLE_TEXTALIGN,   STYLE_HAS_PROP(act, STYLE_TEXTALIGN)    ? V_Set_U8(&v,act->textalign),&v    : NULL );    
-        LVGL_update_style(style, STYLE_TEXTCOLOR,   STYLE_HAS_PROP(act, STYLE_TEXTCOLOR)    ? V_Set_Rgb(&v,act->textcolor),&v   : NULL );   
-        LVGL_update_style(style, STYLE_TEXTFONT,    STYLE_HAS_PROP(act, STYLE_TEXTFONT)     ? V_Set_Ref(&v,act->textfont),&v    : NULL );    
-        LVGL_update_style(style, STYLE_ARCWIDTH,    STYLE_HAS_PROP(act, STYLE_ARCWIDTH)     ? V_Set_U8(&v,act->arcwidth),&v     : NULL );     
-        LVGL_update_style(style, STYLE_ARCOPA,      STYLE_HAS_PROP(act, STYLE_ARCOPA)       ? V_Set_U8(&v,act->arcopa),&v       : NULL );       
+        LVGL_update_style(style, STYLE_TEXTALIGN,   STYLE_HAS_PROP(act, STYLE_TEXTALIGN)    ? V_Set_U8(&v,act->textalign),&v          : NULL );    
+        LVGL_update_style(style, STYLE_TEXTCOLOR,   STYLE_HAS_PROP(act, STYLE_TEXTCOLOR)    ? V_Set_Rgb(&v,act->textcolor),&v         : NULL );   
+        LVGL_update_style(style, STYLE_TEXTFONT,    STYLE_HAS_PROP(act, STYLE_TEXTFONT)     ? V_Set_Ref(&v,(void *)act->textfont),&v  : NULL );    
+        LVGL_update_style(style, STYLE_ARCWIDTH,    STYLE_HAS_PROP(act, STYLE_ARCWIDTH)     ? V_Set_U8(&v,act->arcwidth),&v           : NULL );     
+        LVGL_update_style(style, STYLE_ARCOPA,      STYLE_HAS_PROP(act, STYLE_ARCOPA)       ? V_Set_U8(&v,act->arcopa),&v             : NULL );       
 /* 26 */
-        LVGL_update_style(style, STYLE_ARCCOLOR,    STYLE_HAS_PROP(act, STYLE_ARCCOLOR)     ? V_Set_Rgb(&v,act->arccolor),&v    : NULL );    
-        LVGL_update_style(style, STYLE_LINEWIDTH,   STYLE_HAS_PROP(act, STYLE_LINEWIDTH)    ? V_Set_U8(&v,act->linewidth),&v    : NULL );    
-        LVGL_update_style(style, STYLE_LINECOLOR,   STYLE_HAS_PROP(act, STYLE_LINECOLOR)    ? V_Set_Rgb(&v,act->linecolor),&v   : NULL );   
-        LVGL_update_style(style, STYLE_LINEOPA,     STYLE_HAS_PROP(act, STYLE_LINEOPA)      ? V_Set_U8(&v,act->lineopa),&v      : NULL );      
+        LVGL_update_style(style, STYLE_ARCCOLOR,    STYLE_HAS_PROP(act, STYLE_ARCCOLOR)     ? V_Set_Rgb(&v,act->arccolor),&v          : NULL );    
+        LVGL_update_style(style, STYLE_LINEWIDTH,   STYLE_HAS_PROP(act, STYLE_LINEWIDTH)    ? V_Set_U8(&v,act->linewidth),&v          : NULL );    
+        LVGL_update_style(style, STYLE_LINECOLOR,   STYLE_HAS_PROP(act, STYLE_LINECOLOR)    ? V_Set_Rgb(&v,act->linecolor),&v         : NULL );   
+        LVGL_update_style(style, STYLE_LINEOPA,     STYLE_HAS_PROP(act, STYLE_LINEOPA)      ? V_Set_U8(&v,act->lineopa),&v            : NULL );      
+
 
     	return style;	
     }
@@ -347,54 +347,6 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
         my_free( anyobj );
     }
 
-    /******************************************************************************
-     * @brief  We have al label with an indirect computed caption. This is done in
-     *         the following way:
-     *         1) computed caption = ind_value * 10^ind_scalefactor
-     *         2) computed caption is printf-formatted with "ind_formatstr" and
-     *            used as caption
-     *         as we use no float values, negative scale factors are computed
-     *         in two ints with integer part and fractional part
-     *         Rules for "ind_formatstr":
-     *         1) positive scale factors: we only have an integer part, this may
-     *            be formatted generally as any integer format str in "printf", 
-     *            in conjunction with all allowed modifiers
-     *            Examples: %d, %3d, %+3d, %03d
-     *         2) negative scale factors: we have a signed integer and and an unsigned
-     *            frational part. Both of them have to be formatted with integer
-     *            format strings. The decimal point also has to be specified in
-     *            format str, the fractional part always should be formatted with
-     *            leading zeroes
-                  Examples: %+d.%03u
-     * @param  lbl    - ptr to associated existing label object in LVGL or NULL
-     * @note   caller should assure, that ind_value" and "ind_formatstr" properties 
-     *         are set
-     * @note   no range checking is done with large scale factors!
-     *****************************************************************************/     
-    static void label_compute_ind_caption ( lv_obj_t *lbl, int32_t ind_value, int8_t ind_scalefactor, char *ind_formatstr  )
-    {
-        char caption[GUI_MAX_NAMELEN];    /* resulting output string */
-        uint32_t frac; 
-        int32_t  integer;
-        int32_t  scaler;                  /* holds the scaling value 10^ind_scalefactor */
-        bool     bDivide;                 /* true, if scale factor < 0 */
-
-        bDivide = ind_scalefactor < 0;
-        if ( bDivide ) {
-          scaler  = ipow(10, ((int)ind_scalefactor * -1));
-          frac    = ( abs(ind_value) ) % scaler;
-          integer = ind_value / scaler;  
-          snprintf(caption, GUI_MAX_NAMELEN, ind_formatstr, integer, frac);
-        } else {
-           scaler = ipow(10, (int)ind_scalefactor);
-           frac   = 0;
-           integer = ind_value * scaler;
-           snprintf(caption, GUI_MAX_NAMELEN, ind_formatstr, integer);
-        }
-        
-        lv_label_set_text(lbl, caption);
-
-    }
 
     /******************************************************************************
      * @brief  Create a new LVGL label or update an existing label 
@@ -409,32 +361,36 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
      *****************************************************************************/     
     static lv_obj_t * GUI_new_or_update_label ( GUI_Label_T *act, lv_obj_t *lbl  )
     {
-    	/* Check, whether label is already known to LVGL */
+    	
+
+        /* Check, whether label is already known to LVGL */
     	/* if not found, allocate space and init */
     	if ( !lbl ) { 
           if ( !(lbl = GUI_Allocate( lbl, sizeof(lv_obj_t*))) ) return NULL;
           lbl = lv_label_create(lv_screen_active());
         }
-  
-        if ( LABEL_HAS_PROP(act, LABEL_STYLE))  lv_obj_add_style(lbl, act->style, 0);
-        if ( LABEL_HAS_PROP(act, LABEL_ALIGN))  lv_obj_set_style_align(lbl, act->align, 0);
-        if ( LABEL_HAS_PROP(act, LABEL_X0))     lv_obj_set_x(lbl, act->x0);
-        if ( LABEL_HAS_PROP(act, LABEL_Y0))     lv_obj_set_y(lbl, act->y0); 
+ 
+        /* A label has private data elements, get access to it */
+        List_Elem_T *ll = LL_find_by_type_n_obj(GUI_ITEM_LIST, GUI_ELEM_LABEL, lbl);
+        void *privdata = ll ? ll->private_data : NULL;
+        #if DEBUG_GUIEDIT > 0 || DEBUG_DATAPOINTS > 0
+            if ( !ll) DEBUG_PUTS("Err: No private data for label");
+        #endif
 
-        /*
-         * The label caption is computed as follows:                      
-         * - whenever ind_value and ind_formatstr are set, these tow and ind_scale are used
-         *   to compute and format the caption
-         * - otherwisei, if caption is set, this prop is used to set labels
-         *   caption directly
-         */
-        if ( LABEL_HAS_PROP(act, LABEL_CURVAL) &&LABEL_HAS_PROP(act, LABEL_FORMATSTR)) {
-            label_compute_ind_caption( lbl, act->ind_value, act->ind_scalefactor, act->ind_formatstr );
-        } else {
-            if ( LABEL_HAS_PROP(act, LABEL_CAPTION))lv_label_set_text(lbl,act->caption);
-        }
-        GUI_dump_coords(lbl);
+    	/* assign label  properties */
+        Variant_T v;
+        /*  1 */        
+        LVGL_update_label(lbl, LABEL_STYLE,       LABEL_HAS_PROP(act, LABEL_STYLE)       ? V_Set_Ref (&v, act->style),&v           : NULL, privdata);
+        LVGL_update_label(lbl, LABEL_ALIGN,       LABEL_HAS_PROP(act, LABEL_ALIGN)       ? V_Set_U8  (&v, act->align),&v           : NULL, privdata);
+        LVGL_update_label(lbl, LABEL_X0,          LABEL_HAS_PROP(act, LABEL_X0)          ? V_Set_U16 (&v, act->x0),&v              : NULL, privdata);
+        LVGL_update_label(lbl, LABEL_Y0,          LABEL_HAS_PROP(act, LABEL_Y0)          ? V_Set_U16 (&v, act->y0),&v              : NULL, privdata);
+        LVGL_update_label(lbl, LABEL_CAPTION,     LABEL_HAS_PROP(act, LABEL_CAPTION)     ? V_Set_CStr(&v, act->caption),&v         : NULL, privdata);
+        /*  6 */ 
+        LVGL_update_label(lbl, LABEL_CURVAL,      LABEL_HAS_PROP(act, LABEL_CURVAL)      ? V_Set_I32 (&v, act->ind_value),&v       : NULL, privdata);
+        LVGL_update_label(lbl, LABEL_SCALEFACTOR, LABEL_HAS_PROP(act, LABEL_SCALEFACTOR) ? V_Set_I8  (&v, act->ind_scalefactor),&v : NULL, privdata);
+        LVGL_update_label(lbl, LABEL_FORMATSTR,   LABEL_HAS_PROP(act, LABEL_FORMATSTR)   ? V_Set_CStr(&v, act->ind_formatstr),&v   : NULL, privdata);
 
+        //GUI_dump_coords(lbl);
         return lbl;
     }
 
@@ -460,57 +416,26 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
           lv_obj_remove_style(arc, NULL, LV_PART_KNOB);   
         }
 
-        if ( ARC_HAS_PROP(act, ARC_BGSTYLE))  lv_obj_add_style(arc, act->bgstyle, LV_PART_MAIN);
-        if ( ARC_HAS_PROP(act, ARC_INDSTYLE)) lv_obj_add_style(arc, act->indstyle, LV_PART_INDICATOR);
-        if ( ARC_HAS_PROP(act, ARC_X0))       lv_obj_set_x(arc, act->x0);
-        if ( ARC_HAS_PROP(act, ARC_Y0))       lv_obj_set_y(arc, act->y0); 
-        if ( ARC_HAS_PROP(act, ARC_ROTATE))   lv_arc_set_rotation(arc, act->rotation);
-        if ( ARC_HAS_PROP(act, ARC_BGSTART))  lv_arc_set_bg_start_angle(arc, act->bg_start);
-        if ( ARC_HAS_PROP(act, ARC_BGEND))    lv_arc_set_bg_end_angle(arc, act->bg_end);
-        if ( ARC_HAS_PROP(act, ARC_MINVAL))   lv_arc_set_min_value(arc, act->minval);
-        if ( ARC_HAS_PROP(act, ARC_MAXVAL))   lv_arc_set_max_value(arc, act->maxval);
-        if ( ARC_HAS_PROP(act, ARC_CURVAL))   lv_arc_set_value(arc, act->curval);
-        GUI_dump_coords(arc);
+    	/* assign arc properties */
+        Variant_T v;
+        /*  1 */  
+        if ( ARC_HAS_PROP(act, ARC_BGSTYLE))  { V_Set_Ref(&v, act->bgstyle);  LVGL_update_arc(arc, ARC_BGSTYLE, &v); }
+        if ( ARC_HAS_PROP(act, ARC_INDSTYLE)) { V_Set_Ref(&v, act->indstyle); LVGL_update_arc(arc, ARC_INDSTYLE, &v); }
+        if ( ARC_HAS_PROP(act, ARC_X0))       { V_Set_U16(&v, act->x0);       LVGL_update_arc(arc, ARC_X0, &v); }
+        if ( ARC_HAS_PROP(act, ARC_Y0))       { V_Set_U16(&v, act->y0);       LVGL_update_arc(arc, ARC_Y0, &v); }
+        if ( ARC_HAS_PROP(act, ARC_ROTATE))   { V_Set_U16(&v, act->rotation); LVGL_update_arc(arc, ARC_ROTATE, &v); }
+        /*  6 */  
+        if ( ARC_HAS_PROP(act, ARC_BGSTART))  { V_Set_I16(&v, act->bg_start); LVGL_update_arc(arc, ARC_BGSTART, &v); }
+        if ( ARC_HAS_PROP(act, ARC_BGEND))    { V_Set_I16(&v, act->bg_end);   LVGL_update_arc(arc, ARC_BGEND, &v); }
+        if ( ARC_HAS_PROP(act, ARC_MINVAL))   { V_Set_I16(&v, act->minval);   LVGL_update_arc(arc, ARC_MINVAL, &v); }
+        if ( ARC_HAS_PROP(act, ARC_MAXVAL))   { V_Set_I16(&v, act->maxval);   LVGL_update_arc(arc, ARC_MINVAL, &v); }
+        if ( ARC_HAS_PROP(act, ARC_CURVAL))   { V_Set_I16(&v, act->curval);   LVGL_update_arc(arc, ARC_MINVAL, &v); }
 
+        //GUI_dump_coords(arc);
         return arc;
-
-    }
-
-    /******************************************************************************
-     * @brief Shortcut to only update arc value
-     *****************************************************************************/     
-    void GUI_Arc_set_value  ( lv_obj_t * arc, int16_t newval )
-    {
-      lv_arc_set_value(arc, newval);
     }
 
 
-    /******************************************************************************
-     * @brief  Update the associated label of a scale GUI element with the
-     *         current value of the scale
-     * @param  lbl    - assiociated label as LVGL object 
-     * @param  curval - current scale value
-     *****************************************************************************/     
-    static void Scale_Update_Label ( lv_obj_t *lbl, int16_t curval )
-    {
-        GUI_Label_T temp;
-
-        /* Get the labels associated GUI-Element */ 
-        List_Elem_T *ll = LL_find_by_type_n_obj  ( GUI_item_list, GUI_ELEM_LABEL, lbl );
-        if ( !ll ) {
-            printf("Err: No associated label found!\n");
-            return;
-        }
-      
-        /* 
-         * copy referenced label data into temporary label element 
-         * in order to get referenced label's scaler and formatstring 
-         */
-        memcpy_fast(&temp, ll->ll_entry, edit_label.total_size);
-
-        /* Update GUI label */
-        label_compute_ind_caption( lbl, curval, temp.ind_scalefactor, temp.ind_formatstr );
-    }
  
     /******************************************************************************
      * @brief  Create a new LVGL scale or update an existing scale 
@@ -530,34 +455,39 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
           if ( !(scale = GUI_Allocate( scale, sizeof(lv_obj_t*))) ) return NULL;
           scale = lv_scale_create(lv_screen_active());
         }
+
+        /* A scale has private data elements, get access to it */
+        List_Elem_T *ll = LL_find_by_type_n_obj(GUI_ITEM_LIST, GUI_ELEM_SCALE, scale);
+        void *privdata = ll ? ll->private_data : NULL;
+        #if DEBUG_GUIEDIT > 0 || DEBUG_DATAPOINTS > 0
+            if ( !ll) DEBUG_PUTS("Err: No private data for scale");
+        #endif
+
+    	/* assign scale properties */
+        Variant_T v;
         /* 1 */
-        if ( SCALE_HAS_PROP(act, SCALE_MAINSTYLE))      lv_obj_add_style(scale, act->mainstyle, LV_PART_MAIN );
-        if ( SCALE_HAS_PROP(act, SCALE_MAJORSTYLE))     lv_obj_add_style(scale, act->majorstyle, LV_PART_INDICATOR);
-        if ( SCALE_HAS_PROP(act, SCALE_MINORSTYLE))     lv_obj_add_style(scale, act->minorstyle, LV_PART_ITEMS);
-        if ( SCALE_HAS_PROP(act, SCALE_MODE))           lv_scale_set_mode(scale, act->scalemode);
-        if ( SCALE_HAS_PROP(act, SCALE_X0))             lv_obj_set_x(scale, act->x0);
+        if ( SCALE_HAS_PROP(act, SCALE_MAINSTYLE))      { V_Set_Ref(&v, act->mainstyle);      LVGL_update_scale(scale, SCALE_MAINSTYLE, &v, privdata); }
+        if ( SCALE_HAS_PROP(act, SCALE_MAJORSTYLE))     { V_Set_Ref(&v, act->majorstyle);     LVGL_update_scale(scale, SCALE_MAJORSTYLE, &v, privdata); }
+        if ( SCALE_HAS_PROP(act, SCALE_MINORSTYLE))     { V_Set_Ref(&v, act->minorstyle);     LVGL_update_scale(scale, SCALE_MINORSTYLE, &v, privdata); }
+        if ( SCALE_HAS_PROP(act, SCALE_MODE))           { V_Set_U8(&v, act->scalemode);       LVGL_update_scale(scale, SCALE_MODE, &v, privdata); }
+        if ( SCALE_HAS_PROP(act, SCALE_X0))             { V_Set_U16(&v, act->x0);             LVGL_update_scale(scale, SCALE_X0, &v, privdata); }
         /* 6 */
-        if ( SCALE_HAS_PROP(act, SCALE_Y0))             lv_obj_set_y(scale, act->y0); 
-        if ( SCALE_HAS_PROP(act, SCALE_MINVAL))         lv_scale_set_min_value(scale, act->minval);
-        if ( SCALE_HAS_PROP(act, SCALE_MAXVAL))         lv_scale_set_max_value(scale, act->maxval);
-        if ( SCALE_HAS_PROP(act, SCALE_TOTAL_TICKS))    lv_scale_set_total_tick_count(scale, act->totalticks);
-        if ( SCALE_HAS_PROP(act, SCALE_MAJ_TICK_DIST))  lv_scale_set_major_tick_every(scale, act->tickdistance);
+        if ( SCALE_HAS_PROP(act, SCALE_Y0))             { V_Set_U16(&v, act->y0);             LVGL_update_scale(scale, SCALE_Y0, &v, privdata); }
+        if ( SCALE_HAS_PROP(act, SCALE_MINVAL))         { V_Set_I16(&v, act->minval);         LVGL_update_scale(scale, SCALE_MINVAL, &v, privdata); }
+        if ( SCALE_HAS_PROP(act, SCALE_MAXVAL))         { V_Set_I16(&v, act->maxval);         LVGL_update_scale(scale, SCALE_MAXVAL, &v, privdata); }
+        if ( SCALE_HAS_PROP(act, SCALE_TOTAL_TICKS))    { V_Set_U16(&v, act->totalticks);     LVGL_update_scale(scale, SCALE_TOTAL_TICKS, &v, privdata); }
+        if ( SCALE_HAS_PROP(act, SCALE_MAJ_TICK_DIST))  { V_Set_U16(&v, act->tickdistance);   LVGL_update_scale(scale, SCALE_MAJ_TICK_DIST, &v, privdata); }
         /* 11 */
-        if ( SCALE_HAS_PROP(act, SCALE_SHOWLABEL))      lv_scale_set_label_show(scale, act->bLabelShow != 0);
-        if ( SCALE_HAS_PROP(act, SCALE_ANGLE_RANGE))    lv_scale_set_angle_range(scale, act->angle_range);
-        if ( SCALE_HAS_PROP(act, SCALE_ROTATE))         lv_scale_set_rotation(scale, act->rotation);
-        GUI_dump_coords(scale);
+        if ( SCALE_HAS_PROP(act, SCALE_SHOWLABEL))      { V_Set_U8(&v, act->bLabelShow != 0); LVGL_update_scale(scale, SCALE_SHOWLABEL, &v, privdata); }
+        if ( SCALE_HAS_PROP(act, SCALE_ANGLE_RANGE))    { V_Set_U16(&v, act->angle_range);    LVGL_update_scale(scale, SCALE_ANGLE_RANGE, &v, privdata); }
+        if ( SCALE_HAS_PROP(act, SCALE_ROTATE))         { V_Set_U16(&v, act->rotation);       LVGL_update_scale(scale, SCALE_ROTATE, &v, privdata); }
 
-        /* update associated image */
-        if ( SCALE_HAS_PROP(act, SCALE_CURVAL) && SCALE_HAS_PROP(act, SCALE_MYIMAGE) ) {
-            lv_scale_set_image_needle_value(scale, act->myimage, act->curval);
-        }
+        /* finally the three private values */
+        LVGL_update_scale(scale, SCALE_CURVAL,  SCALE_HAS_PROP(act, SCALE_CURVAL)  ? V_Set_I16(&v, act->curval),&v  : NULL, privdata);
+        LVGL_update_scale(scale, SCALE_MYIMAGE, SCALE_HAS_PROP(act, SCALE_MYIMAGE) ? V_Set_Ref(&v, act->myimage),&v : NULL, privdata);
+        LVGL_update_scale(scale, SCALE_MYLABEL, SCALE_HAS_PROP(act, SCALE_MYLABEL) ? V_Set_Ref(&v, act->mylabel),&v : NULL, privdata);
 
-        /* update associated label */
-        if ( SCALE_HAS_PROP(act, SCALE_CURVAL) && SCALE_HAS_PROP(act, SCALE_MYLABEL) ) {
-            Scale_Update_Label ( act->mylabel, act->curval);
-        }
-
+        //GUI_dump_coords(arc);
         return scale;
 
     }
@@ -617,7 +547,7 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
       /* Iterate thru all defined imgs and insert them into global item list */
       /* List of defined imgs _MUST BE_ terminated by NULL,NULL */
       for ( uint32_t i = 0; i < AllImagesNum1; i++ ) {
-         img = LL_New_Element(GUI_ELEM_RAWIMG,  (void *)AllImages1[i].image, AllImages1[i].imagename, &AllImages1[i], 0);
+         img = LL_New_Element(GUI_ELEM_RAWIMG,  (void *)AllImages1[i].image, AllImages1[i].imagename, &AllImages1[i], 0, 0);
          LL_append(&GUI_item_list, img);
       }
       printf("%d images loaded from 0x%p\n", AllImagesNum1,AllImages1);
@@ -634,7 +564,7 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
       /* Iterate thru all defined fonts and insert them into global item list */
       /* List of defined fonts _MUST BE_ terminated by NULL,NULL */
       for ( uint32_t i = 0; i < AllFontNum1; i++ ) {
-         font = LL_New_Element(GUI_ELEM_FONT,  (void *)AllFonts1[i].font, AllFonts1[i].fontname, &AllFonts1[i], AllFonts1[i].fontsize);
+         font = LL_New_Element(GUI_ELEM_FONT,  (void *)AllFonts1[i].font, AllFonts1[i].fontname, &AllFonts1[i], AllFonts1[i].fontsize, 0);
          LL_append(&GUI_item_list, font);
       }
       printf("%d fonts loaded from 0x%p\n", AllFontNum1,AllFonts1);
@@ -833,26 +763,32 @@ struct TxInfoT {
 
     static void GUI_create_entry_Core1(uint8_t *data, const GUI_Edit_T *editdata )
     {
+        GUI_Edit_Enum etype = editdata->gui_elem_type;
+        
         /* create a full copy of actual data structure */
         uint8_t *copy = my_malloc(editdata->total_size);
         if ( !copy ) return;
     
         memcpy_fast(copy, data, editdata->total_size);
 
-        /* Create associated LVGL obj */
+        /* First create associated LVGL obj */
         void *lvgl_obj=NULL;
         lvgl_obj = GUI_Create_or_update_LVGL_Core1( data, editdata, lvgl_obj );
 
+        /* Therafter create GUI item list entry */
         List_Elem_T *new;
         /* find position of "name" field in raw data */
         char *name = (char *)(copy + editdata->name_ofs);
         /* In case of fonts: also get the fontsize and store as additional item */
-        uint32_t additional = ( editdata->gui_elem_type == GUI_ELEM_FONT ? ((GUI_Font_T*)data)->fontsize: 0); 
+        uint32_t additional = ( etype == GUI_ELEM_FONT ? ((GUI_Font_T*)data)->fontsize: 0); 
     
-        new = LL_New_Element( editdata->gui_elem_type, lvgl_obj, name, copy, additional );
+        new = LL_New_Element( etype, lvgl_obj, name, copy, additional, editdata->priv_datasize );
         LL_append(&GUI_item_list, new );
 
-        printf("Core1: %s %s created\n",Editinfo[editdata->gui_elem_type].name,name);
+        printf("Core1: %s %s created\n",Editinfo[etype].name,name);
+
+        /* In case of labels or scales: Update immediately after creation to have access to private data in list elem */
+        if ( etype == GUI_ELEM_LABEL || etype == GUI_ELEM_SCALE ) GUI_Create_or_update_LVGL_Core1( data, editdata, lvgl_obj );
     }
 
     void GUI_delete_entry_Core1(uint8_t *data, GUI_Edit_Enum gui_elem )
@@ -892,6 +828,8 @@ struct TxInfoT {
             /* first delete internal edit data */
             printf("%s %s deleted\n",Editinfo[editdata->gui_elem_type].name,name);
             my_free( del->ll_entry);
+            /* if we have private data, delete it, too */
+            if ( del->private_data ) my_free( del->private_data );
             /* thereafter delete element in GUI item list */
             LL_delete(&GUI_item_list, del);
         }

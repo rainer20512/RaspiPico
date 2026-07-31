@@ -20,6 +20,7 @@ const  GUI_Edit_T edit_screen = {
   .used_ofs      = offsetof(GUI_Screen_T, used),
   .name_ofs      = offsetof(GUI_Screen_T, name),
   .total_size    = sizeof  (GUI_Screen_T),
+  .priv_datasize = 0,   /* No private data */
   .workspace     = (uint8_t*)&cur_screen,
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .receipe   = {  
@@ -51,6 +52,7 @@ const  GUI_Edit_T edit_style = {
   .used_ofs      = offsetof(GUI_Style_T, used),
   .name_ofs      = offsetof(GUI_Style_T, name),
   .total_size    = sizeof  (GUI_Style_T),
+  .priv_datasize = 0,   /* No private data */
   .workspace     = (uint8_t*)&cur_style,
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .receipe   = {  
@@ -99,14 +101,17 @@ const  GUI_Edit_T edit_label = {
   .used_ofs      = offsetof(GUI_Label_T, used),
   .name_ofs      = offsetof(GUI_Label_T, name),
   .total_size    = sizeof  (GUI_Label_T),
+  .priv_datasize = sizeof  (GUI_LabelPrivate_T),  /* A Label has private data */
   .workspace     = (uint8_t*)&cur_label,
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .receipe   = { 
+/*01*/
     { LABEL_STYLE,        "style",        GUI_STYLE,  offsetof(GUI_Label_T, style) }, 
     { LABEL_ALIGN,        "align",        GUI_UINT8,  offsetof(GUI_Label_T, align) }, 
     { LABEL_X0,           "x",            GUI_UINT16, offsetof(GUI_Label_T, x0) }, 
     { LABEL_Y0,           "y",            GUI_UINT16, offsetof(GUI_Label_T, y0) }, 
     { LABEL_CAPTION,      "caption",      GUI_STRING, offsetof(GUI_Label_T, caption) }, 
+/*06*/
     { LABEL_CURVAL,       "curval",       GUI_INT32,  offsetof(GUI_Label_T, ind_value) }, 
     { LABEL_SCALEFACTOR,  "scaler",       GUI_INT8,   offsetof(GUI_Label_T, ind_scalefactor) }, 
     { LABEL_FORMATSTR,    "formatstr",    GUI_STRING, offsetof(GUI_Label_T, ind_formatstr) }, 
@@ -120,6 +125,7 @@ const  GUI_Edit_T edit_arc = {
   .used_ofs      = offsetof(GUI_Arc_T, used),
   .name_ofs      = offsetof(GUI_Arc_T, name),
   .total_size    = sizeof  (GUI_Arc_T),
+  .priv_datasize = 0,   /* No private data */
   .workspace     = (uint8_t*)&cur_arc,
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .receipe   = { 
@@ -146,6 +152,7 @@ const  GUI_Edit_T edit_scale = {
   .used_ofs      = offsetof(GUI_Scale_T, used),
   .name_ofs      = offsetof(GUI_Scale_T, name),
   .total_size    = sizeof  (GUI_Scale_T),
+  .priv_datasize = sizeof  (GUI_ScalePrivate_T), /* A scale has private data */
   .workspace     = (uint8_t*)&cur_scale,
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .receipe   = { 
@@ -179,6 +186,7 @@ const  GUI_Edit_T edit_image = {
   .used_ofs      = offsetof(GUI_Image_T, used),
   .name_ofs      = offsetof(GUI_Image_T, name),
   .total_size    = sizeof  (GUI_Image_T),
+  .priv_datasize = 0,   /* No private data */
   .workspace     = (uint8_t*)&cur_image,
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .receipe   = { 
@@ -203,6 +211,7 @@ const  GUI_Edit_T edit_datapoint = {
   .used_ofs      = offsetof(GUI_Datapoint_T, used),
   .name_ofs      = offsetof(GUI_Datapoint_T, dpname),
   .total_size    = sizeof  (GUI_Datapoint_T),
+  .priv_datasize = 0,   /* No private data */
   .workspace     = (uint8_t*)&cur_dp,
   /* Element Order has to be the same as in corresponding "used"-bit set !!! */
   .receipe   = { 

@@ -10,6 +10,7 @@
 #include "config/config.h"
 
 #include <malloc.h>
+#include <string.h>
 
 #include "debug/debug_helper.h"
 #include "hardware/timer.h"
@@ -77,12 +78,14 @@ uint32_t pico_get_coreID(void)
 }
 
 /******************************************************************************
- * my own malloc enhanced with message when malloc fails
+ * my own malloc enhanced with zeroing memory and a message when malloc fails
  *****************************************************************************/
 void *my_malloc(size_t bytes)
 {
     void *ret = malloc(bytes);
-    if ( !ret ) { 
+    if ( ret ) { 
+        memset(ret, 0, bytes);
+    } else {
         DEBUG_PRINTF("Err: malloc of %d bytes failed!", bytes);
     }
     return ret;

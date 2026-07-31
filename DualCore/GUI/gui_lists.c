@@ -17,16 +17,18 @@
 
 /*-----------------------------------------------------------------------------
  * @brief Create a new List entry from heap and initialize all fields, 
- * @param type     - Type of associated GUI element
- * @param lvgl_obj - corresponding lvgl object ( lv_font_t, style or lv_obj_t ), or NULL
- *                   if no lvgl object is associated so far
- * @param name     - ptr to objects name within object data 
- * @param entry    - typeless ptr to GUI element data
+ * @param type       - Type of associated GUI element
+ * @param lvgl_obj   - corresponding lvgl object ( lv_font_t, style or lv_obj_t ), or NULL
+ *                     if no lvgl object is associated so far
+ * @param name       - ptr to objects name within object data 
+ * @param entry      - typeless ptr to GUI element data
+ * @param additional - value of Lists "additional" attribute
+ * @param priv_size  - number of bytes to allocate on heap for internal element attributes
  * @retval - new entry or NULL when no memory on heap     
 
  * @note  no insertion into list
  *---------------------------------------------------------------------------*/
-List_Elem_T *LL_New_Element( GUI_Edit_Enum type, void *lvgl_obj, char *name, void *entry, uint16_t additional )
+List_Elem_T *LL_New_Element( GUI_Edit_Enum type, void *lvgl_obj, char *name, void *entry, uint16_t additional, uint16_t priv_size )
 {
     List_Elem_T *newentry = my_malloc(sizeof(List_Elem_T));
     if ( newentry )  { 
@@ -35,6 +37,13 @@ List_Elem_T *LL_New_Element( GUI_Edit_Enum type, void *lvgl_obj, char *name, voi
       newentry->ll_name       = name; 
       newentry->ll_entry      = entry;
       newentry->ll_additional = additional;
+      /* If we have private data, also allocate memory from heap */
+      if ( priv_size > 0 ) 
+          newentry->private_data = my_malloc(priv_size);
+          /* memory is zeroed by "my_malloc" */
+      else
+          newentry->private_data  = NULL;
+
       /* Not insertet in any list at this point */
       newentry->ll_next       = NULL;
     }

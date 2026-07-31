@@ -130,6 +130,25 @@ DPList_Elem_T *DP_Append( DPList_Elem_T **list)
 }
 
 /*-----------------------------------------------------------------------------
+ * @brief Delete all Datapoints in list
+ * @param list - Datapoint list to be searched
+ *---------------------------------------------------------------------------*/
+void DP_Reset(DPList_Elem_T **list)
+{
+    DPList_Elem_T *current = *list;
+    DPList_Elem_T *next;
+    while (current) {
+      next = current->next;
+      my_free(current);
+      current = next;
+    }
+    /* Finally set list ptr to NULL */
+    *list = NULL;
+}
+
+
+
+/*-----------------------------------------------------------------------------
  * @brief Searches for a datapoint whose ID matches the given ID
  * @param list - Datapoint list to be searched
  * @param id   - ID to search for 

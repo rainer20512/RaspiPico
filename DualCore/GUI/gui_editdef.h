@@ -54,6 +54,7 @@ typedef struct {
   uint16_t   used_ofs;          /* offset of "used" bitfield in data structure    */
   uint16_t   name_ofs;          /* offset of "name" string in data structure      */
   uint16_t   total_size;        /* total size of GUI-Element data structure       */
+  uint16_t   priv_datasize;     /* if we have private data, specify its size here */
   uint8_t    *workspace;        /* pointer to associated GUI element data         */
   Edit_Receipe_T receipe[];     /* array edit receipes for all gui elements       */
 } GUI_Edit_T;

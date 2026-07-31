@@ -17,6 +17,8 @@
   #include "../../lvgl/lvgl.h"
 #endif
 
+#include <string.h>   /* Due to use of "strlen" in macro */
+
 /*************************************************************************************************************
  * Codes for possible variant Datatypes 
  *************************************************************************************************************/
@@ -105,6 +107,8 @@ static inline void *        V_Set_Ref   ( Variant_T* v, void     *ptr){ v->type=
 static inline void          V_Set_Null  ( Variant_T* v) { v->type=VAR_NULL; };
 static inline String_T      V_Set_Str   ( Variant_T* v, char *text, size_t len) { v->type=VAR_STRING; v->str.text = text; v->str.len=len; return v->str; };
 static inline void          V_Set_Font  ( Variant_T* v, String_T fontname, uint8_t fontsize ) { v->type=VAR_FONT; v->font.fontname = fontname; v->font.fontsize = fontsize; };
+
+#define                     V_Set_CStr(v, str)   V_Set_Str(v, (str), strlen(str))
 
 /* Get copy of String data ( VAR_STRING, VAR_FONT */
 char     *V_to_cstr       (char *dest, Variant_T *v, size_t maxlen);

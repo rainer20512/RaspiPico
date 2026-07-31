@@ -41,20 +41,8 @@ DPList_Elem_T *DP_Setup_ListElem (char *dpname, char *elemname, char *propname);
 DPList_Elem_T *DP_Find           (DPList_Elem_T *list);
 DPList_Elem_T *DP_Find_ID        (DPList_Elem_T *list, uint8_t id);
 DPList_Elem_T *DP_Append         ( DPList_Elem_T **list);
+void          DP_Reset           (DPList_Elem_T **list);
 bool          DP_Update          ( uint8_t id, Variant_T *v );
-
-#if 0
-DPList_Elem_T *LL_New_Element( GUI_Edit_Enum type, void *lvgl_obj, char *name, void *entry, uint16_t additional );
-DPList_Elem_T *LL_append( DPList_Elem_T **llist, DPList_Elem_T *newentry );
-DPList_Elem_T *LL_find_nth ( DPList_Elem_T *llist, GUI_Edit_Enum search_type, uint32_t position );
-DPList_Elem_T *LL_next ( DPList_Elem_T *llist);
-DPList_Elem_T *LL_iterate_by_type ( DPList_Elem_T *llist, GUI_Edit_Enum search_type );
-DPList_Elem_T *LL_find_by_type_n_name ( DPList_Elem_T *llist, GUI_Edit_Enum search_type, const char *name );
-DPList_Elem_T *LL_find_by_type_name_additional ( DPList_Elem_T *llist, GUI_Edit_Enum search_type, const char *name, uint32_t additional );
-DPList_Elem_T *LL_find_by_type_n_obj  ( DPList_Elem_T *llist, GUI_Edit_Enum search_type, void *lvgl_obj );
-void        LL_delete ( DPList_Elem_T **llist, DPList_Elem_T *delptr );
-#endif
-
 
 #if DEBUG_GUIEDIT > 0
   void DP_Dump ( DPList_Elem_T *llist  );

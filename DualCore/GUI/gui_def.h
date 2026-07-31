@@ -229,6 +229,25 @@ typedef struct {
   char          name[GUI_MAX_NAMELEN];          /* User friendly name */      
 } GUI_Label_T;
 
+/* Labels have a private part, ie data, that is not a direct LVGL object prpoerty, but is used by GUI internally */
+/* in case of labels these private properties are used to compute/format the labels caption at runtime           */
+#define LBLPRIV_CURVAL      0
+#define LBLPRIV_SCALEFACTOR 1
+#define LBLPRIV_FORMATSTR   2
+#define LBLPRIV_CAPTION     3
+
+#define LBLPRIV_HAS_PROP(priv, id) ( (priv)->used &  (  1 << (id) ) )
+#define LBLPRIV_SET_PROP(priv, id) ( (priv)->used |=  ( 1 << (id) ) )
+#define LBLPRIV_CLR_PROP(priv, id) ( (priv)->used &= ~( 1 << (id) ) )
+
+typedef struct {
+  int8_t        used;                           /* bitfield to indicate properties, that are set            */
+  int8_t        ind_scalefactor;                /* scale factor, ie value is multiplied by 10^scalefactor   */
+  int32_t       ind_value;                      /* value to be used as caption, fomatted                    */       
+  char          ind_formatstr[GUI_MAX_NAMELEN]; /* printf-like format str, to be applied to value*10^factor */
+  char          ind_caption[GUI_MAX_NAMELEN];   /* fixed caption string, set if no computed caption is used */
+} GUI_LabelPrivate_T;
+
 
 /* Enumeration of all properties of a GUI_Arc_T */
 /* Order has to be the same as in corresponding Edit receipe !!! */
@@ -312,6 +331,23 @@ typedef struct {
   lv_obj_t      *mylabel;                   /* associated label                     */
   char          name[GUI_MAX_NAMELEN];      /* User friendly name */      
 } GUI_Scale_T;
+
+/* Scales have a private part, ie data, that is not a direct LVGL object property, but is used by GUI internally */
+/* in case of labels these private properties are: associated image, associated label and current needle value   */
+#define SCAPRIV_CURVAL      0
+#define SCAPRIV_MYIMAGE     1
+#define SCAPRIV_MYLABEL     2
+
+#define SCAPRIV_HAS_PROP(priv, id) ( (priv)->used &  (  1 << (id) ) )
+#define SCAPRIV_SET_PROP(priv, id) ( (priv)->used |=  ( 1 << (id) ) )
+#define SCAPRIV_CLR_PROP(priv, id) ( (priv)->used &= ~( 1 << (id) ) )
+
+typedef struct {
+  int8_t   used;            /* bitfield to indicate properties, that are set  */
+  int16_t  prv_curval;      /* current needle value                           */
+  lv_obj_t *prv_myimage;    /* associated (needle) image                      */
+  lv_obj_t *prv_mylabel;    /* associated label ( for value display )         */
+} GUI_ScalePrivate_T;
 
 
 /* Enumeration of all properties of a GUI_Image_T */

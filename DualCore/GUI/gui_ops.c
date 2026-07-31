@@ -6,6 +6,7 @@
 #include "../GUI/gui_ops.h"
 #include "../GUI/gui_edit.h"
 #include "../GUI/gui_lists.h"
+#include "../GUI/dp_lists.h"
 
 #include "debug/debug_helper.h"
 
@@ -229,6 +230,9 @@ void GUI_Init_Ops_Core1(void)
             }         
             ll = next;
         }
+
+        /* third: delete all datapoints */
+        DP_Reset(&GUI_DP_LIST);
 
         /* finaylly clear screen */
         lv_obj_clean(lv_scr_act());
