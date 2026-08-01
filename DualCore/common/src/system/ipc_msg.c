@@ -264,6 +264,34 @@ typedef struct {
   }
 
   /******************************************************************************
+   * IPC Core0 send Datapoint update to Core 1
+   *****************************************************************************/
+  static bool Core0_Send_Datapoint_Internal ( void* userdata, IPC_ResultCB pfAck )
+  { 
+    /* 
+     * Payload of type "IPC_DP_Xfer_Buff_T" are first two bytes in userdata: 
+     */
+    
+    /* First check size */
+    uint16_t size  = *((uint16_t *)userdata);
+
+    /* Copy to sendbuf and msg Core1 */
+    buf0to1.uSize = size;
+    memcpy_fast(buf0to1.buff, userdata, size);
+    /* Send */
+    IPC_SignalCore0to1 (IPC_MSG_0TO1_DATAPOINT, true, pfAck );
+    return true;
+  }
+
+  bool Core0_Send_Datapoint ( void* arg, IPC_ResultCB onCompletion )
+  {
+    FSM_Init(&ipcfsm, arg, Core0_Send_Datapoint_Internal, FSM_Ipc );
+    if ( onCompletion ) FSM_SetCB(&ipcfsm, onCompletion);
+    FSM_Start(&ipcfsm);
+    return true;
+  }
+
+  /******************************************************************************
    * IPC Delete all GUI and LVGL elements in Core1
    *****************************************************************************/
   static bool Core0_Send_GUIresetInternal ( void* userdata, IPC_ResultCB pfAck )
@@ -400,6 +428,11 @@ typedef struct {
         break;
       case IPC_MSG_0TO1_GUIELEM:
         Core1_Receive_LVGL_obj(pbuf0to1->buff, pbuf0to1->uSize);
+        /* No new payload in ACK */
+        ret = false;
+        break;
+      case IPC_MSG_0TO1_DATAPOINT:
+        Core1_Receive_DP_update(pbuf0to1->buff, pbuf0to1->uSize);
         /* No new payload in ACK */
         ret = false;
         break;

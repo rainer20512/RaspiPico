@@ -112,6 +112,9 @@ const  GUI_Edit_T edit_label = {
     { LABEL_Y0,           "y",            GUI_UINT16, offsetof(GUI_Label_T, y0) }, 
     { LABEL_CAPTION,      "caption",      GUI_STRING, offsetof(GUI_Label_T, caption) }, 
 /*06*/
+    { LABEL_PIVOTX,       "pivotx",       GUI_UINT16, offsetof(GUI_Label_T, pivotx) }, 
+    { LABEL_PIVOTY,       "pivoty",       GUI_UINT16, offsetof(GUI_Label_T, pivoty) }, 
+    { LABEL_ROTATE,       "rotate",       GUI_INT16,  offsetof(GUI_Label_T, rot_angle) }, 
     { LABEL_CURVAL,       "curval",       GUI_INT32,  offsetof(GUI_Label_T, ind_value) }, 
     { LABEL_SCALEFACTOR,  "scaler",       GUI_INT8,   offsetof(GUI_Label_T, ind_scalefactor) }, 
     { LABEL_FORMATSTR,    "formatstr",    GUI_STRING, offsetof(GUI_Label_T, ind_formatstr) }, 

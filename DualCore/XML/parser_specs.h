@@ -18,13 +18,7 @@
 #define ESCAPEPROLOG          '?'
 #define ESCAPESLASH           '/'
 
-#if 0
-/****************************************************************************** 
- * Separator to split attribute value and data point name
- *****************************************************************************/ 
-#define STRESCAPECHAR         '\\'
-#define DPSEPARATOR           ':'
-#endif
+
 
 /****************************************************************************** 
  * the follwoing names are used to identify valid gui elements in XML parser,
@@ -43,9 +37,12 @@
  * Specify max length of a property or element name in XML
  * has an impact on RAM useage
  *****************************************************************************/ 
-#define ID_MAXNAMELEN         16
-
-#define XML_PARSER_VERSION    "1.0.2"
+#define ID_MAXNAMELEN           16
+#define XML_PARSER_VER_MAJOR    1
+#define XML_PARSER_VER_MINOR    0
+#define XML_PARSER_VER_BUILD    2
+#define XML_PARSER_VERSION_STR  STR(XML_PARSER_VER_MAJOR) "." STR(XML_PARSER_VER_MINOR) "." STR(XML_PARSER_VER_BUILD)
+#define XML_PARSER_VERSION_BIN  ( ( XML_PARSER_VER_MAJOR << 10 ) | ( XML_PARSER_VER_MINOR <<5 ) | XML_PARSER_VER_BUILD )
 
 /* Root may contain component(s) plus optional prolog, NULL terminated array */
 extern const char *xml_root[];

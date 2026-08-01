@@ -920,7 +920,25 @@ static lv_obj_t * obj=NULL;
             CMD_get_one_word( &word, &wordlen );
             temp = CMD_to_number ( word, wordlen );
             V_Set_U32(&v, temp);
-            printf("DP update %s\n", DP_Update(r, &v ) ?  "ok" : "failed");
+            #if RP2040_M0_0 
+              r = DP_Update_Core0(r, &v );
+            #elif RP2040_M0_1
+              r = DP_Update_Core1(r, &v );
+            #endif
+            printf("DP update %s\n", r ?  "ok" : "failed");
+            break;
+    	case 8:
+            if ( CMD_argc() < 2 ) {
+              printf("Usage: 'Set data <dpnum> <data>\n");
+              return false;
+            } 
+            CMD_get_one_word( &word, &wordlen );
+            r = CMD_to_number ( word, wordlen );
+            CMD_get_one_word( &word, &wordlen );
+            temp = CMD_to_number ( word, wordlen );
+            V_Set_U32(&v, temp);
+            r = DP_Update_Core1(r, &v );
+            printf("DP update %s\n", r ?  "ok" : "failed");
             break;
 #if USE_LVGL > 0
     	case 90:
@@ -998,6 +1016,7 @@ static lv_obj_t * obj=NULL;
         { "Image Editor",           ctype_fn, .exec.fn = GUI_Test_Menu,VOID(5), "Edit Image(s)" },
         { "Datapoint Editor",       ctype_fn, .exec.fn = GUI_Test_Menu,VOID(6), "Edit a Datapoint" },
         { "Set datapoint",          ctype_fn, .exec.fn = GUI_Test_Menu,VOID(7), "Set datapoint data" },
+        { "Set DP direct",          ctype_fn, .exec.fn = GUI_Test_Menu,VOID(8), "Set DP in Core1" },
 
 #if USE_LVGL > 0
         { "Draw Label",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(90), "Draw a fixed Label" },

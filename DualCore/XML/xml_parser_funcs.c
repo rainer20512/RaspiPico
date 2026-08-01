@@ -733,7 +733,7 @@ bool parse_attributes ( char *token, uint32_t tokenlength, uint32_t state )
  *****************************************************************************/
 const char *xml_parser_version(void)
 {
-  return XML_PARSER_VERSION;
+  return XML_PARSER_VERSION_STR;
 }
 
 

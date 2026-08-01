@@ -227,10 +227,14 @@ void LVGL_update_label  ( lv_obj_t *lbl, uint8_t propidx, Variant_T *v, void *pr
  
     switch(propidx) {
       /* prop #0 - #3*/
-      case LABEL_STYLE:   if (bSet) lv_obj_add_style(lbl, V_Get_Ref(v), 0);       break;
-      case LABEL_ALIGN:   if (bSet) lv_obj_set_style_align(lbl, V_Get_U8(v), 0);  break;
-      case LABEL_X0:      if (bSet) lv_obj_set_x(lbl, V_Get_U16(v));              break;
-      case LABEL_Y0:      if (bSet) lv_obj_set_y(lbl, V_Get_U16(v));              break;
+      case LABEL_STYLE:   if (bSet) lv_obj_add_style(lbl, V_Get_Ref(v), 0);                   break;
+      case LABEL_ALIGN:   if (bSet) lv_obj_set_style_align(lbl, V_Get_U8(v), 0);              break;
+      case LABEL_X0:      if (bSet) lv_obj_set_x(lbl, V_Get_U16(v));                          break;
+      case LABEL_Y0:      if (bSet) lv_obj_set_y(lbl, V_Get_U16(v));                          break;
+      case LABEL_PIVOTX:  if (bSet) lv_obj_set_style_transform_pivot_x(lbl, V_Get_U16(v),0);  break;
+      case LABEL_PIVOTY:  if (bSet) lv_obj_set_style_transform_pivot_y(lbl, V_Get_U16(v),0);  break;
+      case LABEL_ROTATE:  if (bSet) lv_obj_set_style_transform_rotation(lbl, V_Get_I16(v),0); break;
+
       /* the remaining properties belong to private data items or depend from them ( caption )*/
       default:
           LVGL_update_label_ind(lbl, propidx, v, priv_data );

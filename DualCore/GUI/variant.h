@@ -33,7 +33,7 @@ typedef enum {
   VAR_INT16   = 7,
   VAR_INT32   = 8,
   VAR_STRING  = 9,
-  VAR_STYLE   = 10,
+  VAR_STYLE   = 10, 
   VAR_FONT    = 11,
   VAR_REF     = 12, 
   VAR_NULL    = 13,
@@ -44,8 +44,8 @@ typedef enum {
  * Definition of String datatype with <ptr to char vector>/<length>
  *************************************************************************************************************/
 typedef struct { 
-    char *text;
-    size_t len;
+    char   *text;
+    uint8_t len;
 } String_T;
 
 /* helper struct to define a string or fontname by char vector and length */ 

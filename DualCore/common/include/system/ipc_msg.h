@@ -24,6 +24,7 @@
 #define IPC_MSG_0TO1_QRY_VERSNINFO 5         /* Core0 queries LVGL Version from Core1                         */
 #define IPC_MSG_0TO1_QRY_GUIINFO   6         /* Core0 queries GUI_item_list ptr from Core1                    */ 
 #define IPC_MSG_0TO1_GUIELEM       7         /* Core0 sends GUI Element data to Core 1                        */
+#define IPC_MSG_0TO1_DATAPOINT     8         /* Core0 sends one datapoint update to Core 1                    */
 
 bool Core0_Handle_Msg           (uint8_t msgID);
 void task_handle_ipc0           ( uint32_t arg );
@@ -36,6 +37,7 @@ bool Core0_SendEcho             ( void* arg, IPC_ResultCB onCompletion );  /* fo
 bool Core0_Qry_Versioninfo      ( void* arg, IPC_ResultCB onCompletion );
 bool Core0_Qry_GUIinfo          ( void* arg, IPC_ResultCB onCompletion );
 bool Core0_Send_Gui_Elem        ( void* arg, IPC_ResultCB onCompletion );  /* Transfer one GUI element */
+bool Core0_Send_Datapoint       ( void* arg, IPC_ResultCB onCompletion );  /* Transfer one Datapoint */
 bool Core0_Send_GUIreset        ( void* arg, IPC_ResultCB onCompletion );
 
 bool Core1_SendEcho             ( void* arg, IPC_ResultCB onCompletion );  /* for testing */

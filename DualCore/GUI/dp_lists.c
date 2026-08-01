@@ -1,5 +1,13 @@
+/**
+ ******************************************************************************
+ * @file    dp_lists.h
+ * @author  Rainer
+ * @brief   Handling of Datapoints
+ ******************************************************************************
+ *
+ ******************************************************************************
+ */
 #include "../GUI/dp_lists.h"
-#if USE_LVGL > 0
 
 #include <stdio.h>
 #include <string.h>
@@ -8,6 +16,9 @@
 #include "../GUI/gui_lists.h"
 #include "../GUI/lvgl_update.h"
 
+#if DEBUG_DATAPOINTS > 0
+    #include "debug/debug_helper.h"
+#endif
 
 
 /* linked list of all datapoints, initially empty */
@@ -18,6 +29,8 @@
     /* Copy if GUI_item_list in Core0, it is read only!! */
     DPList_Elem_T ** REF_Dp_list = NULL;
 #endif
+
+#if RP2040_M0_1 || defined(CORE1_SIM) 
 
 /* static list element, filled by "DP_Create" */
 
@@ -142,8 +155,9 @@ void DP_Reset(DPList_Elem_T **list)
       my_free(current);
       current = next;
     }
-    /* Finally set list ptr to NULL */
-    *list = NULL;
+    /* Finally set list ptr to NULL and ID counter to 0*/
+    *list  = NULL;
+    nextID = 0;
 }
 
 
@@ -162,162 +176,140 @@ DPList_Elem_T *DP_Find_ID(DPList_Elem_T *list, uint8_t id)
     }
     return NULL;
 }
+#endif /* RP2040_M0_1 || defined(CORE1_SIM) */
 
-/*-----------------------------------------------------------------------------
- * @brief Update datapoint ID <id>
- * @param list - Datapoint list to be searched
- * @param id   - ID to search for 
- * @param v    - new value for that datapoint
- * @retval  true, if datapoint exists, false if not
- *---------------------------------------------------------------------------*/
-bool DP_Update ( uint8_t id, Variant_T *v )
-{
-    DPList_Elem_T *list;
-#if  RP2040_M0_0
-    list = *REF_Dp_list;
-#endif
-#if  RP2040_M0_1 || defined(CORE1_SIM)
-    list = GUI_Dp_list;
-#endif
-    DPList_Elem_T *dp = DP_Find_ID(list, id);
-    if ( !dp ) return false;
+/******************************************************************************
+*******************************************************************************
+* Functions/Structure for transferring Datapoint infos between both cores
+*******************************************************************************
+******************************************************************************/
+#include <assert.h>
+#include "system/ipc_msg.h"
 
-    LVGL_update(dp->lvglobj, dp->propidx, v, dp->elemtype );  
-}
-#if 0
+/******************************************************************************
+ * datapoint IPC transfer buffer 
+ * consists of datapoint ID, one Variant plus one string
+ * the string storage is neccessary bcs a Variant holds reference to string
+ * only, not the string data itself
+ * Binary objects cannot be transferred
+ *****************************************************************************/
+typedef struct {
+  uint16_t  buflen;                 /* length of this structure, must be first item */
+  uint16_t  xml_version;            /* sender version to ensure compatibilty */
+  uint8_t   dpID;                   /* datapoint ID                          */
+  Variant_T v;                      /* datapoint value as Variant_T          */
+  char      str[ID_MAXNAMELEN];     /* string data in case of VAR_STRING     */
+  uint8_t   strlen;                 /* string length in case of VAR_STRING   */
+} IPC_DP_Xfer_Buff_T;
 
-/*-----------------------------------------------------------------------------
- * @brief  Find a list entry by type and position in list 
- * @param  search_type - EntryType to search for, LL_NOTYPE = any type
- * @param  position - nth entry in the list of that type, start from beginning
- *         first position is 1!
- * retval  ptr to found entry, NULL if not found
- *---------------------------------------------------------------------------*/
-DPList_Elem_T *LL_find_nth ( DPList_Elem_T *llist, GUI_Edit_Enum search_type, uint32_t position  )
-{
-     
-     if ( position < 1 ) return NULL;
-     while ( llist) {
-      if ( search_type == GUI_ELEM_NOTYPE || search_type == llist->ll_type ) {
-        if ( --position == 0 ) break;
+/* make sure, the IPC transfer buf is capable of store any GUI element */
+static_assert(sizeof(IPC_DP_Xfer_Buff_T) <= IPC_BUFSIZE, "ICP transfer buffer size too small");
+
+
+#if RP2040_M0_1 || defined(CORE1_SIM)
+
+    static IPC_DP_Xfer_Buff_T ipcrecv;
+
+    /*-----------------------------------------------------------------------------
+     * @brief Update datapoint ID <id>
+     * @param list - Datapoint list to be searched
+     * @param id   - ID to search for 
+     * @param v    - new value for that datapoint
+     * @retval  true, if datapoint exists, false if not
+     *---------------------------------------------------------------------------*/
+    bool DP_Update_Core1 ( uint8_t id, Variant_T *v )
+    {
+        DPList_Elem_T *dp = DP_Find_ID(GUI_Dp_list, id);
+        if ( !dp ) return false;
+
+        LVGL_update(dp->lvglobj, dp->propidx, v, dp->elemtype );  
+    }
+
+    static bool DP_Unpack( IPC_DP_Xfer_Buff_T *recvbuf,uint8_t *data, uint16_t buflen)
+    {
+        /* check length */
+            if ( buflen != sizeof(IPC_DP_Xfer_Buff_T) ) {
+            #if DEBUG_DATAPOINTS > 0
+                DEBUG_PRINTF("Err: DP_Unpack: Illegal buf size %d\n", buflen);
+            #endif
+            return false;
+        }
+
+        memcpy_fast(recvbuf, data, buflen);
+
+        /* check version */
+        if ( recvbuf->xml_version != XML_PARSER_VERSION_BIN ) {
+            #if DEBUG_DATAPOINTS > 0
+                DEBUG_PRINTF("Err: DP_Unpack: Parser version mismatch\n");
+            #endif
+            return false;
+        }
+
+        /* in case of string, adjust Variants string pointer */
+        if ( recvbuf->v.type == VAR_STRING ) {
+            recvbuf->v.str.text = recvbuf->str;
+            /* length is unchanged */
+       }
+
+        return true;
+    }
+    /******************************************************************************
+     * @brief  Core1 received an Gui element description via IPC. The data is
+     *         still stored in IPC_Buff
+     *         to free the ipc buf asap, copy content to a IPC_GUI_Xfer_Buff_T
+     *         variable and continue processing on that variable
+     * @param  data     - ptr to IPC receive buffer 
+     * @param  buflen   - number of bytes in that buffer
+     ******************************************************************************/
+    void Core1_Receive_DP_update(uint8_t *data, uint16_t buflen)
+    {
+      /* unpack data into recvbuf */
+      if ( DP_Unpack( &ipcrecv, data, buflen ) ) {
+          /* and update datapoint */
+          bool ret = DP_Update_Core1 ( ipcrecv.dpID, &ipcrecv.v );
+          #if DEBUG_DATAPOINTS > 0
+              DEBUG_PRINTF("Received %ssuccessful DP update from ID %d\n", ret ? "" : "un", ipcrecv.dpID );
+          #endif
       }
-      llist = llist->ll_next;
-     }
+    }
 
-     return llist;
-}
-    
-/*-----------------------------------------------------------------------------
- * @brief  return ptr to next list element
- * @note   only to hide the internal 'next' field
- *---------------------------------------------------------------------------*/
-DPList_Elem_T *LL_next ( DPList_Elem_T *llist)
+
+#endif /* RP2040_M0_1 || defined(CORE1_SIM) */
+
+#if RP2040_M0_0
+
+static IPC_DP_Xfer_Buff_T ipcsend;
+
+static bool DP_Pack( uint8_t id, Variant_T *v )
 {
-  if ( llist ) 
-    return llist->ll_next;
-  else
-    return NULL;
+    /* Ensure, only valid types are transferred */
+    if ( v->type == VAR_STYLE || v->type == VAR_FONT || v->type == VAR_REF ) {
+        #if DEBUG_DATAPOINTS > 0
+            DEBUG_PRINTF("Err: DP_Pack: Illegal Variant type %d\n", v->type);
+        #endif
+        return false;
+    }
+
+    ipcsend.buflen      = sizeof(IPC_DP_Xfer_Buff_T);
+    ipcsend.xml_version = XML_PARSER_VERSION_BIN;
+    ipcsend.dpID        = id;
+    ipcsend.v           = *v;
+
+    /* in case of string copy string data */
+    if ( v->type == VAR_STRING ) {
+      memcpy_fast(ipcsend.str, v->str.text, v->str.len);
+      ipcsend.strlen    = v->str.len;
+    }
+
+    return true;
 }
 
-/*-----------------------------------------------------------------------------
- * @brief  Iterate thru all list entries of a certain type 
- * @param  search_type - EntryType to search for, LL_NOTYPE = any type
- * @param  ptr - pointer to the actual list element,
- *         initialize to list head
- * @retval ptr to found entry
- * @note   to progress, caller must use LL_next
- *---------------------------------------------------------------------------*/
-DPList_Elem_T *LL_iterate_by_type ( DPList_Elem_T *llist, GUI_Edit_Enum search_type )
+bool DP_Update_Core0 ( uint8_t id, Variant_T *v )
 {
-     while ( llist) {
-      if ( search_type == GUI_ELEM_NOTYPE || search_type == llist->ll_type ) return llist;
-      llist = llist->ll_next;
-    }
-    return llist;
+    if ( DP_Pack(id, v) ) Core0_Send_Datapoint ( &ipcsend, NULL );
+    return true;
 }
-    
-/*-----------------------------------------------------------------------------
- * @brief  Find element of certain Type and Name
- * @param  llist       - ptr to linked list head
- * @param  search_type - EntryType to search for, LL_NOTYPE = any type
- * @param  name        - name to search for (case sensitive )
- * @retval ptr to found entry, NULL if no match
- *---------------------------------------------------------------------------*/
-DPList_Elem_T *LL_find_by_types_n_name ( DPList_Elem_T *llist)
-{   
-     while ( llist) {
-      if ( (search_type == GUI_ELEM_NOTYPE || search_type == llist->ll_type ) && strcmp(llist->ll_name, name) == 0 ) return llist;
-      llist = llist->ll_next;
-    }
-    return NULL;
-}
-
-/*-----------------------------------------------------------------------------
- * @brief  Find element of certain Type and additional info and optionally Name
- * @param  llist       - ptr to linked list head
- * @param  search_type - EntryType to search for, LL_NOTYPE = any type
- * @param  name        - name to search for (optional, case sensitive )
- * @param  additional  - additional property 
- * @retval ptr to found entry, NULL if no match
- *---------------------------------------------------------------------------*/
-DPList_Elem_T *LL_find_by_type_name_additional ( DPList_Elem_T *llist, GUI_Edit_Enum search_type, const char *name, uint32_t additional )
-{   
-    bool found;
-    while ( llist) {
-       /* An object is found, if no type specified or types match */     
-       found = (search_type == GUI_ELEM_NOTYPE || search_type == llist->ll_type );
-       /* additional must match exactly */
-       if ( found ) found = additional == llist->ll_additional;
-       /* if name is specified, they must match exactly */
-       if ( found && name ) found = strcmp(llist->ll_name, name) == 0;
-       /* additional must match exactly */
-       if ( found ) found = additional == llist->ll_additional;
-       if ( found ) return llist;
-
-       llist = llist->ll_next;
-    }
-    return NULL;
-}
-
-
-/*-----------------------------------------------------------------------------
- * @brief  Find element of certain Type and associated lvgl object
- * @param  llist       - ptr to linked list head
- * @param  search_type - EntryType to search for, LL_NOTYPE = any type
- * @param  lvgl_obj    - ptr to lvgl obj
- * @retval ptr to found entry, NULL if no match
- *---------------------------------------------------------------------------*/
-DPList_Elem_T *LL_find_by_type_n_obj  ( DPList_Elem_T *llist, GUI_Edit_Enum search_type, void *lvgl_obj )
-{
-     while ( llist) {
-      if ( (search_type == GUI_ELEM_NOTYPE || search_type == llist->ll_type ) && llist->ll_lvgl_obj == lvgl_obj ) return llist;
-      llist = llist->ll_next;
-    }
-    return NULL;
-}
-
-/*-----------------------------------------------------------------------------
- * @brief  delete the list entry delptr points to 
- * @param  llist  - linked list to use
- * @param  delptr - element to be removed
- *         initialize to list head
- * @retval ptr to found entry
- * @note   to progress, caller must use LL_next
- *---------------------------------------------------------------------------*/
-void LL_delete ( DPList_Elem_T **llist, DPList_Elem_T *delptr )
-{
-    if ( !delptr ) return;
-     while ( *llist) {
-      if ( *llist == delptr ) {
-          /* unlink and delete List element */
-          *llist = delptr->ll_next;
-          my_free(delptr);
-          return;
-      }
-      llist = &(*llist)->ll_next;
-    }
-}
-#endif
+#endif /* RP2040_M0_0 */ 
 
 #if DEBUG_GUIEDIT > 0
 
@@ -332,11 +324,10 @@ void LL_delete ( DPList_Elem_T **llist, DPList_Elem_T *delptr )
          llist = llist->next;
       }
   }
+
+
     
 #endif /* DEBUG_GUIEDIT > 0 */    
 
 
-
-
-#endif /* USE_LVGL > 0 */ 
 

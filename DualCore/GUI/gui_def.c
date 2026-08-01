@@ -72,11 +72,12 @@ const GUI_Style_T def_style =
 GUI_Style_T cur_style;    /* Init'ed by GUI_Init_Curr_Elems */
 
 const GUI_Label_T def_label =
-  { .used           = 0b10101110,
+  { .used           = 0b10100001110,
     .style          = NULL,
     .align          = LV_ALIGN_CENTER,
     .x0             = 0,
     .y0             = 0,
+    /* all rotation properties unset */
     .caption        = "-3,5",
     .ind_formatstr  = NULL,
     .name           = "Label01",
@@ -156,8 +157,6 @@ GUI_Datapoint_T cur_dp;         /* Init'ed by GUI_Init_Curr_Elems */
 /* user friendly names of these of GUI elements */
 const ElemInfo_T Editinfo[]  = GUI_EDITINFO;
 
-/* Maximum number of translations binary->name */
-#define MAX_X_NAMES     5
 /******************************************************************************
  * Internal buffer for sending/receiving one GUI element
  * It consists of GUI elem type, the GUI descrioption data and the
@@ -386,6 +385,10 @@ static void *GUI_Allocate ( void *obj_in, size_t size ) {
         LVGL_update_label(lbl, LABEL_Y0,          LABEL_HAS_PROP(act, LABEL_Y0)          ? V_Set_U16 (&v, act->y0),&v              : NULL, privdata);
         LVGL_update_label(lbl, LABEL_CAPTION,     LABEL_HAS_PROP(act, LABEL_CAPTION)     ? V_Set_CStr(&v, act->caption),&v         : NULL, privdata);
         /*  6 */ 
+        LVGL_update_label(lbl, LABEL_PIVOTX,      LABEL_HAS_PROP(act, LABEL_PIVOTX)      ? V_Set_U16 (&v, act->pivotx),&v          : NULL, privdata);
+        LVGL_update_label(lbl, LABEL_PIVOTY,      LABEL_HAS_PROP(act, LABEL_PIVOTY)      ? V_Set_U16 (&v, act->pivoty),&v          : NULL, privdata);
+        LVGL_update_label(lbl, LABEL_ROTATE,      LABEL_HAS_PROP(act, LABEL_ROTATE)      ? V_Set_I16 (&v, act->rot_angle),&v       : NULL, privdata);
+        LVGL_update_label(lbl, LABEL_Y0,          LABEL_HAS_PROP(act, LABEL_Y0)          ? V_Set_U16 (&v, act->y0),&v              : NULL, privdata);
         LVGL_update_label(lbl, LABEL_CURVAL,      LABEL_HAS_PROP(act, LABEL_CURVAL)      ? V_Set_I32 (&v, act->ind_value),&v       : NULL, privdata);
         LVGL_update_label(lbl, LABEL_SCALEFACTOR, LABEL_HAS_PROP(act, LABEL_SCALEFACTOR) ? V_Set_I8  (&v, act->ind_scalefactor),&v : NULL, privdata);
         LVGL_update_label(lbl, LABEL_FORMATSTR,   LABEL_HAS_PROP(act, LABEL_FORMATSTR)   ? V_Set_CStr(&v, act->ind_formatstr),&v   : NULL, privdata);

@@ -202,11 +202,14 @@ typedef enum {
   LABEL_X0           = 2,
   LABEL_Y0           = 3,
   LABEL_CAPTION      = 4,
-  LABEL_CURVAL       = 5,
-  LABEL_SCALEFACTOR  = 6,
-  LABEL_FORMATSTR    = 7,
-  LABEL_NAME         = 8,
-  LABEL_EDIT_MAX     = 9,                  /* mandatory last entry  */
+  LABEL_PIVOTX       = 5,
+  LABEL_PIVOTY       = 6,
+  LABEL_ROTATE       = 7,
+  LABEL_CURVAL       = 8,
+  LABEL_SCALEFACTOR  = 9,
+  LABEL_FORMATSTR    = 10,
+  LABEL_NAME         = 11,
+  LABEL_EDIT_MAX     = 12,                  /* mandatory last entry  */
 } Label_Used_T;
 
 #define LABEL_HAS_PROP(lbl, id) ( (lbl)->used &  (  1 << (id) ) )
@@ -220,6 +223,8 @@ typedef struct {
   lv_style_t 	*style;                         /* style to be used, must be initialized */	
   lv_align_t 	align;                          /* Alignment */
   uint16_t 		x0, y0;                         /* reference position */
+  uint16_t      pivotx, pivoty;                 /* origin of rotation */
+  int16_t       rot_angle;                      /* Rotation angle     */
   char          caption[GUI_MAX_NAMELEN];       /* caption, directly set, only used as long as "ind_formatstr" is NULL */
   int32_t       ind_value;                      /* value to be used as caption, fomatted */       
   int8_t        ind_scalefactor;                /* scale factor, ie value is multiplied by 10^scalefactor */
