@@ -940,6 +940,12 @@ static lv_obj_t * obj=NULL;
             r = DP_Update_Core1(r, &v );
             printf("DP update %s\n", r ?  "ok" : "failed");
             break;
+    	case 9:
+            /* Create generic monitor */
+            lv_obj_t * sysmon = lv_sysmon_create(lv_display_get_default());
+            /* Create memory monitor */
+            lv_sysmon_show_memory(NULL);
+            break;
 #if USE_LVGL > 0
     	case 90:
             /*Change the active screen's background color*/
@@ -1017,6 +1023,7 @@ static lv_obj_t * obj=NULL;
         { "Datapoint Editor",       ctype_fn, .exec.fn = GUI_Test_Menu,VOID(6), "Edit a Datapoint" },
         { "Set datapoint",          ctype_fn, .exec.fn = GUI_Test_Menu,VOID(7), "Set datapoint data" },
         { "Set DP direct",          ctype_fn, .exec.fn = GUI_Test_Menu,VOID(8), "Set DP in Core1" },
+        { "Start Sysmon",           ctype_fn, .exec.fn = GUI_Test_Menu,VOID(9), "Start memory monitor" },
 
 #if USE_LVGL > 0
         { "Draw Label",             ctype_fn, .exec.fn = GUI_Test_Menu,VOID(90), "Draw a fixed Label" },

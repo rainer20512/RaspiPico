@@ -13,6 +13,10 @@
 #ifndef _PARSER_SPECS_H_
 #define _PARSER_SPECS_H_
 
+#include "i2c_specs.h"  /* specifications for both master and slave           */
+                        /* must be identical on both sides!                   */
+
+
 #define OPENBRACKET           '<'
 #define CLOSEBRACKET          '>'
 #define ESCAPEPROLOG          '?'
@@ -33,16 +37,6 @@
 #define SCALE_IDSTR           "scale"
 #define IMAGE_IDSTR           "image"
 
-/****************************************************************************** 
- * Specify max length of a property or element name in XML
- * has an impact on RAM useage
- *****************************************************************************/ 
-#define ID_MAXNAMELEN           16
-#define XML_PARSER_VER_MAJOR    1
-#define XML_PARSER_VER_MINOR    0
-#define XML_PARSER_VER_BUILD    2
-#define XML_PARSER_VERSION_STR  STR(XML_PARSER_VER_MAJOR) "." STR(XML_PARSER_VER_MINOR) "." STR(XML_PARSER_VER_BUILD)
-#define XML_PARSER_VERSION_BIN  ( ( XML_PARSER_VER_MAJOR << 10 ) | ( XML_PARSER_VER_MINOR <<5 ) | XML_PARSER_VER_BUILD )
 
 /* Root may contain component(s) plus optional prolog, NULL terminated array */
 extern const char *xml_root[];

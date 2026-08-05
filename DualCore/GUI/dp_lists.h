@@ -27,7 +27,7 @@ typedef struct DPList_Elem{
   GUI_Edit_Enum       elemtype;                   /* element type of lvgl object              */
   uint8_t             propidx;                    /* property idx datapoint refers to         */
   uint8_t             dtID;                       /* unique ID of dp, assigned by insert      */
-  GUI_E_Datatype_Enum datatype;                   /* Datatype the datapoint expects           */
+  XML_Datatype_Enum datatype;                   /* Datatype the datapoint expects           */
 } DPList_Elem_T;
 
 #if  RP2040_M0_1 || defined(CORE1_SIM)

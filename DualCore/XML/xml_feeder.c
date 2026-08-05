@@ -3,7 +3,7 @@
   * @file    xml_feeder.c
   * @author  Rainer 
   * @brief   functions to feed input into XML parser
-  *          We first collect INBUFSIZE chars in temporary buffer.
+  *          We first collect MASTER_TXSIZE chars in temporary buffer.
   *          When full or <EOF> is received, content will be copied to
   *          parser input circular buffer and parser will be notified
     ******************************************************************************
@@ -20,17 +20,6 @@
 #include "xml_parser_funcs.h"
 #include "xml_feeder.h"
 
-#define INBUFSIZE     64
-#define OUTBUFSIZE    128   
-
-#define RXFLAG_PARSER_RESET		0x10  	/* Tell I2C slave to reset its parser */
-#define RXFLAG_QRY_STATUS    	0x11  	/* Tell i2C slave to send its status in next i2c slave read */
-#define RXFLAG_RAW_DATA      	0x55  	/* Tell i2c slave, that package contains raw data */
-#define WRAPPER_EXCESS_BYTES	2       /* number of bytes added by length and flag Bytes */
-
-/* Answer flag bits for "query status"  */
-#define I2C_SLAVEFLAG_BUSY      (1<<0)	/* i2c slave is busy                  */
-#define I2C_SLAVEFLAG_HASDATA   (1<<1)	/* i2c slave has additional raw data  */	
 
 //const char test[]     = "01234567891023456789";
 //const char test[]     = "012345678910234567892023456789302345678940234567895023456789";
@@ -38,13 +27,13 @@
 typedef struct{
    uint8_t inlen;                       /* total size of packet, length and flags byte excluded! */
    uint8_t inflags;                     /* flag bytes */
-   uint8_t inbytes[INBUFSIZE];          /* raw transfer data */
+   uint8_t inbytes[MASTER_TXSIZE];          /* raw transfer data */
 } I2C_In_WrapperT;
  
 typedef struct{
    uint8_t outlen;                      /* total size of packet, length and flags byte excluded! */
    uint8_t outflags;                    /* flag bytes */
-   uint8_t outbytes[OUTBUFSIZE];        /* raw transfer data */
+   uint8_t outbytes[SLAVE_TXSIZE];        /* raw transfer data */
 } I2C_Out_WrapperT;
 
 static I2C_In_WrapperT  i2c_in;         /* Buffer for incoming i2c Data    */
@@ -67,16 +56,16 @@ SendFunc Sendf = NULL;                  /* Pointer for extended i2c send    */
 /* Some handy macros for inbuf (receive) control */
 /* ( ie we (slave) receive data from i2c master  */
 #define INBUF_INIT()      iptr=0
-#define INBUF_FULL()	  (iptr >= INBUFSIZE + WRAPPER_EXCESS_BYTES)
+#define INBUF_FULL()	  (iptr >= MASTER_TXSIZE + WRAPPER_EXCESS_BYTES)
 #define INBUF_COMPLETE()  (iptr == i2c_in.inlen + WRAPPER_EXCESS_BYTES) 
 #define INBUF_EMPTY()	  (iptr == 0)
 
 /* Some handy macros for outbuf control */
 /* ( ie data to be sent when we (slave) get a read request from i2c master  */
 #define OUTBUF_INIT()     optr=oi2c=orawlen=0;Sendf=NULL;
-#define OUTBUF_FULL()	  (optr >= OUTBUFSIZE)
+#define OUTBUF_FULL()	  (optr >= SLAVE_TXSIZE)
 #define OUTBUF_EMPTY()	  (optr == 0)
-#define OUTBUF_FREE()     (OUTBUFSIZE-optr)
+#define OUTBUF_FREE()     (SLAVE_TXSIZE-optr)
 
 /******************************************************************************
  * @brief master is requesting slave status: Assemble it and prepare for
@@ -89,6 +78,19 @@ void send_slave_flags(void)
     if ( CircBuff_PeekToken(&in) ) i2c_out.outflags |= I2C_SLAVEFLAG_BUSY;
     if ( !OUTBUF_EMPTY() )         i2c_out.outflags |= I2C_SLAVEFLAG_HASDATA;
 }
+
+/******************************************************************************
+ * @brief master is requesting slave status: Assemble it and prepare for
+ *        i2c slave read 
+ * @note  executed in interrupt context
+ *****************************************************************************/
+void send_DP_info(void)
+{
+    i2c_out.outlen = i2c_out.outflags = 0;
+    if ( CircBuff_PeekToken(&in) ) i2c_out.outflags |= I2C_SLAVEFLAG_BUSY;
+    if ( !OUTBUF_EMPTY() )         i2c_out.outflags |= I2C_SLAVEFLAG_HASDATA;
+}
+
 
 /******************************************************************************
  * @brief Got i2c dat with raw data in it. copy to circular input buffer
@@ -118,13 +120,16 @@ void handle_inbuf(void)
 {
     // DEBUG_PRINTF("HI=x%02x",i2c_in.inflags);
     switch ( i2c_in.inflags ) {
-      case RXFLAG_PARSER_RESET: 
+      case I2C_CMD_PARSER_RESET: 
         xml_parser_init();
         break;
-      case RXFLAG_QRY_STATUS:
+      case I2C_CMD_QRY_STATUS:
         send_slave_flags();
         break;
-      case RXFLAG_RAW_DATA:
+      case I2C_CMD_QRY_DPINFO:
+        send_DP_info();
+        break;
+      case I2C_CMD_RAW_DATA:
         inbuf_flush();
         break;
       default:

@@ -33,7 +33,7 @@ static DP_Datapoint_T act;              /* working copy for datapoints, used by 
  * @param  all neccessary data to create datapoint
  * @retval ptr to new initiated variable "act"
  ******************************************************************************/
-DP_Datapoint_T *DP_New( char *name,  GUI_Edit_Enum elemtype, uint8_t propidx, GUI_E_Datatype_Enum datatype ) 
+DP_Datapoint_T *DP_New( char *name,  GUI_Edit_Enum elemtype, uint8_t propidx, XML_Datatype_Enum datatype ) 
 {
     /* store datapoint in modul variable "act" */
     strncpy(act.DP_name, name, ID_MAXNAMELEN);

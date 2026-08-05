@@ -22,7 +22,7 @@
  * Description of every known GUI-Datatype 
  *************************************************************************************************************/
 typedef struct {
-  GUI_E_Datatype_Enum e;    /* GUI Element Type                                                              */
+  XML_Datatype_Enum e;    /* GUI Element Type                                                              */
   uint8_t is_obj;           /* set to TRUE, if datatype is a ptr to LVGL obj ( like style, label, arc, ... ) */
                             /* strings, images and fonts are excluded, they are handeled directly            */
   uint8_t bytelen;          /* length of datatype in bytes                                                   */

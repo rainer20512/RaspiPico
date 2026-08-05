@@ -20,30 +20,13 @@
 #include "../../lvgl/lvgl.h"
 #include "gui_def.h"
 
-/* Recognized data types */
-typedef enum {
-  GUI_UINT8   = 0,
-  GUI_UINT16  = 1,
-  GUI_RGB888  = 2,
-  GUI_UINT32  = 3,
-  GUI_INT8    = 4,
-  GUI_INT16   = 5,
-  GUI_INT32   = 6,
-  GUI_STRING  = 7,
-  GUI_STYLE   = 8,
-  GUI_RAWIMG  = 9,
-  GUI_FONT    = 10,
-  GUI_IMAGE   = 11,
-  GUI_LABEL   = 12,
-  GUI_MAXELEM = 13,
-} GUI_E_Datatype_Enum;
-
+#include "i2c_specs.h"                           /* datatype definitions are here */
 
 /* Receipe for one Edit-Element                                                   */
 typedef struct {
   uint8_t            propnum;       /* number of property as defined in gui_def.h */
   const char         *elem_name;    /* User freindly name of GUI-Element          */
-  GUI_E_Datatype_Enum elem_type;    /* Data type of GUI-Element                   */
+  XML_Datatype_Enum elem_type;    /* Data type of GUI-Element                   */
   uint16_t            elem_offset;  /* offs of data element within data vector    */ 
 } Edit_Receipe_T;
 
